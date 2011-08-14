@@ -1,0 +1,199 @@
+/*
+ * plugin_core.h - Sof Game Psi plugin
+ * Copyright (C) 2010  Aleksey Andreev
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * You can also redistribute and/or modify this program under the
+ * terms of the Psi License, specified in the accompanied COPYING
+ * file, as published by the Psi Project; either dated January 1st,
+ * 2005, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+#ifndef PLUGIN_CORE_H
+#define PLUGIN_CORE_H
+
+//#include <QtCore>
+#include <QDomDocument>
+#include <QDateTime>
+#include <QtDebug>
+
+#include "popupaccessinghost.h"
+#include "optionaccessinghost.h"
+
+#define cVer "0.1.16"
+
+#include "pers.h"
+#include "pers_info.h"
+#include "main_window.h"
+
+class PluginCore: public QObject
+{
+  Q_OBJECT
+
+	public:
+		PluginCore();
+		~PluginCore();
+		void doShortCut();
+		void updateRegExpForPersName();
+		void setAccountJidStatus(qint32 status);
+		void setGameJidStatus(int, qint32);
+		bool getIntValue(int valueId, int* valuePtr);
+		bool getTextValue(int valueId, QString* valuePtr);
+		void resetStatistic(int valueId);
+		bool setIntSettingValue(qint32 settingId, int settingValue);
+		bool setStringSettingValue(qint32 settingId, QString* settingPtr);
+		bool getIntSettingValue(qint32 settingId, qint32* settingPtr);
+		bool getStringSettingValue(qint32 settingId, QString* settingPtr);
+		bool sendCommandToCore(qint32 commandId);
+		bool sendString(const QString &str);
+		PersInfo* getPersInfo(QString);
+
+	private:
+		SofMainWindow* mainWindow;
+		QString accJid;
+		QString lastGameJid;
+		QString lastChatJid;
+		//QString persName;
+		//int persLevel;
+		int statMessagesCount;
+		int persStatus;
+		int statExperience;
+		int statExperienceFull;
+		//qint32 persHealthCurr;
+		//qint32 persHealthMax;
+		//qint32 persEnergyCurr;
+		//qint32 persEnergyMax;
+		int statMoneysDropCount;
+		int statFightsCount;
+		int statFightDamageMin;
+		int statFightDamageMax;
+		int statFingsDropCount;
+		QString statFingDropLast;
+		int statExperienceDropCount;
+		int statKilledEnemies;
+		QString settingPersName;
+		QVector<quint32> settingSlots;
+		int settingPersSaveMode;
+		int settingMapsSaveMode;
+		bool settingSavePersParam;
+		bool settingSaveBackpack;
+		int settingSaveStat;
+		bool settingChangeMirrorMode;
+		qint32 settingPersX;
+		qint32 settingPersY;
+		int settingWindowSizePos;
+		int settingWindowPosX;
+		int settingWindowPosY;
+		int settingWindowWidth;
+		int settingWindowHeight;
+		int settingFightTimer;
+		int settingFightAutoClose;
+		bool settingFingDropPopup;
+		int settingWatchRestHealthEnergy;
+		int settingFightSelectAction;
+		bool settingInKillersCupPopup;
+		bool settingKillerAttackPopup;
+		bool settingShowQueryLength;
+		bool settingResetQueueForUnknowStatus;
+		int  settingServerTextBlocksCount;
+		bool settingResetQueuePopup;
+		QString settingPersNameFont;
+		QString settingServerTextFont;
+		QRegExp mapCoordinatesExp;
+		QRegExp parPersRegExp;
+		QRegExp fightDropMoneyReg2;
+		QRegExp secretDropFingReg;
+		QRegExp experienceDropReg;
+		QRegExp experienceDropReg2;
+		QRegExp secretBeforeReg;
+		QRegExp secretBeforeReg2;
+		QRegExp takeBeforeReg;
+		QRegExp commandStrReg;
+		QRegExp fingElementReg;
+		QRegExp persInfoReg;
+		QRegExp persInfoMainReg;
+		QRegExp persInfoSitizenshipReg;
+		QRegExp persInfoClanReg;
+		QRegExp persInfoRatingReg;
+		QRegExp persInfoParamsReg;
+		QRegExp persInfoLossReg;
+		QRegExp persInfoProtectReg;
+		QRegExp persInfoAbility;
+		QRegExp persInfoEquipReg;
+		QRegExp fightShowReg;
+		QRegExp otherPersPosReg1;
+		QRegExp otherPersPosReg2;
+		QRegExp killerAttackReg;
+		QRegExp dealerBuyReg;
+		QRegExp warehouseShelfReg;
+		QVector<PersInfo*> persInfoList;
+		bool persStatusChangedFlag;
+		bool persBackpackChangedFlag;
+		bool statisticChangedFlag;
+		QTimer saveStatusTimer;
+		// --
+		QRegExp fightOneTimeoutReg;
+		QRegExp fightElement0Reg;
+		QRegExp fightElement1Reg;
+		QRegExp fightElement2Reg;
+		QRegExp parPersPower1Reg;
+		QRegExp fightDamageFromPersReg1;
+		QRegExp fightDamageFromPersReg2;
+		QRegExp fightDamageFromPersReg3;
+		QRegExp fightDropMoneyReg1;
+		QRegExp fightDropThingReg1;
+
+	private:
+		void valueChanged(int valueId, int valueType, int value);
+		void setGameText(QString);
+		void setConsoleText(QString, bool);
+		bool savePersStatus();
+		bool savePluginSettings();
+		bool saveWindowSettings();
+		bool loadPersStatus();
+		bool loadPluginSettings();
+		void getStatistics(QString* commandPtr);
+		void mapsCommands(QStringList*);
+		void persCommands(QStringList*);
+		void clearCommands(QStringList*);
+		void fingsCommands(QStringList*);
+		void aliasesCommands(const QStringList &);
+		void settingsCommands(const QStringList &);
+		void initPopup(QString, QString, int);
+		int parseFinghtGroups(QStringList, int);
+		int parseFinghtStepResult(QStringList, int);
+
+	protected:
+
+
+	public slots:
+		void changeAccountJid(QString);
+		bool textParsing(QString* jid, QString* message);
+		void processError(int errorNum);
+		void fightStarted(int mode);
+		void persParamChanged();
+		void persBackpackChanged();
+		void statisticsChanged();
+		void saveStatusTimeout();
+
+};
+
+extern PluginCore *pluginCore;
+extern PopupAccessingHost *myPopupHost;
+extern OptionAccessingHost* psiOptions;
+
+#endif
