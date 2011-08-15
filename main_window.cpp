@@ -1871,11 +1871,15 @@ void SofMainWindow::moveMapElement()
 	}
 	// Отображаем окно выбора карты
 	bool fOk = false;
-	QString mapName = QInputDialog::getItem(this, QString::fromUtf8("Выбор карты"), QString::fromUtf8("Выберите карту, в которую перенести элемент:"), maps, 0, false, &fOk);
+	int idx = maps.indexOf(lastMapForMoveElement);
+	if (idx == -1)
+		idx = 0;
+	QString mapName = QInputDialog::getItem(this, QString::fromUtf8("Выбор карты"), QString::fromUtf8("Выберите карту, в которую перенести элемент:"), maps, idx, false, &fOk);
 	if (fOk && !mapName.isEmpty()) {
 		// Ищем индекс выбранной карты по ее имени
 		int mapIndex = -1;
-		for (int i = 0; i < cnt; i++) {
+		int i;
+		for (i = 0; i < cnt; i++) {
 			if (mapsList[i].name == mapName) {
 				mapIndex = mapsList[i].index;
 				break;
@@ -1883,6 +1887,7 @@ void SofMainWindow::moveMapElement()
 		}
 		// Переносим элемент
 		if (mapIndex != -1) {
+			lastMapForMoveElement = mapsList.at(i).name;
 			GameMap::instance()->moveMapElement(currIndex, mapIndex, selectedMapElement);
 		} else {
 			QMessageBox::critical(this, QString::fromUtf8("Перенос элемента карты"), QString::fromUtf8("Выбранная карта не найдена"));

@@ -130,6 +130,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		QList<FingFilter*> filtersList;
 		bool autoEnterMode;
 		int  thingsIface;
+		QString lastMapForMoveElement; // Запоминается имя карты последнего переноса элемента
 
 	public slots:
 		void valueChanged(int eventId, int valueType, int value); // Приходят сообщения и событиях, часто об обновлении статистики.
