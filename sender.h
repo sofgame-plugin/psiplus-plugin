@@ -31,90 +31,88 @@
 #include "applicationinfoaccessinghost.h"
 #include "stanzasendinghost.h"
 
+extern StanzaSendingHost* sender_;
+extern QStringList chatJids;
 
 class Sender: public QObject
 {
 Q_OBJECT
 
-	public:
-		struct jid_status {
-			QString     jid;
-			int         status;
-			QDateTime	last_status;
-			QDateTime	last_send;
-			QDateTime	last_recv_game; // Последнее игровое сообщение (ответ на запрос)
-			QDateTime	last_send_ping;
-			QDateTime	last_recv_ping;
-			int 		probe_count;
-			float		resp_average;
-		};
-		Sender();
-		~Sender();
-		void changeAccount(int, QString);
-		void setAccountStatus(int curr_status);
-		void insertGameJid(QString, int);
-		void removeGameJid(QString);
-		int  getGameJidIndex(QString);
-		QStringList getGameJids();
-		const struct jid_status* getGameJidInfo(int);
-		bool setGameJidStatus(int, qint32);
-		bool changeGameMirrorsMode(int mirrorsMode);
-		bool setSendDelta(int);
-		int  getSendDelta();
-		bool setServerTimeoutDuration(int);
-		int  getServerTimeoutDuration();
-		bool doGameAsk(QString* mirrorJid, QString* message);
-		bool sendString(const QString &str);
-		bool sendSystemString(QString* stringPtr);
-		int  getGameQueueLength();
-		void resetGameQueue();
+public:
+	struct jid_status {
+		QString     jid;
+		int         status;
+		QDateTime	last_status;
+		QDateTime	last_send;
+		QDateTime	last_recv_game; // Последнее игровое сообщение (ответ на запрос)
+		QDateTime	last_send_ping;
+		QDateTime	last_recv_ping;
+		int 		probe_count;
+		float		resp_average;
+	};
+	static Sender *instance();
+	static void reset();
+	void changeAccount(int, const QString &);
+	void setAccountStatus(int curr_status);
+	void insertGameJid(const QString &, int);
+	void removeGameJid(const QString &);
+	int  getGameJidIndex(const QString &) const;
+	QStringList getGameJids() const;
+	const struct jid_status* getGameJidInfo(int) const;
+	bool setGameJidStatus(int, qint32);
+	bool changeGameMirrorsMode(int mirrorsMode);
+	bool setSendDelta(int);
+	int  getSendDelta() const;
+	bool setServerTimeoutDuration(int);
+	int  getServerTimeoutDuration() const;
+	bool doGameAsk(const QString &mirrorJid, const QString &message);
+	bool sendString(const QString &str);
+	bool sendSystemString(const QString &stringPtr);
+	int  getGameQueueLength() const;
+	void resetGameQueue();
 
-	private:
-		int currentAccount;
-		QString currentAccJid;
-		QVector<struct jid_status> gameJidsEx;
-		int jidActiveCount;
-		bool pingMirrors;
-		int jidInterval;
-		QDateTime lastSend;
-		//QDateTime lastReceive;
-		//QTimer* mirrorsProbeTimer;
-		QQueue<int> pingQueue;
-		QQueue<QString> gameQueue;
-		QQueue<QString> systemQueue;
-		int gameMirrorsMode;
-		int currGameJidIndex;
-		int  lastSendIndex; // TODO объединить с предыдущим
-		bool waitingForReceive;
-		int  waitForReceivePeriod;
-		int  sendCommandRetries;
-		QString lastCommand;
-		QRegExp fastSendReg;
-		QTimer gameSenderTimer;
-		QString prefix;
+private:
+	static Sender *instanse_;
+	int currentAccount;
+	QString currentAccJid;
+	QVector<struct jid_status> gameJidsEx;
+	int jidActiveCount;
+	bool pingMirrors;
+	int jidInterval;
+	QDateTime lastSend;
+	//QDateTime lastReceive;
+	//QTimer* mirrorsProbeTimer;
+	QQueue<int> pingQueue;
+	QQueue<QString> gameQueue;
+	QQueue<QString> systemQueue;
+	int gameMirrorsMode;
+	int currGameJidIndex;
+	int  lastSendIndex; // TODO объединить с предыдущим
+	bool waitingForReceive;
+	int  waitForReceivePeriod;
+	int  sendCommandRetries;
+	QString lastCommand;
+	QRegExp fastSendReg;
+	QTimer gameSenderTimer;
+	QString prefix;
 
-	private:
-		void startPingMirrors();
-		void stopPingMirrors();
-		void clearPingQueue(int mirrorIndex);
+private:
+	Sender();
+	~Sender();
+	void startPingMirrors();
+	void stopPingMirrors();
+	void clearPingQueue(int mirrorIndex);
 
-	private slots:
-		void doPingJob();
-		void doSendGameStringJob();
+private slots:
+	void doPingJob();
+	void doSendGameStringJob();
 
-	signals:
-		void accountChanged(QString);
-		bool gameTextReceived(QString*,QString*);
-		void errorOccurred(int);
-		void queueSizeChanged(int);
+signals:
+	void accountChanged(const QString);
+	bool gameTextReceived(const QString, const QString);
+	void errorOccurred(int);
+	void queueSizeChanged(int);
 
 };
-
-extern Sender* mySender;
-//extern int currentAccount;
-extern StanzaSendingHost* sender_;
-//extern QString accountJid;
-extern QStringList chatJids;
-
 
 #endif

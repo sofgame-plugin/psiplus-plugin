@@ -47,7 +47,6 @@ SofGamePlugin::SofGamePlugin() :
 {
 	psiOptions = 0;
 	sender_ = 0;
-	mySender = 0;
 	myPopupHost = 0;
 	chatJids << tr("sofch@jabber.ru");
 }
@@ -76,7 +75,7 @@ bool SofGamePlugin::enable()
 	if (!psiOptions || !sender_)
 		return false;
 	// Инициируем модуль приема/передачи плагина
-	mySender = new Sender;
+	Sender::instance();
 	// Инициируем загрузку ядра плагина
 	PluginCore::instance();
 	//--
@@ -95,9 +94,7 @@ bool SofGamePlugin::enable()
 	//if (currentAccount != newAccount) {
 		currentAccount = newAccount;
 		accountJid = newAccJid;
-		if (mySender) {
-			mySender->changeAccount(currentAccount, accountJid);
-		}
+		Sender::instance()->changeAccount(currentAccount, accountJid);
 	}
 	QStringList game_jids;
 	QVariant vGameJids(game_jids);
@@ -105,13 +102,14 @@ bool SofGamePlugin::enable()
 	if (!vGameJids.isNull()) {
 		game_jids = vGameJids.toStringList();
 	}
+	Sender *sender = Sender::instance();
 	if (game_jids.isEmpty()) {
-		mySender->insertGameJid("sof@jabbergames.ru", -1);
-		mySender->insertGameJid("sofgm@jabber.ru", -1);
+		sender->insertGameJid("sof@jabbergames.ru", -1);
+		sender->insertGameJid("sofgm@jabber.ru", -1);
 	} else {
 		int cnt = game_jids.size();
 		for (int i = 0; i < cnt; i++) {
-			mySender->insertGameJid(game_jids.at(i), -1);
+			sender->insertGameJid(game_jids.at(i), -1);
 		}
 	}
 	QVariant vChatJids(chatJids);
@@ -132,7 +130,7 @@ bool SofGamePlugin::enable()
 		QString jid_str = accInfoHost->getStatus(currentAccount);
 		if (jid_str != "offline") {
 			// Отсылаем запросы об активности зеркал
-			QStringList jids = mySender->getGameJids();
+			QStringList jids = sender->getGameJids();
 			while (!jids.isEmpty()) {
 				QString jid = jids.takeFirst();
 				sendLastActiveQuery(accountJid, jid);
@@ -149,10 +147,7 @@ bool SofGamePlugin::disable()
 		//psiShortcuts = 0;
 	}
 	PluginCore::reset();
-	if (mySender) {
-		delete mySender;
-		mySender = 0;
-	}
+	Sender::reset();
 	enabled = false;
 	return true;
 }
@@ -169,7 +164,7 @@ QWidget* SofGamePlugin::options()
 	layout->addWidget(new QLabel(QString::fromUtf8("Внимание! Перед началом игры, необходимо добавить указанные ниже JID-ы в ростер."), optionsWid));
 	// Список Jid-ов игры
 	gameJidsWid = new QTextEdit(optionsWid);
-	QStringList game_jids = mySender->getGameJids();
+	QStringList game_jids = Sender::instance()->getGameJids();
 	gameJidsWid->setText(game_jids.join("\n"));
 	QVBoxLayout *gameJidsVertLayout = new QVBoxLayout();
 	gameJidsVertLayout->addWidget(new QLabel(QString::fromUtf8("JID-ы игры:"), optionsWid));
@@ -227,6 +222,7 @@ void SofGamePlugin::applyOptions() {
 	if (!gameJidsWid || !chatJidsWid || !shortCutWid || !accountsWid) {
 		return;
 	}
+	Sender *sender = Sender::instance();
 	// Аккаунт игры
 	qint32 index = accountsWid->currentIndex();
 	QString newAccJid = "";
@@ -239,9 +235,7 @@ void SofGamePlugin::applyOptions() {
 	if (currentAccount != newAccount || newAccJid != accountJid) {
 		currentAccount = newAccount;
 		accountJid = newAccJid;
-		if (mySender) {
-			mySender->changeAccount(currentAccount, accountJid);
-		}
+			sender->changeAccount(currentAccount, accountJid);
 	}
 	// *** Jid-ы игры ***
 	QStringList game_jids = gameJidsWid->toPlainText().split(QRegExp("\\s+"), QString::SkipEmptyParts);
@@ -249,7 +243,7 @@ void SofGamePlugin::applyOptions() {
 	// Сохраняем в настройках
 	psiOptions->setPluginOption(constGameJids, vGameJids);
 	// Получаем старый набор джидов игры
-	QStringList old_game_jids = mySender->getGameJids();
+	QStringList old_game_jids = sender->getGameJids();
 	// Производим изменения
 	bool fActive = false;
 	if (currentAccount != -1 && accInfoHost->getStatus(currentAccount) != "offline")
@@ -260,14 +254,14 @@ void SofGamePlugin::applyOptions() {
 		if (i != -1) {
 			old_game_jids.removeAt(i);
 		} else {
-			mySender->insertGameJid(jid, -1);
+			sender->insertGameJid(jid, -1);
 			if (fActive)
 				sendLastActiveQuery(accountJid, jid);
 		}
 	}
 	while (!old_game_jids.isEmpty()) {
 		QString jid = old_game_jids.takeFirst();
-		mySender->removeGameJid(jid);
+		sender->removeGameJid(jid);
 	}
 	// *** Jid-ы чата ***
 	chatJids = chatJidsWid->toPlainText().split(QRegExp("\\s+"), QString::SkipEmptyParts);
@@ -285,7 +279,7 @@ void SofGamePlugin::restoreOptions() {
 	if (gameJidsWid == 0 || chatJidsWid == 0 || shortCutWid == 0 || accountsWid == 0) {
 		return;
 	}
-	QStringList game_jids = mySender->getGameJids();
+	QStringList game_jids = Sender::instance()->getGameJids();
 	QVariant vGameJids(game_jids);
 	vGameJids = psiOptions->getPluginOption(constGameJids);
 	if (!vGameJids.isNull()) {
@@ -435,21 +429,21 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 {
 	if (!enabled)
 		return false;
+	Sender *sender = Sender::instance();
 	if (currentAccount == -1) {
 		// Проверяем JID, от которого пришло сообщение
 		if (accountJid != accInfoHost->getJid(account))
 			return false;
 		// Сохраняем id аккаунта
 		currentAccount = account;
-		if (mySender)
-			mySender->changeAccount(account, accountJid);
+		sender->changeAccount(account, accountJid);
 	} else if (currentAccount != account) {
 		return false;
 	}
 	// Проверяем JID от которого пришло сообщение
 	QString jid = stanza.attribute("from");
 	jid = jid.left(jid.indexOf("/")).toLower();
-	int i = mySender->getGameJidIndex(jid);
+	int i = sender->getGameJidIndex(jid);
 	if (i == -1) { // JID не найден
 		return false;
 	}
@@ -467,7 +461,7 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 		}
 		QString message = eBody.text();
 		// Передаем jid отправителя и текст обработчику
-		bool res = mySender->doGameAsk(&jid, &message);
+		bool res = sender->doGameAsk(jid, message);
 		//bool res = pluginCore->textParsing(jid, message);
 		return res;
 	} else if (sTagName == "presence") {

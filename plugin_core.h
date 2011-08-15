@@ -178,8 +178,8 @@ class PluginCore: public QObject
 
 
 	public slots:
-		void changeAccountJid(QString);
-		bool textParsing(QString* jid, QString* message);
+		void changeAccountJid(const QString);
+		bool textParsing(const QString jid, const QString message);
 		void processError(int errorNum);
 		void fightStarted(int mode);
 		void persParamChanged();

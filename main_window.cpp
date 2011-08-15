@@ -595,12 +595,12 @@ void SofMainWindow::getAllDataFromCore() {
 	if (newIntValue == 1) {
 		state = Qt::Checked;
 		if (!queueShowFlag) {
-			connect(mySender, SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
+			connect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			queueShowFlag = true;
 		}
 	} else {
 		if (queueShowFlag) {
-			disconnect(mySender, SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
+			disconnect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			queueShowFlag = false;
 			showQueueLen(0);
 		}
@@ -1547,13 +1547,13 @@ void SofMainWindow::applySettings()
 	if (i == Qt::Checked) {
 		i = 1;
 		if (!queueShowFlag) {
-			connect(mySender, SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
+			connect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			queueShowFlag = true;
 		}
 	} else {
 		i = 0;
 		if (queueShowFlag) {
-			disconnect(mySender, SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
+			disconnect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			showQueueLen(0);
 			queueShowFlag = false;
 		}

@@ -121,13 +121,13 @@ PluginCore::PluginCore()
 	fightElement2Reg.setMinimal(true);
 	parPersPower1Reg.setPattern(QString::fromUtf8("^Энергия:(-?[0-9]{1,6})/([0-9]{1,6})$"));
 	// Соединения
-	if (mySender) {
-		connect(mySender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
-		connect(mySender, SIGNAL(gameTextReceived(QString*,QString*)), this, SLOT(textParsing(QString*, QString*)));
-		connect(mySender, SIGNAL(accountChanged(QString)), this, SLOT(changeAccountJid(QString)));
-	}
-	connect(Pers::instance(), SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged()));
-	connect(Pers::instance(), SIGNAL(fingsChanged()), this, SLOT(persBackpackChanged()));
+	Sender *sender = Sender::instance();
+	connect(sender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
+	connect(sender, SIGNAL(gameTextReceived(const QString, const QString)), this, SLOT(textParsing(const QString, const QString)));
+	connect(sender, SIGNAL(accountChanged(const QString)), this, SLOT(changeAccountJid(const QString)));
+	Pers *pers = Pers::instance();
+	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged()));
+	connect(pers, SIGNAL(fingsChanged()), this, SLOT(persBackpackChanged()));
 	connect(&saveStatusTimer, SIGNAL(timeout()), this, SLOT(saveStatusTimeout()));
 }
 
@@ -135,8 +135,9 @@ PluginCore::~PluginCore()
 {
 	if (saveStatusTimer.isActive())
 		saveStatusTimer.stop();
-	disconnect(mySender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
-	disconnect(mySender, SIGNAL(gameTextReceived(QString*,QString*)), this, SLOT(textParsing(QString*, QString*)));
+	Sender *sender = Sender::instance();
+	disconnect(sender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
+	disconnect(sender, SIGNAL(gameTextReceived(QString*,QString*)), this, SLOT(textParsing(QString*, QString*)));
 	if (mainWindow) {
 		delete mainWindow;
 	}
@@ -175,7 +176,7 @@ void PluginCore::doShortCut()
 	mainWindow->show();
 }
 
-void PluginCore::changeAccountJid(QString newJid)
+void PluginCore::changeAccountJid(const QString newJid)
 {
 	// *** В настройках плагина сменился игровой аккаунт ***
 	if (!accJid.isEmpty()) {
@@ -205,13 +206,14 @@ void PluginCore::setAccountJidStatus(qint32 status)
 	// *** Смена статуса игрового аккаунта *** //  И как это радостное событие отловить, а?
 	// Если аккаунт отключен, то устанавливаем игровым jid-ам статус отключенных
 	setConsoleText(QString::fromUtf8("### Аккаунт отключен ###"), false);
-	mySender->setAccountStatus(status);
+	Sender::instance()->setAccountStatus(status);
 }
 
 void PluginCore::setGameJidStatus(int jid_index, qint32 status)
 {
-	if (mySender->setGameJidStatus(jid_index, status)) {
-		const Sender::jid_status* jstat = mySender->getGameJidInfo(jid_index);
+	Sender *sender = Sender::instance();
+	if (sender->setGameJidStatus(jid_index, status)) {
+		const Sender::jid_status* jstat = sender->getGameJidInfo(jid_index);
 		QString str1 = "### " + jstat->jid + " - ";
 		if (status == 0) {
 			str1.append(QString::fromUtf8("отключен"));
@@ -223,7 +225,7 @@ void PluginCore::setGameJidStatus(int jid_index, qint32 status)
 	}
 }
 
-bool PluginCore::textParsing(QString* jid, QString* message)
+bool PluginCore::textParsing(const QString jid, const QString message)
 {
 	bool myMessage = false; // Пока считаем что сообщение послано не нами
 //	if (mySender->doGameAsk(&jid, &message)) { // Сначала сообщение обрабатывает Sender
@@ -235,13 +237,13 @@ bool PluginCore::textParsing(QString* jid, QString* message)
 	}
 	//--
 	if (lastGameJid != jid) {
-		lastGameJid = *jid;
+		lastGameJid = jid;
 		valueChanged(VALUE_LAST_GAME_JID, TYPE_STRING, 0);
 	}
 	++statMessagesCount;
 	valueChanged(VALUE_MESSAGES_COUNT, TYPE_INTEGER_FULL, statMessagesCount);
 	// Распускаем полученное сообщение построчно
-	QStringList aMessage = message->split("\n");
+	QStringList aMessage = message.split("\n");
 	// Просматриваем данные построчно
 	PersStatus nPersStatus = NotKnow;
 	//int nParamLine = -1;
@@ -984,12 +986,12 @@ bool PluginCore::textParsing(QString* jid, QString* message)
 		// Выводим сообщение игры на экран
 		int startText = -1;
 		if (persX != QINT32_MIN && persY != QINT32_MIN) { // Есть координаты от GPS
-			startText = message->indexOf("\n");
+			startText = message.indexOf("\n");
 		}
 		if (startText == -1) {
-			setGameText(*message);
+			setGameText(message);
 		} else {
-			setGameText(message->midRef(startText + 1).toString());
+			setGameText(message.mid(startText + 1));
 		}
 	//}
 	if (nCmdStatus > 3  && persX != QINT32_MIN && persY != QINT32_MIN) { // Т.е Есть что то кроме нестандартных и посторонних команд и координаты
@@ -1002,20 +1004,20 @@ bool PluginCore::textParsing(QString* jid, QString* message)
 	}
 	if (fNewFight) {
 		// Если выбран новый бой, посылаем "0" чтобы показать список мобов
-		QString str1 = "0"; // Продолжение игры
-		mySender->sendSystemString(&str1);
+		Sender::instance()->sendSystemString("0"); // Продолжение игры
 	} else if (nPersStatus == FightMultiSelect) {
 		if (settingFightSelectAction == 1 || settingFightSelectAction == 2) { // Всегда новый бой
-			if (settingFightSelectAction == 2 || mySender->getGameQueueLength() > 0) {
-				QString str1 = "1"; // 1 - новый бой
-				mySender->sendSystemString(&str1);
+			Sender *sender = Sender::instance();
+			if (settingFightSelectAction == 2 || sender->getGameQueueLength() > 0) {
+				sender->sendSystemString("1"); // 1 - новый бой
 			}
 		}
 	} else if ((nPersStatus == NotKnow && settingResetQueueForUnknowStatus) || nPersStatus == KillerAttack) {
 		// Если очередь не пуста, сбрасываем очередь
-		int q_len = mySender->getGameQueueLength();
+		Sender *sender = Sender::instance();
+		int q_len = sender->getGameQueueLength();
 		if (q_len > 0) {
-			mySender->resetGameQueue();
+			sender->resetGameQueue();
 			if (settingResetQueuePopup) {
 				initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Очередь сброшена"), 60);
 			}
@@ -1058,10 +1060,9 @@ void PluginCore::fightStarted(int mode)
 			if (settingFightAutoClose == 1) { // Автозакрытие боя если один против мобов
 				if (fight->gameMobEnemyCount() > 0 && fight->gameHumanEnemyCount() == 0) { // В противниках только мобы
 					if (fight->gameMobAllyCount() == 0 && fight->gameHumanAllyCount() == 0) { // В нашей команде никого нет
-						QString str1 = "*"; // Команда закрытия боя
-						mySender->sendSystemString(&str1);
-						str1 = "0"; // Продолжение игры
-						mySender->sendSystemString(&str1);
+						Sender *sender = Sender::instance();
+						sender->sendSystemString("*"); // Команда закрытия боя
+						sender->sendSystemString("0"); // Продолжение игры
 					}
 				}
 			}
@@ -1260,7 +1261,7 @@ bool PluginCore::setIntSettingValue(qint32 settingId, int settingValue)
 	} else if (settingId == SETTING_CHANGE_MIRROR_MODE) {
 		settingChangeMirrorMode = 0;
 		settingChangeMirrorMode = settingValue;
-		return mySender->changeGameMirrorsMode(settingChangeMirrorMode);
+		return Sender::instance()->changeGameMirrorsMode(settingChangeMirrorMode);
 	} else if (settingId == SETTING_WINDOW_SIZE_POS) {
 		settingWindowSizePos = 0;
 			settingWindowSizePos = settingValue;
@@ -2081,7 +2082,7 @@ bool PluginCore::loadPluginSettings()
 								i = mirrorChangeModeStrings.indexOf(str1);
 								if (i != -1) {
 									settingChangeMirrorMode = i;
-									mySender->changeGameMirrorsMode(i);
+									Sender::instance()->changeGameMirrorsMode(i);
 								}
 							} else if (sTagName == "window-save-params") {
 								settingWindowSizePos = 1;
@@ -2260,7 +2261,7 @@ bool PluginCore::sendString(const QString &str)
 		}
 		if (new_cmd.isEmpty() || !str1.startsWith("/")) {
 			// Отсылаем строку серверу
-			mySender->sendString(str1);
+			Sender::instance()->sendString(str1);
 			return true;
 		}
 	}
@@ -2281,9 +2282,10 @@ bool PluginCore::sendString(const QString &str)
 		str1.append(QString::fromUtf8("/ver — версия плагина\n"));
 		setConsoleText(str1, true);
 	} else if (str1 == "/-") {
-		int q_len = mySender->getGameQueueLength();
+		Sender *sender = Sender::instance();
+		int q_len = sender->getGameQueueLength();
 		if (q_len > 0) {
-			mySender->resetGameQueue();
+			sender->resetGameQueue();
 			str1 = QString::fromUtf8("### Очередь сброшена. Количество: %1 ###").arg(q_len);
 		} else {
 			str1 = QString::fromUtf8("### Очередь пуста. ###");
@@ -2293,7 +2295,7 @@ bool PluginCore::sendString(const QString &str)
 	} else if (str1 == "/stat" || str1.startsWith("/stat ")) {
 		getStatistics(&str1);
 	} else if (str1 == "/send_delta") {
-		str1 = "send_delta = " + QString::number(mySender->getSendDelta()) + " msec.";
+		str1 = "send_delta = " + QString::number(Sender::instance()->getSendDelta()) + " msec.";
 		setConsoleText(str1, true);
 	} else if (str1.startsWith("/send_delta=")) {
 		if (str1.length() >= 13) {
@@ -2301,14 +2303,15 @@ bool PluginCore::sendString(const QString &str)
 			int nDelta = str1.mid(12).toInt(&res);
 			str1 = "send_delta not set";
 			if (res) {
-				if (mySender->setSendDelta(nDelta)) {
-					str1 = "send_delta set is " + QString::number(mySender->getSendDelta()) + " msec.";
+				Sender *sender = Sender::instance();
+				if (sender->setSendDelta(nDelta)) {
+					str1 = "send_delta set is " + QString::number(sender->getSendDelta()) + " msec.";
 				}
 			}
 			setConsoleText(str1, true);
 		}
 	} else if (str1 == "/server_timeout") {
-		str1 = "server_timeout = " + QString::number(mySender->getServerTimeoutDuration()) + " sec.";
+		str1 = "server_timeout = " + QString::number(Sender::instance()->getServerTimeoutDuration()) + " sec.";
 		setConsoleText(str1, true);
 	} else if (str1.startsWith("/server_timeout=")) {
 		if (str1.length() >= 17) {
@@ -2316,8 +2319,9 @@ bool PluginCore::sendString(const QString &str)
 			int nTimeout = str1.mid(16).toInt(&res);
 			str1 = "server timeout not set";
 			if (res) {
-				if (mySender->setServerTimeoutDuration(nTimeout)) {
-					str1 = "server_timeout set is " + QString::number(mySender->getServerTimeoutDuration()) + " sec.";
+				Sender *sender = Sender::instance();
+				if (sender->setServerTimeoutDuration(nTimeout)) {
+					str1 = "server_timeout set is " + QString::number(sender->getServerTimeoutDuration()) + " sec.";
 				}
 			}
 			setConsoleText(str1, true);
@@ -2441,13 +2445,14 @@ void PluginCore::getStatistics(QString* commandPtr)
 	}
 	if (mode == 0 || mode == 9) {
 		stat_str.append(QString::fromUtf8("--Статистика зеркал игры--\n"));
-		QStringList game_jids = mySender->getGameJids();
+		Sender *sender = Sender::instance();
+		QStringList game_jids = sender->getGameJids();
 		stat_str.append(QString::fromUtf8("Всего зеркал: "));
 		stat_str.append(QString::number(game_jids.size()));
 		int jid_index = 0;
 		while (!game_jids.isEmpty()) {
 			QString jid = game_jids.takeFirst();
-			const struct Sender::jid_status* jstat = mySender->getGameJidInfo(jid_index);
+			const struct Sender::jid_status* jstat = sender->getGameJidInfo(jid_index);
 			if (jstat != 0) {
 				stat_str.append(QString::fromUtf8("\n-Зеркало: "));
 				stat_str.append(jid);

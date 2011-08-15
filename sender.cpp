@@ -28,10 +28,6 @@
 #include "sender.h"
 #include "common.h"
 
-Sender* mySender;
-
-//int currentAccount;
-
 QString alfa = "0123456789abcdefghijklmnopqrstuvwxyz";
 StanzaSendingHost* sender_;
 QStringList chatJids;
@@ -40,6 +36,24 @@ QList<short int> aPrefix = (QList<short int>()
 	<< 4  << 5  << 16 << 27 << 29 << 1  << 9  << 17 << 2  << 3
 	<< 17 << 13 << 15 << 27 << 2  << 2  << 3  << 4  << 2  << 20
 	<< 19) ;
+
+Sender *Sender::instanse_ = NULL;
+
+Sender *Sender::instance()
+{
+	if (Sender::instanse_ == NULL) {
+		Sender::instanse_ = new Sender();
+	}
+	return Sender::instanse_;
+}
+
+void Sender::reset()
+{
+	if (Sender::instanse_ != NULL) {
+		delete Sender::instanse_;
+		Sender::instanse_ = NULL;
+	}
+}
 
 Sender::Sender() :
 	currentAccount(-1),
@@ -58,15 +72,15 @@ Sender::Sender() :
 	connect(&gameSenderTimer, SIGNAL(timeout()), this, SLOT(doSendGameStringJob()));
 }
 
+/**
+ * Деструктор
+ */
 Sender::~Sender()
 {
-	/**
-	* Деструктор
-	*/
 	disconnect(&gameSenderTimer, SIGNAL(timeout()), this, SLOT(doSendGameStringJob()));
 }
 
-void Sender::changeAccount(int accIndex, QString accJid)
+void Sender::changeAccount(int accIndex, const QString &accJid)
 {
 	currentAccount = accIndex;
 	if (currentAccJid != accJid) {
@@ -106,7 +120,7 @@ void Sender::setAccountStatus(int curr_status)
  * Вставка нового джида jid на позицию pos
  * Если pos == -1, то добавляем в конец
  */
-void Sender::insertGameJid(QString jid, int pos)
+void Sender::insertGameJid(const QString &jid, int pos)
 {
 	if (jid.isEmpty())
 		return;
@@ -134,7 +148,7 @@ void Sender::insertGameJid(QString jid, int pos)
 /**
  * Удаление джида зеркала из списка зеркал
  */
-void Sender::removeGameJid(QString jid)
+void Sender::removeGameJid(const QString &jid)
 {
 	int i = getGameJidIndex(jid);
 	if (i != -1) {
@@ -144,7 +158,7 @@ void Sender::removeGameJid(QString jid)
 	}
 }
 
-int Sender::getGameJidIndex(QString jid)
+int Sender::getGameJidIndex(const QString &jid) const
 {
 	int cnt = gameJidsEx.size();
 	for (int i = 0; i < cnt; i++) {
@@ -154,7 +168,7 @@ int Sender::getGameJidIndex(QString jid)
 	return -1;
 }
 
-QStringList Sender::getGameJids()
+QStringList Sender::getGameJids() const
 {
 	QStringList res;
 	int cnt = gameJidsEx.size();
@@ -164,7 +178,7 @@ QStringList Sender::getGameJids()
 	return res;
 }
 
-const struct Sender::jid_status* Sender::getGameJidInfo(int jid_index)
+const struct Sender::jid_status* Sender::getGameJidInfo(int jid_index) const
 {
 	if (jid_index < 0 || jid_index >= gameJidsEx.size())
 		return 0;
@@ -230,11 +244,11 @@ bool Sender::setSendDelta(int delta)
 	return false;
 }
 
-int Sender::getSendDelta()
+/**
+ * Возращает значение паузы между отправками пакетов серверу игры
+ */
+int Sender::getSendDelta() const
 {
-	/**
-	* Возращает значение паузы между отправками пакетов серверу игры
-	**/
 	return jidInterval;
 }
 
@@ -253,24 +267,24 @@ bool Sender::setServerTimeoutDuration(int duration)
 /**
  * Возвращает длительность ожидания ответа от сервера, в секундах
  */
-int Sender::getServerTimeoutDuration()
+int Sender::getServerTimeoutDuration() const
 {
 	return (waitForReceivePeriod / 1000);
 }
 
-bool Sender::doGameAsk(QString* mirrorJid, QString* message)
+/**
+ * Обработка ответа игры
+ * Возвращает true если пакет полностью обработан функцией
+ */
+bool Sender::doGameAsk(const QString &mirrorJid, const QString &message)
 {
-	/**
-	* Обработка ответа игры
-	* Возвращает true если пакет полностью обработан функцией
-	**/
-	int jidIndex = getGameJidIndex(*mirrorJid);
+	int jidIndex = getGameJidIndex(mirrorJid);
 	if (jidIndex != -1) {
 		const struct jid_status* jstat = getGameJidInfo(jidIndex);
 		if (jstat != 0) {
 			// Отмечаем общее время приема пакета
 			QDateTime lastReceive = QDateTime::currentDateTime();
-			if (message->trimmed() == "000") {
+			if (message.trimmed() == "000") {
 				// Пришел пакет в результате пинга зеркала
 				if (jstat->last_send_ping.isValid() && (!jstat->last_recv_ping.isValid() || jstat->last_send_ping > jstat->last_recv_ping)) { // TODO Надо продумать, что делать при значительном запоздании пакета
 					// Похоже что ping послан нами
@@ -305,7 +319,7 @@ bool Sender::doGameAsk(QString* mirrorJid, QString* message)
 					// Это ожидаемый нами пакет
 					waitingForReceive = false;
 					// Проверяем на наличие ошибки частых команд
-					if (fastSendReg.indexIn(*message, 0) == -1) {
+					if (fastSendReg.indexIn(message, 0) == -1) {
 						sendCommandRetries = 0;
 						// Отмечаем дату приема сообщения
 						gameJidsEx[jidIndex].last_recv_game = lastReceive;
@@ -355,11 +369,11 @@ bool Sender::sendString(const QString &str)
 * Добавляет системную команду для игры в очередь системных команд с максимальным приоритетом
 * Если других команд в очередях нет, инициирует процедуру отправки
 */
-bool Sender::sendSystemString(QString* stringPtr)
+bool Sender::sendSystemString(const QString &str)
 {
 	bool is_empty = gameQueue.isEmpty();
 	is_empty &= systemQueue.isEmpty();
-	systemQueue.enqueue(*stringPtr);
+	systemQueue.enqueue(str);
 	if (is_empty && sendCommandRetries == 0) {
 		doSendGameStringJob();
 	}
@@ -630,7 +644,6 @@ void Sender::doSendGameStringJob() {
 					}
 					weight += weight_tmp;
 				}
-				//qDebug() << "--Index: " << i << ", weight: " << weight << ", probe: " << gameJidsStatus[i].probe_count << ", average: " << gameJidsStatus[i].resp_average;
 				// Сверяем весовые коэффициенты
 				if (jidWeight < weight) {
 					jidWeight = weight;
@@ -650,7 +663,6 @@ void Sender::doSendGameStringJob() {
 			emit errorOccurred(ERROR_NO_MORE_MIRRORS);
 			return; // И выходим
 		}
-		//qDebug() << "Index: " << jidIndex << ", weight: " << jidWeight;
 		// Отмечаем время отправки
 		gameJidsEx[jidIndex].last_send = currTime;
 		lastSend = currTime;
@@ -686,7 +698,7 @@ void Sender::doSendGameStringJob() {
 /**
  * Возвращает длину очереди команд игры
  */
-int  Sender::getGameQueueLength()
+int  Sender::getGameQueueLength() const
 {
 	int res = gameQueue.size() + systemQueue.size();
 	if (sendCommandRetries != 0)
