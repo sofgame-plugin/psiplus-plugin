@@ -41,6 +41,14 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	timeoutStamp = 0;
 	timeoutTimer = 0;
 	setupUi(this);
+#ifdef Q_WS_WIN
+	// В некоторых случаях фреймы с QFrame::StyledPanel в Windows не отображаются.
+	// Похоже зависит от текущей темы. Ставим прямые углы для Windows
+	header->setFrameShape(QFrame::Panel);
+	mainFrame->setFrameShape(QFrame::Panel);
+	mainInfo->setFrameShape(QFrame::Panel);
+	footer->setFrameShape(QFrame::Panel);
+#endif
 	initStatisticData();
 	statLabelsCaption.fill(0, STAT_PARAMS_COUNT);
 	statLabelsValues.fill(0, STAT_PARAMS_COUNT);
