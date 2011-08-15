@@ -39,7 +39,6 @@
 
 
 // Глобальные переменные (знаю что не кошерно, зато работает быстро и... удобно)
-PluginCore *pluginCore;
 PopupAccessingHost *myPopupHost;
 OptionAccessingHost* psiOptions;
 
@@ -52,6 +51,24 @@ QStringList fightAutoCloseStrings = (QStringList() << "not-close" << "if-one-opp
 QStringList watchRestHealthEnergyStrings = (QStringList() << "no-watch" << "intell-watch" << "each-10-secs" << "each-30-secs" << "each-60-secs");
 QStringList fightSelectActionStrings = (QStringList() << "no-action" << "new-if-queue-not-empty" << "always-new");
 //-----
+
+PluginCore *PluginCore::instance_ = NULL;
+
+PluginCore *PluginCore::instance()
+{
+	if (PluginCore::instance_ == NULL) {
+		PluginCore::instance_ = new PluginCore();
+	}
+	return PluginCore::instance_;
+}
+
+void PluginCore::reset()
+{
+	if (PluginCore::instance_ != NULL) {
+		delete PluginCore::instance_;
+		PluginCore::instance_ = NULL;
+	}
+}
 
 PluginCore::PluginCore()
 {

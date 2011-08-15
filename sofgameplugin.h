@@ -101,6 +101,8 @@ private:
 	ShortcutAccessingHost* psiShortcuts;
 	AccountInfoAccessingHost *accInfoHost;
 	//PopupAccessingHost* myPopupHost;
+
+private:
 	quint32 getAccounts(QStringList* accNamesPtr, QStringList* accJidsPtr);
 	int getAccountByJid(QString);
 	void sendLastActiveQuery(QString, QString);

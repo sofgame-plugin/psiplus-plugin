@@ -237,8 +237,9 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 
 SofMainWindow::~SofMainWindow()
 {
+	Pers *pers = Pers::instance();
 	if (thingsIface)
-		Pers::instance()->removeThingsInterface(thingsIface);
+		pers->removeThingsInterface(thingsIface);
 	if (timeoutStamp)
 		delete timeoutStamp;
 	if (timeoutTimer)
@@ -246,12 +247,12 @@ SofMainWindow::~SofMainWindow()
 	while (!filtersList.isEmpty()) {
 		delete filtersList.takeFirst();
 	}
-	disconnect(Pers::instance(), SIGNAL(fingsChanged()), this, SLOT(persFingsChanged()));
-	disconnect(Pers::instance(), SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
+	disconnect(pers, SIGNAL(fingsChanged()), this, SLOT(persFingsChanged()));
+	disconnect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	disconnect(stackedWidget, SIGNAL(currentChanged(int)), this, SLOT(changePage(int)));
 	disconnect (serverTextLabel, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(textShowContextMenu(const QPoint &)));
 	disconnect (console_textedit, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
-	disconnect(Pers::instance(), SIGNAL(filtersChanged()), this, SLOT(updateFingFiltersTab()));
+	disconnect(pers, SIGNAL(filtersChanged()), this, SLOT(updateFingFiltersTab()));
 
 	disconnect(fontButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(chooseFont(QAbstractButton*)));
 }
@@ -292,11 +293,12 @@ void SofMainWindow::init()
 	if (windowSizePosCombo->currentIndex() != 0) {
 		int wnd_x = 0;
 		int wnd_y = 0;
-		if (pluginCore->getIntSettingValue(SETTING_WINDOW_POS_X, &wnd_x)) {
-			if (pluginCore->getIntSettingValue(SETTING_WINDOW_POS_Y, &wnd_y)) {
+		PluginCore *core = PluginCore::instance();
+		if (core->getIntSettingValue(SETTING_WINDOW_POS_X, &wnd_x)) {
+			if (core->getIntSettingValue(SETTING_WINDOW_POS_Y, &wnd_y)) {
 				int wnd_width = 0; int wnd_height = 0;
-				if (pluginCore->getIntSettingValue(SETTING_WINDOW_WIDTH, &wnd_width)) {
-					if (pluginCore->getIntSettingValue(SETTING_WINDOW_HEIGHT, &wnd_height)) {
+				if (core->getIntSettingValue(SETTING_WINDOW_WIDTH, &wnd_width)) {
+					if (core->getIntSettingValue(SETTING_WINDOW_HEIGHT, &wnd_height)) {
 						// Определяем геометрию рабочих столов (доступное пространство)
 						QRect screenRect = QApplication::desktop()->availableGeometry(-1); //-- default system screen
 						// Корректируем наши параметры, если превышают допустимые
@@ -406,16 +408,17 @@ void SofMainWindow::closeEvent(QCloseEvent *evnt)
 	// Отправка координат окна
 	QPoint wndPos = pos();
 	qint32 i = wndPos.x();
-	pluginCore->setIntSettingValue(SETTING_WINDOW_POS_X, i);
+	PluginCore *core = PluginCore::instance();
+	core->setIntSettingValue(SETTING_WINDOW_POS_X, i);
 	i = wndPos.y();
-	pluginCore->setIntSettingValue(SETTING_WINDOW_POS_Y, i);
+	core->setIntSettingValue(SETTING_WINDOW_POS_Y, i);
 	// Отправка размеров окна
 	i = width();
-	pluginCore->setIntSettingValue(SETTING_WINDOW_WIDTH, i);
+	core->setIntSettingValue(SETTING_WINDOW_WIDTH, i);
 	i = height();
-	pluginCore->setIntSettingValue(SETTING_WINDOW_HEIGHT, i);
+	core->setIntSettingValue(SETTING_WINDOW_HEIGHT, i);
 	// Отправка команды сохранения настроек ядру плагина
-	pluginCore->sendCommandToCore(COMMAND_CLOSE_WINDOW);
+	core->sendCommandToCore(COMMAND_CLOSE_WINDOW);
 	evnt->accept();
 }
 
@@ -520,44 +523,45 @@ void SofMainWindow::getAllDataFromCore() {
 	int newIntValue;
 	QString newStrValue;
 	// *** Настройки плагина ***
+	PluginCore *core = PluginCore::instance();
 	// Имя персонажа
-	if (!pluginCore->getStringSettingValue(SETTING_PERS_NAME, &newStrValue)) {
+	if (!core->getStringSettingValue(SETTING_PERS_NAME, &newStrValue)) {
 		newStrValue = NA_TEXT;
 	}
 	setPersName->setText(newStrValue);
 	// Режим переключения зеркал
-	if (!pluginCore->getIntSettingValue(SETTING_CHANGE_MIRROR_MODE, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_CHANGE_MIRROR_MODE, &newIntValue)) {
 		newIntValue = 0;
 	}
 	mirrorChangeModeCombo->setCurrentIndex(newIntValue);
 	// Сохранение параметров окна
-	if (!pluginCore->getIntSettingValue(SETTING_WINDOW_SIZE_POS, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_WINDOW_SIZE_POS, &newIntValue)) {
 		newIntValue = 0;
 	}
 	windowSizePosCombo->setCurrentIndex(newIntValue);
 	// Отслеживание восстановления здоровья и энергии
-	if (!pluginCore->getIntSettingValue(SETTING_REST_HEALTH_ENERGY, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_REST_HEALTH_ENERGY, &newIntValue)) {
 		newIntValue = 0;
 	}
 	restHealthEnergyCombo->setCurrentIndex(newIntValue);
 	// Таймер в бою
-	if (!pluginCore->getIntSettingValue(SETTING_FIGHT_TIMER, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_FIGHT_TIMER, &newIntValue)) {
 		newIntValue = 0;
 	}
 	settingTimeOutDisplay = newIntValue;
 	fightTimerCombo->setCurrentIndex(newIntValue);
 	// Выбор боя
-	if (!pluginCore->getIntSettingValue(SETTING_FIGHT_SELECT_ACTION, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_FIGHT_SELECT_ACTION, &newIntValue)) {
 		newIntValue = 0;
 	}
 	fightSelectAction->setCurrentIndex(newIntValue);
 	// Автозакрытие боя
-	if (!pluginCore->getIntSettingValue(SETTING_AUTOCLOSE_FIGHT, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_AUTOCLOSE_FIGHT, &newIntValue)) {
 		newIntValue = 0;
 	}
 	setAutoCloseFight->setCurrentIndex(newIntValue);
 	// Попап при дропе вещей
-	if (!pluginCore->getIntSettingValue(SETTING_FING_DROP_POPUP, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_FING_DROP_POPUP, &newIntValue)) {
 		newIntValue = 0;
 	}
 	Qt::CheckState state = Qt::Unchecked;
@@ -566,7 +570,7 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	checkbox_FingDropPopup->setCheckState(state);
 	// Попап при заказе в клубе убийц
-	if (!pluginCore->getIntSettingValue(SETTING_IN_KILLERS_CUP_POPUP, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_IN_KILLERS_CUP_POPUP, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -575,7 +579,7 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	checkbox_InKillersCupPopup->setCheckState(state);
 	// Попап при нападении убийцы
-	if (!pluginCore->getIntSettingValue(SETTING_KILLER_ATTACK_POPUP, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_KILLER_ATTACK_POPUP, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -584,7 +588,7 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	checkbox_KillerClubAttack->setCheckState(state);
 	// Отображение длины очереди
-	if (!pluginCore->getIntSettingValue(SETTING_SHOW_QUEUE_LENGTH, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_SHOW_QUEUE_LENGTH, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -603,7 +607,7 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	checkbox_ShowQueueLength->setCheckState(state);
 	// Сброс очереди при неизвестном статусе
-	if (!pluginCore->getIntSettingValue(SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -612,14 +616,14 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	checkbox_ResetQueueForUnknowStatus->setCheckState(state);
 	// Попап при сбросе очереди
-	if (!pluginCore->getIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, &newIntValue) || newIntValue != 1) {
+	if (!core->getIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, &newIntValue) || newIntValue != 1) {
 		checkbox_ResetQueuePopup->setChecked(false);
 	} else {
 		checkbox_ResetQueuePopup->setChecked(true);
 	}
 	// Позиции в слотах
 	statisticFooterPos.fill(-1, STAT_PARAMS_COUNT);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT1, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT1, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 0;
 			++newIntValue;
@@ -630,7 +634,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot1Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT2, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT2, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 1;
 			++newIntValue;
@@ -641,7 +645,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot2Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT3, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT3, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 2;
 			++newIntValue;
@@ -652,7 +656,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot3Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT4, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT4, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 3;
 			++newIntValue;
@@ -663,7 +667,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot4Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT5, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT5, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 4;
 			++newIntValue;
@@ -674,7 +678,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot5Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT6, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT6, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 5;
 			++newIntValue;
@@ -685,7 +689,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot6Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT7, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT7, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 6;
 			++newIntValue;
@@ -696,7 +700,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot7Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT8, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT8, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 7;
 			++newIntValue;
@@ -707,7 +711,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	slot8Combo->setCurrentIndex(newIntValue);
-	if (pluginCore->getIntSettingValue(SETTING_SLOT9, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SLOT9, &newIntValue)) {
 		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
 			statisticFooterPos[newIntValue] = 8;
 			++newIntValue;
@@ -719,17 +723,17 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	slot9Combo->setCurrentIndex(newIntValue);
 	// Сохранение статистики
-	//if (!pluginCore->getIntSettingValue(SETTING_SAVE_STAT, &newIntValue)) {
+	//if (!core->getIntSettingValue(SETTING_SAVE_STAT, &newIntValue)) {
 	//	newIntValue = 0;
 	//}
 	//setSaveStatAtExit->setCurrentIndex(newIntValue);
 	// Сохранение основных параметров персонажа
-	if (!pluginCore->getIntSettingValue(SETTING_PERS_PARAM_SAVE_MODE, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_PERS_PARAM_SAVE_MODE, &newIntValue)) {
 		newIntValue = 0;
 	}
 	persParamSaveMode_combo->setCurrentIndex(newIntValue);
 	// Сохранение основных параметров персонажа
-	if (!pluginCore->getIntSettingValue(SETTING_SAVE_PERS_PARAM, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_SAVE_PERS_PARAM, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -738,7 +742,7 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	saveMainPersParam_checkbox->setCheckState(state);
 	// Сохранение рюкзака персонажа
-	if (!pluginCore->getIntSettingValue(SETTING_SAVE_PERS_BACKPACK, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_SAVE_PERS_BACKPACK, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -747,7 +751,7 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	savePersBackpack_checkbox->setCheckState(state);
 	// Сохранение статистики
-	if (!pluginCore->getIntSettingValue(SETTING_SAVE_PERS_STAT, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_SAVE_PERS_STAT, &newIntValue)) {
 		newIntValue = 0;
 	}
 	state = Qt::Unchecked;
@@ -756,121 +760,122 @@ void SofMainWindow::getAllDataFromCore() {
 	}
 	saveStatistic_checkbox->setCheckState(state);
 	// *** Основные данные ***
-	if (!Pers::instance()->getIntParamValue(VALUE_PERS_STATUS, &newIntValue)) {
+	Pers *pers = Pers::instance();
+	if (!pers->getIntParamValue(VALUE_PERS_STATUS, &newIntValue)) {
 		newIntValue = NotKnow;
 	}
 	changePersStatus(newIntValue);
-	if (!Pers::instance()->getStringParamValue(VALUE_PERS_NAME, &newStrValue)) {
+	if (!pers->getStringParamValue(VALUE_PERS_NAME, &newStrValue)) {
 		newStrValue = NA_TEXT;
 	}
 	persNameLabel->setText(newStrValue);
-	if (!Pers::instance()->getIntParamValue(VALUE_PERS_LEVEL, &newIntValue)) {
+	if (!pers->getIntParamValue(VALUE_PERS_LEVEL, &newIntValue)) {
 		newStrValue = NA_TEXT;
 	} else {
 		newStrValue = QString::number(newIntValue);
 	}
 	levelLabel->setText(newStrValue);
-	if (!pluginCore->getIntValue(VALUE_EXPERIENCE_CURR, &newIntValue)) {
+	if (!core->getIntValue(VALUE_EXPERIENCE_CURR, &newIntValue)) {
 		newIntValue = 0;
 	}
 	experienceLabel->setText(numToStr(newIntValue, "'"));
 	experienceBar->setValue(newIntValue);
-	if (!pluginCore->getIntValue(VALUE_EXPERIENCE_MAX, &newIntValue)) {
+	if (!core->getIntValue(VALUE_EXPERIENCE_MAX, &newIntValue)) {
 		newIntValue = 0;
 	}
 	experienceBar->setRange(0, newIntValue);
-	if (!Pers::instance()->getIntParamValue(VALUE_HEALTH_CURR, &newIntValue)) {
+	if (!pers->getIntParamValue(VALUE_HEALTH_CURR, &newIntValue)) {
 		newIntValue = 0;
 	}
 	setCurrentHealth(newIntValue);
-	if (!Pers::instance()->getIntParamValue(VALUE_HEALTH_MAX, &newIntValue)) {
+	if (!pers->getIntParamValue(VALUE_HEALTH_MAX, &newIntValue)) {
 		newIntValue = 0;
 	}
 	healthBar->setRange(0, newIntValue);
-	if (!Pers::instance()->getIntParamValue(VALUE_ENERGY_CURR, &newIntValue)) {
+	if (!pers->getIntParamValue(VALUE_ENERGY_CURR, &newIntValue)) {
 		newIntValue = 0;
 	}
 	setCurrentEnergy(newIntValue);
-	if (!Pers::instance()->getIntParamValue(VALUE_ENERGY_MAX, &newIntValue)) {
+	if (!pers->getIntParamValue(VALUE_ENERGY_MAX, &newIntValue)) {
 		newIntValue = 0;
 	}
 	energyBar->setRange(0, newIntValue);
 
-	if (pluginCore->getIntValue(VALUE_CHANGE_PERS_POS, &newIntValue)) {
+	if (core->getIntValue(VALUE_CHANGE_PERS_POS, &newIntValue)) {
 		// Новая позиция персонажа
 		//scrollMapNewPosition(newIntValue % 100000, newIntValue / 100000);
 		scrollMapToPersPosition();
 	}
 	// *** Статистические данные ***
-	if (pluginCore->getIntValue(VALUE_DROP_MONEYS, &newIntValue)) {
+	if (core->getIntValue(VALUE_DROP_MONEYS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_DROP_MONEYS);
 	}
 	updateValue(VALUE_DROP_MONEYS, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_MESSAGES_COUNT, &newIntValue)) {
+	if (core->getIntValue(VALUE_MESSAGES_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_MESSAGES_COUNT);
 	}
 	updateValue(VALUE_MESSAGES_COUNT, &newStrValue);
-	if (!pluginCore->getTextValue(VALUE_LAST_GAME_JID, &newStrValue)) {
+	if (!core->getTextValue(VALUE_LAST_GAME_JID, &newStrValue)) {
 		newStrValue = statisticStartValue.at(VALUE_LAST_GAME_JID);
 	}
 	updateValue(VALUE_LAST_GAME_JID, &newStrValue);
-	if (!pluginCore->getTextValue(VALUE_LAST_CHAT_JID, &newStrValue)) {
+	if (!core->getTextValue(VALUE_LAST_CHAT_JID, &newStrValue)) {
 		newStrValue = statisticStartValue.at(VALUE_LAST_CHAT_JID);
 	}
 	updateValue(VALUE_LAST_CHAT_JID, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &newIntValue)) {
+	if (core->getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_DAMAGE_MIN_FROM_PERS);
 	}
 	updateValue(VALUE_DAMAGE_MIN_FROM_PERS, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &newIntValue)) {
+	if (core->getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_DAMAGE_MAX_FROM_PERS);
 	}
 	updateValue(VALUE_DAMAGE_MAX_FROM_PERS, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_FINGS_DROP_COUNT, &newIntValue)) {
+	if (core->getIntValue(VALUE_FINGS_DROP_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_FINGS_DROP_COUNT);
 	}
 	updateValue(VALUE_FINGS_DROP_COUNT, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_FIGHTS_COUNT, &newIntValue)) {
+	if (core->getIntValue(VALUE_FIGHTS_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_FIGHTS_COUNT);
 	}
 	updateValue(VALUE_FIGHTS_COUNT, &newStrValue);
-	if (!pluginCore->getTextValue(VALUE_FING_DROP_LAST, &newStrValue)) {
+	if (!core->getTextValue(VALUE_FING_DROP_LAST, &newStrValue)) {
 		newStrValue = statisticStartValue.at(VALUE_FING_DROP_LAST);
 	}
 	updateValue(VALUE_FING_DROP_LAST, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_EXPERIENCE_DROP_COUNT, &newIntValue)) {
+	if (core->getIntValue(VALUE_EXPERIENCE_DROP_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_EXPERIENCE_DROP_COUNT);
 	}
 	updateValue(VALUE_EXPERIENCE_DROP_COUNT, &newStrValue);
-	if (pluginCore->getIntValue(VALUE_KILLED_ENEMIES, &newIntValue)) {
+	if (core->getIntValue(VALUE_KILLED_ENEMIES, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_KILLED_ENEMIES);
 	}
 	updateValue(VALUE_KILLED_ENEMIES, &newStrValue);
 	// Шрифты
-	if (pluginCore->getStringSettingValue(SETTING_PERS_NAME_FONT, &newStrValue)) {
+	if (core->getStringSettingValue(SETTING_PERS_NAME_FONT, &newStrValue)) {
 		persNameFont_label->setFont(newStrValue);
 		QFont f;
 		if (f.fromString(persNameFont_label->fontName())) {
 			persNameLabel->setFont(f);
 		}
 	}
-	if (pluginCore->getStringSettingValue(SETTING_SERVER_TEXT_FONT, &newStrValue)) {
+	if (core->getStringSettingValue(SETTING_SERVER_TEXT_FONT, &newStrValue)) {
 		gameTextFont_label->setFont(newStrValue);
 		QFont f;
 		if (f.fromString(gameTextFont_label->fontName())) {
@@ -879,7 +884,7 @@ void SofMainWindow::getAllDataFromCore() {
 		}
 	}
 	newIntValue = 0;
-	if (pluginCore->getIntSettingValue(SETTING_SERVER_TEXT_BLOCKS_COUNT, &newIntValue)) {
+	if (core->getIntSettingValue(SETTING_SERVER_TEXT_BLOCKS_COUNT, &newIntValue)) {
 		if (newIntValue < 0) {
 			newIntValue = 0;
 		} else if (newIntValue > 0 && newIntValue < 100) {
@@ -890,7 +895,7 @@ void SofMainWindow::getAllDataFromCore() {
 	serverTextLabel->setMaximumBlockCount(newIntValue);
 	console_textedit->setMaximumBlockCount(newIntValue);
 	// Режим сохранения карт
-	if (!pluginCore->getIntSettingValue(SETTING_MAPS_PARAM_SAVE_MODE, &newIntValue)) {
+	if (!core->getIntSettingValue(SETTING_MAPS_PARAM_SAVE_MODE, &newIntValue)) {
 		newIntValue = 0;
 	}
 	mapsParamSaveMode->setCurrentIndex(newIntValue);
@@ -954,7 +959,7 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			statFingsCount = value;
 			updateValue(VALUE_FINGS_DROP_COUNT, &str1);
 			// Последняя упавшая вещь
-			if (pluginCore->getTextValue(VALUE_FING_DROP_LAST, &str1)) {
+			if (PluginCore::instance()->getTextValue(VALUE_FING_DROP_LAST, &str1)) {
 				str1 = str1.left(20);
 			} else {
 				str1 = NA_TEXT;
@@ -973,7 +978,7 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		// Строковые данные. За значением нужно обращаться к ядру плагина.
 		if (eventId == VALUE_LAST_GAME_JID) {
 			// Текущий игровой JID
-			if (pluginCore->getTextValue(eventId, &str1)) {
+			if (PluginCore::instance()->getTextValue(eventId, &str1)) {
 				str1 = str1.left(20);
 			} else {
 				str1 = NA_TEXT;
@@ -1467,49 +1472,52 @@ void SofMainWindow::activateSettingsPage()
 
 void SofMainWindow::resetCommonStatistic()
 {
-	pluginCore->resetStatistic(VALUE_LAST_GAME_JID);
-	pluginCore->resetStatistic(VALUE_LAST_CHAT_JID);
-	pluginCore->resetStatistic(VALUE_MESSAGES_COUNT);
+	PluginCore *core = PluginCore::instance();
+	core->resetStatistic(VALUE_LAST_GAME_JID);
+	core->resetStatistic(VALUE_LAST_CHAT_JID);
+	core->resetStatistic(VALUE_MESSAGES_COUNT);
 }
 
 void SofMainWindow::resetFightStatistic()
 {
-	pluginCore->resetStatistic(VALUE_FIGHTS_COUNT);
-	pluginCore->resetStatistic(VALUE_DAMAGE_MAX_FROM_PERS);
-	pluginCore->resetStatistic(VALUE_DAMAGE_MIN_FROM_PERS);
-	pluginCore->resetStatistic(VALUE_DROP_MONEYS);
-	pluginCore->resetStatistic(VALUE_FINGS_DROP_COUNT);
-	pluginCore->resetStatistic(VALUE_FING_DROP_LAST);
-	pluginCore->resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
-	pluginCore->resetStatistic(VALUE_KILLED_ENEMIES);
+	PluginCore *core = PluginCore::instance();
+	core->resetStatistic(VALUE_FIGHTS_COUNT);
+	core->resetStatistic(VALUE_DAMAGE_MAX_FROM_PERS);
+	core->resetStatistic(VALUE_DAMAGE_MIN_FROM_PERS);
+	core->resetStatistic(VALUE_DROP_MONEYS);
+	core->resetStatistic(VALUE_FINGS_DROP_COUNT);
+	core->resetStatistic(VALUE_FING_DROP_LAST);
+	core->resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
+	core->resetStatistic(VALUE_KILLED_ENEMIES);
 }
 
 void SofMainWindow::applySettings()
 {
 	// *** Отправляем новые настройки ядру плагина ***
 	int i, j;
+	PluginCore *core = PluginCore::instance();
 	// Имя персонажа
 	QString str1 = setPersName->text();
-	pluginCore->setStringSettingValue(SETTING_PERS_NAME, &str1);
+	core->setStringSettingValue(SETTING_PERS_NAME, &str1);
 	// Режим переключения зеркал
 	i = mirrorChangeModeCombo->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_CHANGE_MIRROR_MODE, i);
+	core->setIntSettingValue(SETTING_CHANGE_MIRROR_MODE, i);
 	// Сохранение параметров окна
 	i = windowSizePosCombo->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_WINDOW_SIZE_POS, i);
+	core->setIntSettingValue(SETTING_WINDOW_SIZE_POS, i);
 	// Отслеживание восстановления здоровья и энергии
 	i = restHealthEnergyCombo->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_REST_HEALTH_ENERGY, i);
+	core->setIntSettingValue(SETTING_REST_HEALTH_ENERGY, i);
 	// Таймер в бою
 	i = fightTimerCombo->currentIndex();
 	settingTimeOutDisplay = i;
-	pluginCore->setIntSettingValue(SETTING_FIGHT_TIMER, i);
+	core->setIntSettingValue(SETTING_FIGHT_TIMER, i);
 	// Выбор боя
 	i = fightSelectAction->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_FIGHT_SELECT_ACTION, i);
+	core->setIntSettingValue(SETTING_FIGHT_SELECT_ACTION, i);
 	// Автозакрытие боя
 	i = setAutoCloseFight->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_AUTOCLOSE_FIGHT, i);
+	core->setIntSettingValue(SETTING_AUTOCLOSE_FIGHT, i);
 	// Попап при дропе вещей
 	i = checkbox_FingDropPopup->checkState();
 	if (i == Qt::Checked) {
@@ -1517,7 +1525,7 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_FING_DROP_POPUP, i);
+	core->setIntSettingValue(SETTING_FING_DROP_POPUP, i);
 	// Попап при заказе в клубе убийц
 	i = checkbox_InKillersCupPopup->checkState();
 	if (i == Qt::Checked) {
@@ -1525,7 +1533,7 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_IN_KILLERS_CUP_POPUP, i);
+	core->setIntSettingValue(SETTING_IN_KILLERS_CUP_POPUP, i);
 	// Попап при нападении убийцы
 	i = checkbox_KillerClubAttack->checkState();
 	if (i == Qt::Checked) {
@@ -1533,7 +1541,7 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_KILLER_ATTACK_POPUP, i);
+	core->setIntSettingValue(SETTING_KILLER_ATTACK_POPUP, i);
 	// Отображение очереди команд
 	i = checkbox_ShowQueueLength->checkState();
 	if (i == Qt::Checked) {
@@ -1550,7 +1558,7 @@ void SofMainWindow::applySettings()
 			queueShowFlag = false;
 		}
 	}
-	pluginCore->setIntSettingValue(SETTING_SHOW_QUEUE_LENGTH, i);
+	core->setIntSettingValue(SETTING_SHOW_QUEUE_LENGTH, i);
 	// Сброс очереди при неизвестном статусе
 	i = checkbox_ResetQueueForUnknowStatus->checkState();
 	if (i == Qt::Checked) {
@@ -1558,74 +1566,74 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS, i);
+	core->setIntSettingValue(SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS, i);
 	// Попап при сбросе очереди
 	i = (checkbox_ResetQueuePopup->isChecked()) ? 1 : 0;
-	pluginCore->setIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, i);
+	core->setIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, i);
 	// Настройка слотов
 	statisticFooterPos.fill(-1, STAT_PARAMS_COUNT);
 	j = slot1Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 0;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT1, 0);
+		core->setIntSettingValue(SETTING_SLOT1, 0);
 	}
 	j = slot2Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 1;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT2, 0);
+		core->setIntSettingValue(SETTING_SLOT2, 0);
 	}
 	j = slot3Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 2;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT3, 0);
+		core->setIntSettingValue(SETTING_SLOT3, 0);
 	}
 	j = slot4Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 3;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT4, 0);
+		core->setIntSettingValue(SETTING_SLOT4, 0);
 	}
 	j = slot5Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 4;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT5, 0);
+		core->setIntSettingValue(SETTING_SLOT5, 0);
 	}
 	j = slot6Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 5;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT6, 0);
+		core->setIntSettingValue(SETTING_SLOT6, 0);
 	}
 	j = slot7Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 6;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT7, 0);
+		core->setIntSettingValue(SETTING_SLOT7, 0);
 	}
 	j = slot8Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 7;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT8, 0);
+		core->setIntSettingValue(SETTING_SLOT8, 0);
 	}
 	j = slot9Combo->currentIndex() - 1;
 	if (j >= 0 && j < STAT_PARAMS_COUNT) {
 		statisticFooterPos[j] = 8;
 	} else {
-		pluginCore->setIntSettingValue(SETTING_SLOT9, 0);
+		core->setIntSettingValue(SETTING_SLOT9, 0);
 	}
 	for (i = 0; i < STAT_PARAMS_COUNT; i++) {
 		j = statisticFooterPos[i];
-		pluginCore->setIntSettingValue(j + SETTING_SLOT1, i);
+		core->setIntSettingValue(j + SETTING_SLOT1, i);
 	}
 	fullUpdateFooterStatistic();
 	// Режим сохранения параметров персонажа
 	i = persParamSaveMode_combo->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_PERS_PARAM_SAVE_MODE, i);
+	core->setIntSettingValue(SETTING_PERS_PARAM_SAVE_MODE, i);
 	// Сохранение параметров персонажа
 	i = saveMainPersParam_checkbox->checkState();
 	if (i == Qt::Checked) {
@@ -1633,7 +1641,7 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_SAVE_PERS_PARAM, i);
+	core->setIntSettingValue(SETTING_SAVE_PERS_PARAM, i);
 	// Сохранение рюкзака персонажа
 	i = savePersBackpack_checkbox->checkState();
 	if (i == Qt::Checked) {
@@ -1641,7 +1649,7 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_SAVE_PERS_BACKPACK, i);
+	core->setIntSettingValue(SETTING_SAVE_PERS_BACKPACK, i);
 	// Сохранение статистики
 	i = saveStatistic_checkbox->checkState();
 	if (i == Qt::Checked) {
@@ -1649,7 +1657,7 @@ void SofMainWindow::applySettings()
 	} else {
 		i = 0;
 	}
-	pluginCore->setIntSettingValue(SETTING_SAVE_PERS_STAT, i);
+	core->setIntSettingValue(SETTING_SAVE_PERS_STAT, i);
 	// Применение фильтров вещей
 	Pers::instance()->setFingsFiltersEx(fingFiltersTable->getFilters());
 	// Применение шрифтов
@@ -1657,13 +1665,13 @@ void SofMainWindow::applySettings()
 	if (f.fromString(persNameFont_label->fontName())) {
 		persNameLabel->setFont(f);
 		str1 = f.toString();
-		pluginCore->setStringSettingValue(SETTING_PERS_NAME_FONT, &str1);
+		core->setStringSettingValue(SETTING_PERS_NAME_FONT, &str1);
 	}
 	if (f.fromString(gameTextFont_label->fontName())) {
 		serverTextLabel->setFont(f);
 		console_textedit->setFont(f);
 		str1 = f.toString();
-		pluginCore->setStringSettingValue(SETTING_SERVER_TEXT_FONT, &str1);
+		core->setStringSettingValue(SETTING_SERVER_TEXT_FONT, &str1);
 	}
 	int textBlocksCount = maxTextBlocksCount->value();
 	if (textBlocksCount < 0) {
@@ -1672,10 +1680,10 @@ void SofMainWindow::applySettings()
 		textBlocksCount = 100;
 	}
 	serverTextLabel->setMaximumBlockCount(textBlocksCount);
-	pluginCore->setIntSettingValue(SETTING_SERVER_TEXT_BLOCKS_COUNT, textBlocksCount);
+	core->setIntSettingValue(SETTING_SERVER_TEXT_BLOCKS_COUNT, textBlocksCount);
 	// Режим сохранения карт
 	i = mapsParamSaveMode->currentIndex();
-	pluginCore->setIntSettingValue(SETTING_MAPS_PARAM_SAVE_MODE, i);
+	core->setIntSettingValue(SETTING_MAPS_PARAM_SAVE_MODE, i);
 
 }
 
@@ -1684,12 +1692,12 @@ void SofMainWindow::saveSettings()
 	// Отправляем настройки ядру
 	applySettings();
 	// Отправка команды сохранения настроек ядру плагина
-	pluginCore->sendCommandToCore(COMMAND_SAVE_SETTINGS);
+	PluginCore::instance()->sendCommandToCore(COMMAND_SAVE_SETTINGS);
 }
 
 void SofMainWindow::resetGameJid()
 {
-	pluginCore->resetStatistic(VALUE_LAST_GAME_JID);
+	PluginCore::instance()->resetStatistic(VALUE_LAST_GAME_JID);
 }
 
 void SofMainWindow::userCommandChanged()
@@ -1703,7 +1711,7 @@ void SofMainWindow::userCommandChanged()
 			if (sText >= "0" && sText <= "9") {
 				setGameText(sText, 1);
 				userCommandLine->setText("");
-				pluginCore->sendString(sText);
+				PluginCore::instance()->sendString(sText);
 			}
 		}
 	}
@@ -1724,7 +1732,7 @@ void SofMainWindow::userCommandReturnPressed()
 				} else {
 					sText = sText.mid(3);
 					setGameText(sText, 1);
-					pluginCore->sendString(sText);
+					PluginCore::instance()->sendString(sText);
 				}
 				userCommandLine->setText("");
 				return;
@@ -1746,7 +1754,7 @@ void SofMainWindow::userCommandReturnPressed()
 			setGameText(sText, 1);
 		}
 		userCommandLine->setText("");
-		pluginCore->sendString(sText);
+		PluginCore::instance()->sendString(sText);
 	}
 }
 
@@ -1797,12 +1805,13 @@ void SofMainWindow::createMap()
 void SofMainWindow::clearMap()
 {
 	struct GameMap::maps_info mapsInfo;
-	GameMap::instance()->mapsInfo(&mapsInfo);
+	GameMap *map = GameMap::instance();
+	map->mapsInfo(&mapsInfo);
 	int currIndex = mapsInfo.curr_map_index;
 	if (currIndex == -1)
 		return;
 	if (QMessageBox::critical(this, QString::fromUtf8("Очистка карты"), QString::fromUtf8("Вы действительно хотите очистить текущую карту?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes) {
-		GameMap::instance()->clearMap(currIndex);
+		map->clearMap(currIndex);
 	}
 	return;
 }
@@ -1850,13 +1859,14 @@ void SofMainWindow::moveMapElement()
 		return;
 	// Определяем имя текущей карты
 	struct GameMap::maps_info mapsInfo;
-	GameMap::instance()->mapsInfo(&mapsInfo);
+	GameMap *map = GameMap::instance();
+	map->mapsInfo(&mapsInfo);
 	int currIndex = mapsInfo.curr_map_index;
 	if (currIndex == -1)
 		return;
 	// Запрашиваем список карт
 	QVector<GameMap::maps_list2> mapsList;
-	GameMap::instance()->getMapsList(&mapsList);
+	map->getMapsList(&mapsList);
 	// Выкидываем текущую карту из списка
 	QStringList maps;
 	int cnt = mapsList.size();
@@ -1888,7 +1898,7 @@ void SofMainWindow::moveMapElement()
 		// Переносим элемент
 		if (mapIndex != -1) {
 			lastMapForMoveElement = mapsList.at(i).name;
-			GameMap::instance()->moveMapElement(currIndex, mapIndex, selectedMapElement);
+			map->moveMapElement(currIndex, mapIndex, selectedMapElement);
 		} else {
 			QMessageBox::critical(this, QString::fromUtf8("Перенос элемента карты"), QString::fromUtf8("Выбранная карта не найдена"));
 		}
@@ -1904,12 +1914,13 @@ void SofMainWindow::removeMapElement()
 		return;
 	// Определяем имя текущей карты
 	struct GameMap::maps_info mapsInfo;
-	GameMap::instance()->mapsInfo(&mapsInfo);
+	GameMap *map = GameMap::instance();
+	map->mapsInfo(&mapsInfo);
 	int currIndex = mapsInfo.curr_map_index;
 	if (currIndex == -1)
 		return;
 	if (QMessageBox::critical(this, QString::fromUtf8("Удаление элемента карты"), QString::fromUtf8("Вы действительно хотите удалить элемент карты?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes) {
-		GameMap::instance()->removeMapElement(currIndex, selectedMapElement);
+		map->removeMapElement(currIndex, selectedMapElement);
 	}
 	return;
 }
@@ -1954,9 +1965,10 @@ void SofMainWindow::showFings(int tab_num)
  */
 void SofMainWindow::showThingsSummary()
 {
-	int nCountAll = Pers::instance()->getFingsCount(thingsIface);
-	int nPriceAll = Pers::instance()->getPriceAll(thingsIface);
-	int noPrice = Pers::instance()->getNoPriceCount(thingsIface);
+	Pers *pers = Pers::instance();
+	int nCountAll = pers->getFingsCount(thingsIface);
+	int nPriceAll = pers->getPriceAll(thingsIface);
+	int noPrice = pers->getNoPriceCount(thingsIface);
 	labelFingsCountAll->setText(numToStr(nCountAll, "'"));
 	QString str1 = numToStr(nPriceAll, "'");
 	if (noPrice != 0)
@@ -1984,10 +1996,11 @@ void SofMainWindow::fingsShowContextMenu(const QPoint &pos)
  */
 void SofMainWindow::setFingPrice()
 {
+	Pers *pers = Pers::instance();
 	// Получаем номер строки
 	int row = fingsTable->currentIndex().row();
 	// Получаем указатель на вещь
-	Thing *thg = Pers::instance()->getFingByRow(row, thingsIface);
+	Thing *thg = pers->getFingByRow(row, thingsIface);
 	if (!thg || !thg->isValid())
 		return;
 	// Получаем имя выбранной вещи и цену
@@ -1997,7 +2010,7 @@ void SofMainWindow::setFingPrice()
 	int new_price = QInputDialog::getInt(this, QString::fromUtf8("Цена торговца"), s_name, n_price, -1, 2147483647, 1, &f_ok, 0);
 	if (f_ok && n_price != new_price) {
 		// Меняем цену вещи
-		Pers::instance()->setFingPrice(thingsIface, row, new_price);
+		pers->setFingPrice(thingsIface, row, new_price);
 		// Пересчитываем итоги таблицы
 		showThingsSummary();
 	}
@@ -2148,11 +2161,11 @@ void SofMainWindow::chooseFont(QAbstractButton* button)
 		font.fromString(fontLabelGroup.at(i)->fontName());
 		// ensure we don't use the new native font dialog on mac with Qt 4.5,
 		//   since it was broken last we checked (qt task #252000)
-		#if QT_VERSION >= 0x040500
+#if QT_VERSION >= 0x040500
 		QString fnt = QFontDialog::getFont(&fOk, font, this, QString(), QFontDialog::DontUseNativeDialog).toString();
-		#else
+#else
 		QString fnt = QFontDialog::getFont(&fOk, font, this).toString();
-		#endif
+#endif
 		if (fOk) {
 			fontLabelGroup[i]->setFont(fnt);
 		}

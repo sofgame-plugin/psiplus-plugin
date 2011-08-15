@@ -33,69 +33,53 @@
 
 Q_EXPORT_PLUGIN(SofGamePlugin);
 
-SofGamePlugin::SofGamePlugin() {
-	//qDebug() << "SofGamePlugin::SofGamePlugin";
-	enabled = false;
-	chatJidsWid = 0;
-	gameJidsWid = 0;
-	shortCutWid = 0;
+SofGamePlugin::SofGamePlugin() :
+	enabled(false),
+	currentAccount(-1),
+	shortCut("Ctrl+Alt+g"),
+	gameJidsWid(NULL),
+	chatJidsWid(NULL),
+	shortCutWid(NULL),
+	accountsWid(NULL),
+	psiShortcuts(NULL),
+	accInfoHost(NULL)
+
+{
 	psiOptions = 0;
 	sender_ = 0;
-	psiShortcuts = 0;
 	mySender = 0;
-	pluginCore = 0;
-	accInfoHost = 0;
 	myPopupHost = 0;
-	chatJids <<tr("sofch@jabber.ru");
-	shortCut = "Ctrl+Alt+g";
-	accountJid = "";
-	currentAccount = -1;
+	chatJids << tr("sofch@jabber.ru");
 }
 
 SofGamePlugin::~SofGamePlugin() {
-	//qDebug() << "SofGamePlugin::~SofGamePlugin";
 	disable();
 }
 
 QString SofGamePlugin::name() const
 {
-	//qDebug() << "SofGamePlugin::name";
 	return "SofGame Plugin";
 }
 
 QString SofGamePlugin::shortName() const
 {
-	//qDebug() << "SofGamePlugin::shortName";
 	return "sofgame";
 }
 
 QString SofGamePlugin::version() const
 {
-	//qDebug() << "SofGamePlugin::version";
 	return cVer;
 }
 
 bool SofGamePlugin::enable()
 {
-	//qDebug() << "SofGamePlugin::enable";
 	if (!psiOptions || !sender_)
 		return false;
 	// Инициируем модуль приема/передачи плагина
 	mySender = new Sender;
-	// Инициируем ядро плагина
-	pluginCore = new PluginCore;
-	// Проверяем все ли загрузилось
-	if (!mySender || !pluginCore) {
-		if (mySender) {
-			delete mySender;
-			mySender = 0;
-		}
-		if (pluginCore) {
-			delete pluginCore;
-			pluginCore = 0;
-		}
-		return false;
-	}
+	// Инициируем загрузку ядра плагина
+	PluginCore::instance();
+	//--
 	enabled = true;
 	// Получаем данные аккаунта
 	QVariant vGameAccount(accountJid);
@@ -105,8 +89,6 @@ bool SofGamePlugin::enable()
 	if (!vGameAccount.isNull()) {
 		newAccJid = vGameAccount.toString();
 		newAccount = getAccountByJid(newAccJid);
-		//qDebug() << "___________________"<<accInfoHost->getStatus(0);
-		//qDebug() << "___________________"<<accInfoHost->getJid(0);
 
 	}
 	if (currentAccount != newAccount || newAccJid != accountJid) {
@@ -162,15 +144,11 @@ bool SofGamePlugin::enable()
 
 bool SofGamePlugin::disable()
 {
-	//qDebug() << "SofGamePlugin::disable";
 	if (psiShortcuts) {
 		psiShortcuts->disconnectShortcut(QKeySequence(shortCut), this, SLOT(doShortCut()));
 		//psiShortcuts = 0;
 	}
-	if (pluginCore) {
-		delete pluginCore;
-		pluginCore = 0;
-	}
+	PluginCore::reset();
 	if (mySender) {
 		delete mySender;
 		mySender = 0;
@@ -181,7 +159,6 @@ bool SofGamePlugin::disable()
 
 QWidget* SofGamePlugin::options()
 {
-	//qDebug() << "SofGamePlugin::options";
 	if (!enabled) {
 		return 0;
 	}
@@ -247,7 +224,6 @@ QWidget* SofGamePlugin::options()
 }
 
 void SofGamePlugin::applyOptions() {
-	//qDebug() << "SofGamePlugin::applyOptions";
 	if (!gameJidsWid || !chatJidsWid || !shortCutWid || !accountsWid) {
 		return;
 	}
@@ -306,7 +282,6 @@ void SofGamePlugin::applyOptions() {
 }
 
 void SofGamePlugin::restoreOptions() {
-	//qDebug() << "SofGamePlugin::restoreOptions";
 	if (gameJidsWid == 0 || chatJidsWid == 0 || shortCutWid == 0 || accountsWid == 0) {
 		return;
 	}
@@ -334,9 +309,6 @@ void SofGamePlugin::restoreOptions() {
 	}
 	// Выбранный аккаунт
 	qint32 index = accountsWid->findData(accountJid);
-	//if (index == -1) {
-	//	index = 0;
-	//}
 	accountsWid->setCurrentIndex(index);
 }
 
@@ -350,7 +322,6 @@ QString SofGamePlugin::pluginInfo() {
 
 void SofGamePlugin::selectShortCut()
 {
-	//qDebug() << "SofGamePlugin::selectShortCut";
 	if (psiShortcuts) {
 		psiShortcuts->requestNewShortcut(this, SLOT(onNewShortcutKey(QKeySequence)));
 	}
@@ -358,7 +329,6 @@ void SofGamePlugin::selectShortCut()
 
 void SofGamePlugin::onNewShortcutKey(QKeySequence ks)
 {
-	//qDebug() << "SofGamePlugin::onNewShortcutKey";
 	if (shortCutWid) {
 		shortCutWid->setText(ks.toString(QKeySequence::NativeText));
 	}
@@ -415,13 +385,11 @@ void SofGamePlugin::sendLastActiveQuery(QString from_jid, QString to_jid)
 
 void SofGamePlugin::setOptionAccessingHost(OptionAccessingHost* host)
 {
-	//qDebug() << "SofGamePlugin::setOptionAccessingHost";
 	psiOptions = host;
 }
 
 void SofGamePlugin::optionChanged(const QString& option)
 {
-	//qDebug() << "SofGamePlugin::optionChanged";
 	Q_UNUSED(option);
 }
 
@@ -429,7 +397,6 @@ void SofGamePlugin::optionChanged(const QString& option)
 
 void SofGamePlugin::setStanzaSendingHost(StanzaSendingHost *host)
 {
-	//qDebug() << "SofGamePlugin::setStanzaSendingHost";
 	sender_ = host;
 }
 
@@ -437,38 +404,37 @@ void SofGamePlugin::setStanzaSendingHost(StanzaSendingHost *host)
 
 void SofGamePlugin::setShortcutAccessingHost(ShortcutAccessingHost* host)
 {
-	//qDebug() << "SofGamePlugin::setShortcutAccessingHost";
 	psiShortcuts = host;
 }
 
 void SofGamePlugin::setShortcuts()
 {
-	//qDebug() << "SofGamePlugin::setShortcuts";
 	if (enabled && psiShortcuts) {
 		psiShortcuts->connectShortcut(QKeySequence(shortCut), this, SLOT(doShortCut()));
 	}
 }
+
 // ----------------- ApplicationInfoAccessor -------------------
 void SofGamePlugin::setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) {
-	//qDebug() << "SofGamePlugin::setApplicationInfoAccessingHost";
 	appInfoHost = host;
 }
+
 // ----------------- AccountInfoAccessor -------------------
 void SofGamePlugin::setAccountInfoAccessingHost(AccountInfoAccessingHost* host) {
-	//qDebug() << "SofGamePlugin::setAccountInfoAccessingHost";
 	accInfoHost = host;
 }
+
 // ----------------- PopupAccessor -------------------
 void SofGamePlugin::setPopupAccessingHost(PopupAccessingHost* host) {
 	//qDebug() << "SofGamePlugin::setPopupAccessingHost";
 	myPopupHost = host;
 }
+
 // ----------------------- StanzaFilter ------------------------------
 bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 {
-	if (!enabled || !pluginCore || !mySender) {
+	if (!enabled)
 		return false;
-	}
 	if (currentAccount == -1) {
 		// Проверяем JID, от которого пришло сообщение
 		if (accountJid != accInfoHost->getJid(account))
@@ -506,9 +472,9 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 		return res;
 	} else if (sTagName == "presence") {
 		if (stanza.attribute("type") == "unavailable") {
-			pluginCore->setGameJidStatus(i, 0);
+			PluginCore::instance()->setGameJidStatus(i, 0);
 		} else {
-			pluginCore->setGameJidStatus(i, 1);
+			PluginCore::instance()->setGameJidStatus(i, 1);
 		}
 	} else if (sTagName == "iq") {
 		if (stanza.attribute("type") == "result" && stanza.attribute("id") == "sofgame_plugin") {
@@ -528,9 +494,9 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 				queryNode = queryNode.nextSibling();
 			}
 			if (fFound) {
-				pluginCore->setGameJidStatus(i, 1);
+				PluginCore::instance()->setGameJidStatus(i, 1);
 			} else {
-				pluginCore->setGameJidStatus(i, 0);
+				PluginCore::instance()->setGameJidStatus(i, 0);
 			}
 		}
 	}
@@ -546,8 +512,7 @@ bool SofGamePlugin::outgoingStanza(int/* account*/, QDomElement&/* stanza*/)
 
 void SofGamePlugin::doShortCut()
 {
-	//qDebug() << "SofGamePlugin::doShortCut";
-	if (enabled && pluginCore) {
-		pluginCore->doShortCut();
+	if (enabled) {
+		PluginCore::instance()->doShortCut();
 	}
 }

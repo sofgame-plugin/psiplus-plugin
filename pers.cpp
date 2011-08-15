@@ -1064,7 +1064,7 @@ void Pers::doWatchRestTime()
 {
 	if (persStatus == Stand) {
 		QString str1 = "0";
-		pluginCore->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
+		PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
 	}
 }
 
@@ -1073,7 +1073,7 @@ void Pers::doWatchHealthRestTime()
 	if (settingWatchRestHealthEnergy == 1 && watchHealthSpeedDelta == 0) {
 		if (persStatus == Stand) {
 			QString str1 = "0";
-			pluginCore->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
+			PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
 		}
 	} else if (settingWatchRestHealthEnergy == 1) {
 		if (watchHealthSpeedDelta > 0) { // Имеются результаты замеров

@@ -45,8 +45,8 @@ class PluginCore: public QObject
   Q_OBJECT
 
 	public:
-		PluginCore();
-		~PluginCore();
+		static PluginCore *instance();
+		static void reset();
 		void doShortCut();
 		void updateRegExpForPersName();
 		void setAccountJidStatus(qint32 status);
@@ -63,20 +63,15 @@ class PluginCore: public QObject
 		PersInfo* getPersInfo(QString);
 
 	private:
+		static PluginCore *instance_;
 		SofMainWindow* mainWindow;
 		QString accJid;
 		QString lastGameJid;
 		QString lastChatJid;
-		//QString persName;
-		//int persLevel;
 		int statMessagesCount;
 		int persStatus;
 		int statExperience;
 		int statExperienceFull;
-		//qint32 persHealthCurr;
-		//qint32 persHealthMax;
-		//qint32 persEnergyCurr;
-		//qint32 persEnergyMax;
 		int statMoneysDropCount;
 		int statFightsCount;
 		int statFightDamageMin;
@@ -158,6 +153,8 @@ class PluginCore: public QObject
 		QRegExp fightDropThingReg1;
 
 	private:
+		PluginCore();
+		~PluginCore();
 		void valueChanged(int valueId, int valueType, int value);
 		void setGameText(QString);
 		void setConsoleText(QString, bool);
@@ -192,7 +189,6 @@ class PluginCore: public QObject
 
 };
 
-extern PluginCore *pluginCore;
 extern PopupAccessingHost *myPopupHost;
 extern OptionAccessingHost* psiOptions;
 
