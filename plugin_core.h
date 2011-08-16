@@ -49,7 +49,7 @@ class PluginCore: public QObject
 		static void reset();
 		void doShortCut();
 		void updateRegExpForPersName();
-		void setAccountJidStatus(qint32 status);
+		void setAccountStatus(int status);
 		void setGameJidStatus(int, qint32);
 		bool getIntValue(int valueId, int* valuePtr);
 		bool getTextValue(int valueId, QString* valuePtr);

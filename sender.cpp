@@ -57,7 +57,6 @@ void Sender::reset()
 
 Sender::Sender() :
 	currentAccount(-1),
-	//currentAccJid(QString()),
 	pingMirrors(false),
 	jidInterval(600), // Частота отправки запросов, msec.
 	waitForReceivePeriod(20000) // Ожидание ответа от игры в течении 20 сек.
@@ -66,7 +65,6 @@ Sender::Sender() :
 	foreach (short int idx, aPrefix) {
 		prefix.append(alfa.at(idx));
 	}
-	//prefix =      "md5gt45yrp45grt19h23hdfr22342kj";
 	fastSendReg.setPattern(QString::fromUtf8("Можно отсылать не чаще .+ команд.+0- обновить."));
 	gameSenderTimer.setSingleShot(true);
 	connect(&gameSenderTimer, SIGNAL(timeout()), this, SLOT(doSendGameStringJob()));
@@ -106,7 +104,7 @@ void Sender::changeAccount(int accIndex, const QString &accJid)
 
 void Sender::setAccountStatus(int curr_status)
 {
-	// *** Смена статуса игрового аккаунта *** //  И как это радостное событие отловить, а?
+	// *** Смена статуса игрового аккаунта ***
 	// Если аккаунт отключен, то устанавливаем игровым jid-ам статус отключенных
 	if (curr_status == 0) {
 		int cnt = gameJidsEx.size();

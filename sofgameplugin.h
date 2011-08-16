@@ -44,8 +44,6 @@
 #include "popupaccessor.h"
 #include "popupaccessinghost.h"
 
-//#include "plugin_core.h"
-
 #define constGameJids "game-jids"
 #define constChatJids "chat-jids"
 #define constShortCut "shortcut"
@@ -90,7 +88,8 @@ public:
 
 private:
 	bool enabled;
-	int currentAccount;
+	int  currentAccount;
+	bool currAccActive;
 	QString accountJid;
 	QString shortCut;
 	QTextEdit* gameJidsWid;
@@ -103,9 +102,9 @@ private:
 	//PopupAccessingHost* myPopupHost;
 
 private:
-	quint32 getAccounts(QStringList* accNamesPtr, QStringList* accJidsPtr);
-	int getAccountByJid(QString);
-	void sendLastActiveQuery(QString, QString);
+	QList< QPair<QString, QString> > getAccounts() const;
+	int getAccountByJid(const QString &) const;
+	void sendLastActiveQuery(const QString &, const QString &);
 
 private slots:
 	void doShortCut();
