@@ -201,11 +201,15 @@ void PluginCore::changeAccountJid(const QString newJid)
 	return;
 }
 
-void PluginCore::setAccountJidStatus(qint32 status)
+void PluginCore::setAccountStatus(int status)
 {
 	// *** Смена статуса игрового аккаунта *** //  И как это радостное событие отловить, а?
 	// Если аккаунт отключен, то устанавливаем игровым jid-ам статус отключенных
-	setConsoleText(QString::fromUtf8("### Аккаунт отключен ###"), false);
+	if (status == 0) {
+		setConsoleText(QString::fromUtf8("### Аккаунт отключен ###"), false);
+	} else {
+		setConsoleText(QString::fromUtf8("### Аккаунт активен ###"), false);
+	}
 	Sender::instance()->setAccountStatus(status);
 }
 
