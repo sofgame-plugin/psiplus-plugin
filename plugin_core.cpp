@@ -2273,8 +2273,8 @@ bool PluginCore::sendString(const QString &str)
 		str1.append(QString::fromUtf8("/clear — очистка и сброс различных данных\n"));
 		str1.append(QString::fromUtf8("/help — этот текст помощи\n"));
 		str1.append(QString::fromUtf8("/maps — информация и управление картами\n"));
-		str1.append("/pers info — information about current pers\n/pers info2 — detail information about current pers\n/pers info <name> — information about pers by name\n/pers info2 <name> — detail information about pers by name\n/pers list — list stored pers info\n");
-		str1.append("/send_delta — get pause value for command send\n/send_delta=n — set pause value for command send in msec.\n");
+		str1.append(QString::fromUtf8("/pers info — информация о текущем персонаже\n/pers info2 — детальная информация о текущем персонаже\n/pers info <nick> — информация о персонаже с ником nick\n/pers info2 <nick> — детальная информация о персонаже с ником nick\n/pers list — список персонажей, для которых доступна информация\n"));
+		str1.append(QString::fromUtf8("/send_delta — показать значение паузы между отправками команд игровому серверу\n/send_delta=n — установить значение паузы между отправками команд игровому серверу в миллисекундах\n"));
 		str1.append(QString::fromUtf8("/server_timeout — показать время ожидания ответа сервера\n/server_timeout=n — установить время ожидания сервера в n сек.\n"));
 		str1.append(QString::fromUtf8("/settings — Управление настройками\n"));
 		str1.append(QString::fromUtf8("/stat — полная статистика\n/stat 1 — общая статистика\n/stat 2 — статистика боев\n/stat 9 — статистика зеркал\n"));
