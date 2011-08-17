@@ -33,11 +33,15 @@ class FingsView : public QTableView
 	Q_OBJECT
 public:
 	FingsView( QWidget * parent = 0 );
+	~FingsView();
 	void init();
 
+private slots:
+	void headerContentMenu(const QPoint &);
+
 protected:
-	void contextMenuEvent( QContextMenuEvent * e );
-	void keyPressEvent( QKeyEvent * e );
+	void contextMenuEvent(QContextMenuEvent *e);
+	void keyPressEvent(QKeyEvent *e);
 };
 
 #endif // FINGSVIEW_H

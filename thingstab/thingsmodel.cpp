@@ -29,8 +29,8 @@
 
 ThingsModel::ThingsModel(QObject* /*parent*/)
 {
-	columnNames << QString::fromUtf8("Ном.") << QString::fromUtf8("Наименование") << QString::fromUtf8("Кол-во") << QString::fromUtf8("Цена");
-	roles << NumberRole << NameRole << CountRole << PriceRole;
+	columnNames << QString::fromUtf8("Ном.") << QString::fromUtf8("Наименование") << QString::fromUtf8("Тип") << QString::fromUtf8("Кол-во") << QString::fromUtf8("Цена");
+	roles << NumberRole << NameRole << TypeRole << CountRole << PriceRole;
 	thingsList.clear();
 }
 
@@ -62,16 +62,17 @@ int ThingsModel::columnCount(const QModelIndex& /*parent*/) const
 QVariant ThingsModel::data(const QModelIndex &index, int role) const
 {
 	//if (currFilterIndex >= 0) {
-		Role columnRole = roles[index.column()];
+		ColumnRole columnRole = roles[index.column()];
 		if (role == Qt::TextAlignmentRole) {
 			switch (columnRole) {
-				case NumberRole:
-				case CountRole:
-					return (int)(Qt::AlignCenter | Qt::AlignVCenter);
-				case PriceRole:
-					return (int)(Qt::AlignRight | Qt::AlignVCenter);
-				default:
-					return (int)(Qt::AlignLeft | Qt::AlignVCenter);
+			case NumberRole:
+			case TypeRole:
+			case CountRole:
+				return (int)(Qt::AlignCenter | Qt::AlignVCenter);
+			case PriceRole:
+				return (int)(Qt::AlignRight | Qt::AlignVCenter);
+			default:
+				return (int)(Qt::AlignLeft | Qt::AlignVCenter);
 			}
 		} else if (role == Qt::DisplayRole) {
 			int row = index.row();
@@ -79,25 +80,23 @@ QVariant ThingsModel::data(const QModelIndex &index, int role) const
 				Thing* thing = thingsList.at(row);
 				if (thing) {
 					QString str1;
-					//int num1;
-					QFlags<enum Thing::ToStringFlag> flags;
 					switch (columnRole) {
-						case NumberRole:
-							return thing->number();
-						case NameRole:
-							flags |= Thing::ShowName;
-							flags |= Thing::ShowType;
-							return thing->toString(flags);
-						case CountRole:
-							return thing->count();
-						case PriceRole:
-							int num1 = thing->price();
-							if (num1 == -1) {
-								str1 = QString::fromUtf8("нет цены");
-							} else {
-								str1 = numToStr(num1, "'");
-							}
-							return str1;
+					case NumberRole:
+						return thing->number();
+					case NameRole:
+						return thing->toString(Thing::ShowName);
+					case TypeRole:
+						return thing->toString(Thing::ShowType);
+					case CountRole:
+						return thing->count();
+					case PriceRole:
+						int num1 = thing->price();
+						if (num1 == -1) {
+							str1 = QString::fromUtf8("нет цены");
+						} else {
+							str1 = numToStr(num1, "'");
+						}
+						return str1;
 					}
 				}
 			}

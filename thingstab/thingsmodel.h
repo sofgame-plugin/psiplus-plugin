@@ -35,11 +35,12 @@ class ThingsModel : public QAbstractTableModel
 {
 	Q_OBJECT
 public:
-	enum Role {
-		NumberRole,
-		NameRole,
-		CountRole,
-		PriceRole
+	enum ColumnRole {
+		NumberRole = 0,
+		NameRole   = 1,
+		TypeRole   = 2,
+		CountRole  = 3,
+		PriceRole  = 4
 	};
 	ThingsModel(QObject* parent);
 	~ThingsModel();
@@ -54,7 +55,7 @@ public:
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	void clear();
 	Qt::ItemFlags flags(const QModelIndex & index) const;
-	QList<Role> roles;
+	QList<ColumnRole> roles;
 
 
 private:

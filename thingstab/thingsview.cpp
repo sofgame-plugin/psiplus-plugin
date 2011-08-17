@@ -23,15 +23,20 @@
  *
  */
 
-//#include <QMenu>
+#include <QMenu>
 //#include <QContextMenuEvent>
 #include <QtGui/QHeaderView>
 
 #include "thingsview.h"
+#include "thingsmodel.h"
 
 FingsView::FingsView( QWidget * parent ) : QTableView(parent)
 {
+	connect(horizontalHeader(), SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(headerContentMenu(const QPoint &)));
+}
 
+FingsView::~FingsView()
+{
 }
 
 void FingsView::init()
@@ -39,71 +44,52 @@ void FingsView::init()
 	resizeColumnsToContents();
 	resizeColumnsToContents();
 
-	horizontalHeader()->setResizeMode(0, QHeaderView::ResizeToContents);
-	horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
-	horizontalHeader()->setResizeMode(2, QHeaderView::ResizeToContents);
-	horizontalHeader()->setResizeMode(3, QHeaderView::ResizeToContents);
-	//horizontalHeader()->setMinimumSectionSize(75);
-	//horizontalHeader()->setCascadingSectionResizes(true);
-
-	//horizontalHeader()->setStretchLastSection(true);
+	horizontalHeader()->setResizeMode(ThingsModel::NumberRole, QHeaderView::ResizeToContents);
+	horizontalHeader()->setResizeMode(ThingsModel::NameRole, QHeaderView::Stretch);
+	horizontalHeader()->setResizeMode(ThingsModel::TypeRole, QHeaderView::ResizeToContents);
+	horizontalHeader()->setResizeMode(ThingsModel::CountRole, QHeaderView::ResizeToContents);
+	horizontalHeader()->setResizeMode(ThingsModel::PriceRole, QHeaderView::ResizeToContents);
 
 	horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
 
 	verticalHeader()->setDefaultAlignment( Qt::AlignHCenter );
 	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-	//verticalHeader()->setMinimumSectionSize(10);
 
 	connect(horizontalHeader(), SIGNAL(sectionClicked(int)), this, SLOT(sortByColumn(int)));
+
+	horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
-void FingsView::contextMenuEvent( QContextMenuEvent * e )
+void FingsView::contextMenuEvent(QContextMenuEvent */*e*/)
 {
-	Q_UNUSED(e)
-/*	QMenu *popup = new QMenu(this);
-	QList<QAction *> actions;
-	actions <<new QAction(IconsetFactory::icon("psi/cm_check").icon(), tr("Check"), popup)
-			<<new QAction(IconsetFactory::icon("psi/cm_uncheck").icon(), tr("Uncheck"), popup)
-			<<new QAction(IconsetFactory::icon("psi/cm_invertcheck").icon(), tr("Invert"), popup);
-	popup->addActions(actions);
-	QAction *result = popup->exec(e->globalPos());
-	int iresult;
-	if (result) {
-		iresult = actions.indexOf(result);
-		const QVariant value(2);
-		foreach(const QModelIndex &check, selectionModel()->selectedRows(0)) {
-			switch (iresult) {
-				case 0: //check
-					model()->setData(check, 2);
-					break;
-				case 1: //uncheck
-					model()->setData(check, 0);
-					break;
-				case 2: //invert
-					model()->setData(check, 3);
-					break;
-			}
+}
+
+void FingsView::keyPressEvent(QKeyEvent */*e*/)
+{
+}
+
+/**
+ * Формирование меню для шапки таблицы
+ */
+void FingsView::headerContentMenu(const QPoint &p)
+{
+	QMenu *menu = new QMenu();
+	QHeaderView *header = horizontalHeader();
+	QAbstractItemModel *model_ = model();
+	for (int i = 0, cnt = model_->columnCount(); i < cnt; i++) {
+		if (i != ThingsModel::NameRole) { // Меню для всех столбцов кроме имени
+			QString name = model_->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString();
+			QAction *act = new QAction(name, menu);
+			act->setCheckable(true);
+			act->setChecked(!header->isSectionHidden(i));
+			act->setData(i);
+			menu->addAction(act);
 		}
 	}
-	delete popup;*/
-}
-
-void FingsView::keyPressEvent( QKeyEvent * e )
-{
-	Q_UNUSED(e)
-/*	if (e->key() == Qt::Key_Space) {
-		int data = 2; //check
-		if (e->modifiers() & Qt::ControlModifier) {
-			data = 3; //invert
-		} else if (e->modifiers() & Qt::ShiftModifier) {
-			data = 0; //uncheck
-		}
-		foreach(const QModelIndex &check, selectionModel()->selectedRows(0)) {
-			model()->setData(check, data);
-		}
-		e->accept();
-	} else {
-		QTableView::keyPressEvent(e);
-		e->ignore();
-	}*/
+	QAction *res = menu->exec(parentWidget()->mapToGlobal(p));
+	if (res != NULL) {
+		int col = res->data().toInt();
+		header->setSectionHidden(col, !res->isChecked());
+	}
+	delete menu;
 }
