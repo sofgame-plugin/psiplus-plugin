@@ -27,11 +27,14 @@
 #include "../utils.h"
 #include "../pers_info.h"
 
-ThingsModel::ThingsModel(QObject* /*parent*/)
+ThingsModel::ThingsModel(QObject* parent) :
+	QAbstractTableModel(parent)
 {
-	columnNames << QString::fromUtf8("Ном.") << QString::fromUtf8("Наименование") << QString::fromUtf8("Тип") << QString::fromUtf8("Кол-во") << QString::fromUtf8("Цена");
-	roles << NumberRole << NameRole << TypeRole << CountRole << PriceRole;
-	thingsList.clear();
+	columnsList[NumberRole] = QPair<QString, QString>("number", QString::fromUtf8("Ном."));
+	columnsList[NameRole] = QPair<QString, QString>("name", QString::fromUtf8("Наименование"));
+	columnsList[TypeRole] = QPair<QString, QString>("type", QString::fromUtf8("Тип"));
+	columnsList[CountRole] = QPair<QString, QString>("count", QString::fromUtf8("Кол-во"));
+	columnsList[PriceRole] = QPair<QString, QString>("price", QString::fromUtf8("Цена"));
 }
 
 ThingsModel::~ThingsModel()
@@ -56,13 +59,13 @@ int ThingsModel::rowCount(const QModelIndex &parent) const
 
 int ThingsModel::columnCount(const QModelIndex& /*parent*/) const
 {
-	return columnNames.size();
+	return columnsList.size();
 }
 
 QVariant ThingsModel::data(const QModelIndex &index, int role) const
 {
 	//if (currFilterIndex >= 0) {
-		ColumnRole columnRole = roles[index.column()];
+		int columnRole = index.column();
 		if (role == Qt::TextAlignmentRole) {
 			switch (columnRole) {
 			case NumberRole:
@@ -131,9 +134,13 @@ QVariant ThingsModel::data(const QModelIndex &index, int role) const
 
 QVariant ThingsModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-	if (role == Qt::DisplayRole) {
-		if (orientation == Qt::Horizontal) {
-			return columnNames[section];
+	if (orientation == Qt::Horizontal) {
+		if (role == Qt::DisplayRole) {
+			// Текст заголовка
+			return columnsList.value(section, QPair<QString, QString>(QString(), QString())).second;
+		} else if (role == Qt::UserRole) {
+			// Id заголовка для настроек
+			return columnsList.value(section, QPair<QString, QString>(QString(), QString())).first;
 		}
 	}
 	return QVariant();

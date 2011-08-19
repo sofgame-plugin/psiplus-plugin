@@ -1154,6 +1154,64 @@ void SofMainWindow::setConsoleText(QString text, int type, bool switch_)
 	}
 }
 
+/**
+ * Возвращает DOM элемент, содержащий настройки внешнего вида
+ */
+QDomElement SofMainWindow::getAppearanceSettings(QDomDocument &xmlDoc) const
+{
+	QDomElement eAppearance = xmlDoc.createElement("appearance");
+	QDomElement ePersNameAppe = xmlDoc.createElement("pers-name");
+	eAppearance.appendChild(ePersNameAppe);
+	QDomElement ePersNameFontAppe = xmlDoc.createElement("font");
+	ePersNameAppe.appendChild(ePersNameFontAppe);
+	ePersNameFontAppe.setAttribute("value", persNameFont_label->fontName());
+	QDomElement eServerTextAppe = xmlDoc.createElement("server-text");
+	eAppearance.appendChild(eServerTextAppe);
+	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
+	eServerTextAppe.appendChild(eServerTextFontAppe);
+	eServerTextFontAppe.setAttribute("value", gameTextFont_label->fontName());
+	QDomElement eThingsTable = fingsTable->saveSettingsToXml(xmlDoc);
+	eAppearance.appendChild(eThingsTable);
+	return eAppearance;
+}
+
+/**
+ * Применяет настройки внешнего вида
+ */
+void SofMainWindow::setAppearanceSetting(QDomElement &xml)
+{
+	QDomElement ePersName = xml.firstChildElement("pers-name");
+	if (!ePersName.isNull()) {
+		QDomElement ePersNameFont = ePersName.firstChildElement("font");
+		if (!ePersNameFont.isNull()) {
+			QString fontStr = ePersNameFont.attribute("value");
+			if (!fontStr.isEmpty()) {
+				QFont f;
+				if (f.fromString(fontStr)) {
+					persNameFont_label->setFont(f.toString());
+					persNameLabel->setFont(f);
+				}
+			}
+		}
+	}
+	QDomElement eServerText = xml.firstChildElement("server-text");
+	if (!eServerText.isNull()) {
+		QDomElement eServerTextFont = eServerText.firstChildElement("font");
+		if (!eServerTextFont.isNull()) {
+			QString fontStr = eServerTextFont.attribute("value");
+			if (!fontStr.isEmpty()) {
+				QFont f;
+				if (f.fromString(fontStr)) {
+					gameTextFont_label->setFont(f.toString());
+					serverTextLabel->setFont(f);
+				}
+			}
+		}
+	}
+	QDomElement eThingsSettings = xml.firstChildElement("things-table");
+	fingsTable->loadSettingsFromXml(eThingsSettings);
+}
+
 void SofMainWindow::initEventSlots()
 {
 	/**
@@ -2035,9 +2093,7 @@ void SofMainWindow::fingParamToConsole()
  */
 void SofMainWindow::persFingsChanged()
 {
-	qDebug() << "SofMainWindow::persFingsChanged() 1";
 	if (currentPage != 3) {
-		qDebug() << "SofMainWindow::persFingsChanged() 2";
 		// Если текущая страница не вещи
 		fingsChanged = true;
 		// Меняем цвет текста кнопки

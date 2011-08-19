@@ -172,6 +172,8 @@ void PluginCore::doShortCut()
 {
 	if (!mainWindow) {
 		mainWindow = new SofMainWindow();
+		mainWindow->setAppearanceSetting(appearaceSettings);
+		appearaceSettings.clear();
 	}
 	mainWindow->show();
 }
@@ -1788,18 +1790,10 @@ bool PluginCore::savePluginSettings()
 		eNewAccount.appendChild(eAliases);
 	}
 	// Сохраняем настройки внешнего вида (цвета, шрифты)
-	QDomElement eAppearance = xmlDoc.createElement("appearance");
-	eNewAccount.appendChild(eAppearance);
-	QDomElement ePersNameAppe = xmlDoc.createElement("pers-name");
-	eAppearance.appendChild(ePersNameAppe);
-	QDomElement ePersNameFontAppe = xmlDoc.createElement("font");
-	ePersNameAppe.appendChild(ePersNameFontAppe);
-	ePersNameFontAppe.setAttribute("value", settingPersNameFont);
-	QDomElement eServerTextAppe = xmlDoc.createElement("server-text");
-	eAppearance.appendChild(eServerTextAppe);
-	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
-	eServerTextAppe.appendChild(eServerTextFontAppe);
-	eServerTextFontAppe.setAttribute("value", settingServerTextFont);
+	if (mainWindow) {
+		QDomElement eAppearance = mainWindow->getAppearanceSettings(xmlDoc);
+		eNewAccount.appendChild(eAppearance);
+	}
 	// Сохраняем настройки рюкзака
 	QDomElement eFings = xmlDoc.createElement("backpack");
 	Pers::instance()->exportBackpackSettingsToDomElement(&xmlDoc, &eFings);
@@ -2208,27 +2202,7 @@ bool PluginCore::loadPluginSettings()
 							Pers::instance()->loadBackpackSettingsFromDomNode(&childJidNode);
 						}
 					} else if (childJidNode.toElement().tagName() == "appearance") {
-						QDomNode eAppeChildNode = childJidNode.firstChild();
-						while (!eAppeChildNode.isNull()) {
-							if (eAppeChildNode.toElement().tagName() == "pers-name") {
-								QDomNode ePersNameChildNode = eAppeChildNode.firstChild();
-								while (!ePersNameChildNode.isNull()) {
-									if (ePersNameChildNode.toElement().tagName() == "font") {
-										settingPersNameFont = ePersNameChildNode.toElement().attribute("value");
-									}
-									ePersNameChildNode = ePersNameChildNode.nextSibling();
-								}
-							} else if (eAppeChildNode.toElement().tagName() == "server-text") {
-								QDomNode eServerTextChildNode = eAppeChildNode.firstChild();
-								while (!eServerTextChildNode.isNull()) {
-									if (eServerTextChildNode.toElement().tagName() == "font") {
-										settingServerTextFont = eServerTextChildNode.toElement().attribute("value");
-									}
-									eServerTextChildNode = eServerTextChildNode.nextSibling();
-								}
-							}
-							eAppeChildNode = eAppeChildNode.nextSibling();
-						}
+						appearaceSettings = childJidNode.toElement();
 					} else if (childJidNode.toElement().tagName() == "maps") {
 						QDomNode childMapsNode = childJidNode.firstChild();
 						while (!childMapsNode.isNull()) {

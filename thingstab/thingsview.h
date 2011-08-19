@@ -27,6 +27,7 @@
 #define FINGSVIEW_H
 
 #include <QTableView>
+#include <QDomDocument>
 
 class FingsView : public QTableView
 {
@@ -35,6 +36,8 @@ public:
 	FingsView( QWidget * parent = 0 );
 	~FingsView();
 	void init();
+	QDomElement saveSettingsToXml(QDomDocument &xmlDoc) const;
+	void loadSettingsFromXml(QDomElement &xml);
 
 private slots:
 	void headerContentMenu(const QPoint &);

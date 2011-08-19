@@ -55,12 +55,11 @@ public:
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	void clear();
 	Qt::ItemFlags flags(const QModelIndex & index) const;
-	QList<ColumnRole> roles;
 
 
 private:
 	QList<Thing*> thingsList;
-	QStringList columnNames;
+	QHash<int, QPair<QString, QString> > columnsList;
 
 protected:
 

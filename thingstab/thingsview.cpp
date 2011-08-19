@@ -42,22 +42,79 @@ FingsView::~FingsView()
 void FingsView::init()
 {
 	resizeColumnsToContents();
-	resizeColumnsToContents();
 
-	horizontalHeader()->setResizeMode(ThingsModel::NumberRole, QHeaderView::ResizeToContents);
-	horizontalHeader()->setResizeMode(ThingsModel::NameRole, QHeaderView::Stretch);
-	horizontalHeader()->setResizeMode(ThingsModel::TypeRole, QHeaderView::ResizeToContents);
-	horizontalHeader()->setResizeMode(ThingsModel::CountRole, QHeaderView::ResizeToContents);
-	horizontalHeader()->setResizeMode(ThingsModel::PriceRole, QHeaderView::ResizeToContents);
+	QHeaderView *hHeader = horizontalHeader();
+	QHeaderView *vHeader = verticalHeader();
+	hHeader->setResizeMode(ThingsModel::NumberRole, QHeaderView::ResizeToContents);
+	hHeader->setResizeMode(ThingsModel::NameRole, QHeaderView::Stretch);
+	hHeader->setResizeMode(ThingsModel::TypeRole, QHeaderView::ResizeToContents);
+	hHeader->setResizeMode(ThingsModel::CountRole, QHeaderView::ResizeToContents);
+	hHeader->setResizeMode(ThingsModel::PriceRole, QHeaderView::ResizeToContents);
 
-	horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
+	hHeader->setSortIndicator(-1, Qt::AscendingOrder);
 
-	verticalHeader()->setDefaultAlignment( Qt::AlignHCenter );
-	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+	vHeader->setDefaultAlignment( Qt::AlignHCenter );
+	vHeader->setResizeMode(QHeaderView::ResizeToContents);
 
-	connect(horizontalHeader(), SIGNAL(sectionClicked(int)), this, SLOT(sortByColumn(int)));
+	connect(hHeader, SIGNAL(sectionClicked(int)), this, SLOT(sortByColumn(int)));
 
-	horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+	hHeader->setContextMenuPolicy(Qt::CustomContextMenu);
+}
+
+/**
+ * Сохраняет настройки таблицы вещей в xml элемент
+ */
+QDomElement FingsView::saveSettingsToXml(QDomDocument &xmlDoc) const
+{
+	QDomElement eThingsTable = xmlDoc.createElement("things-table");
+	QDomElement eColumns = xmlDoc.createElement("columns");
+	eThingsTable.appendChild(eColumns);
+	QHeaderView *header = horizontalHeader();
+	QAbstractItemModel *model_ = model();
+	for (int i = 0, cnt = header->count(); i < cnt; i++) {
+		QDomElement eCol = xmlDoc.createElement("column");
+		eColumns.appendChild(eCol);
+		eCol.setAttribute("id", model_->headerData(i, Qt::Horizontal, Qt::UserRole).toString());
+		eCol.setAttribute("show", header->isSectionHidden(i) ? "false" : "true");
+	}
+	return eThingsTable;
+}
+
+/**
+ * Загружает настройки таблицы из xml элемента
+ * Если xml пустой, то применяются дефолтные настройки
+ */
+void FingsView::loadSettingsFromXml(QDomElement &xml)
+{
+	QHash<QString, bool>colSet;
+	if (!xml.isNull()) {
+		QDomElement eColumns = xml.firstChildElement("columns");
+		if (!eColumns.isNull()) {
+			// Последовательно читаем настройки колонок
+			QDomElement eCol = eColumns.firstChildElement("column");
+			while (!eCol.isNull()) {
+				QString id = eCol.attribute("id");
+				if (!id.isEmpty()) {
+					colSet[id] = (eCol.attribute("show") == "true");
+				}
+				eCol = eCol.nextSiblingElement("column");
+			}
+		}
+	}
+	// Применяем найденные настройки
+	QHeaderView *header = horizontalHeader();
+	QAbstractItemModel *model_ = model();
+	for (int i = 0, cnt = header->count(); i < cnt; i++) {
+		QString id = model_->headerData(i, Qt::Horizontal, Qt::UserRole).toString();
+		if (colSet.contains(id)) {
+			// Настройка для колонки найдена
+			header->setSectionHidden(i, !colSet.value(id));
+		} else {
+			// Настройка для колонки не найдена
+			// Для специальных столбцов по умолчению включено
+			header->setSectionHidden(i, !(id == "number" || id == "name" || id == "type" || id == "count"));
+		}
+	}
 }
 
 void FingsView::contextMenuEvent(QContextMenuEvent */*e*/)
@@ -71,7 +128,7 @@ void FingsView::keyPressEvent(QKeyEvent */*e*/)
 /**
  * Формирование меню для шапки таблицы
  */
-void FingsView::headerContentMenu(const QPoint &p)
+void FingsView::headerContentMenu(const QPoint &/*p*/)
 {
 	QMenu *menu = new QMenu();
 	QHeaderView *header = horizontalHeader();
@@ -86,7 +143,7 @@ void FingsView::headerContentMenu(const QPoint &p)
 			menu->addAction(act);
 		}
 	}
-	QAction *res = menu->exec(parentWidget()->mapToGlobal(p));
+	QAction *res = menu->exec(QCursor::pos());
 	if (res != NULL) {
 		int col = res->data().toInt();
 		header->setSectionHidden(col, !res->isChecked());

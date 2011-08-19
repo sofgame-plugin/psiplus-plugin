@@ -60,7 +60,7 @@ bool ThingsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
 {
 	Thing *left_thg = thingsSource->getThingByRow(left.row());
 	Thing *right_thg = thingsSource->getThingByRow(right.row());
-	ThingsModel::ColumnRole col_role = thingsSource->roles[left.column()];
+	int col_role = left.column();
 	bool b_res = false;
 	switch (col_role) {
 		case ThingsModel::NumberRole:

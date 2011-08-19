@@ -64,7 +64,8 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void init();
 		void setGameText(QString, int);
 		void setConsoleText(QString, int, bool);
-
+		QDomElement getAppearanceSettings(QDomDocument &xmlDoc) const;
+		void setAppearanceSetting(QDomElement &xml);
 	protected:
 		QVector<QLabel*> statLabelsCaption; // Для хранения указателей на элементы QLabel окна статистики
 		QVector<QLabel*> statLabelsValues;  // Для хранения указателей на элементы QLabel окна статистики
