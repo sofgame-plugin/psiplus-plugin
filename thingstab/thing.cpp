@@ -166,7 +166,7 @@ void Thing::init()
 	req_intell = 0;
 }
 
-bool Thing::isEqual(Thing* oth_thing)
+bool Thing::isEqual(const Thing* oth_thing) const
 {
 	// !! Цена не сверяется !!
 	// Если указатели равны, то и вещь одна и та же
@@ -197,7 +197,7 @@ bool Thing::isEqual(Thing* oth_thing)
 	return false;
 }
 
-bool Thing::isValid()
+bool Thing::isValid() const
 {
 	if (valid_status != Unknow) {
 		if (valid_status == Valid) {
@@ -217,41 +217,16 @@ bool Thing::isValid()
 	return false;
 }
 
-void Thing::setDressed(bool _dressed)
-{
-	dressed_ = _dressed;
-}
-
-int Thing::number()
-{
-	return number_;
-}
-
-QString Thing::name()
-{
-	return name_;
-}
-
-void Thing::setName(QString new_name)
+void Thing::setName(QString &new_name)
 {
 	name_ = new_name;
 	valid_status = Unknow;
-}
-
-int Thing::type()
-{
-	return type_;
 }
 
 void Thing::setType(int _type)
 {
 	type_ = _type;
 	valid_status = Unknow;
-}
-
-int Thing::count()
-{
-	return count_;
 }
 
 void Thing::setCount(int _count)
@@ -263,21 +238,6 @@ void Thing::setCount(int _count)
 	}
 }
 
-int Thing::uplevel()
-{
-	return up_level;
-}
-
-void Thing::setUplevel(int _level)
-{
-	up_level = _level;
-}
-
-int Thing::price()
-{
-	return price_;
-}
-
 void Thing::setPrice(int new_price)
 {
 	if (new_price >= -1) {
@@ -287,25 +247,10 @@ void Thing::setPrice(int new_price)
 	}
 }
 
-bool Thing::isDressed()
-{
-	return dressed_;
-}
-
-int Thing::loss()
-{
-	return loss_;
-}
-
 void Thing::setLoss(int _loss)
 {
 	loss_ = _loss;
 	valid_status = Unknow;
-}
-
-float Thing::lossmul()
-{
-	return loss_mul;
 }
 
 void Thing::setLossmul(float _lossmul)
@@ -314,20 +259,10 @@ void Thing::setLossmul(float _lossmul)
 	valid_status = Unknow;
 }
 
-int Thing::protect()
-{
-	return protect_;
-}
-
 void Thing::setProtect(int _protect)
 {
 	protect_ = _protect;
 	valid_status = Unknow;
-}
-
-float Thing::protectmul()
-{
-	return protect_mul;
 }
 
 void Thing::setProtectmul(float _protectmul)
@@ -336,20 +271,10 @@ void Thing::setProtectmul(float _protectmul)
 	valid_status = Unknow;
 }
 
-int Thing::force()
-{
-	return force_;
-}
-
 void Thing::setForce(int _force)
 {
 	force_ = _force;
 	valid_status = Unknow;
-}
-
-float Thing::forcemul()
-{
-	return force_mul;
 }
 
 void Thing::setForcemul(float _forcemul)
@@ -358,20 +283,10 @@ void Thing::setForcemul(float _forcemul)
 	valid_status = Unknow;
 }
 
-int Thing::dext()
-{
-	return dext_;
-}
-
 void Thing::setDext(int _dext)
 {
 	dext_ = _dext;
 	valid_status = Unknow;
-}
-
-float Thing::dextmul()
-{
-	return dext_mul;
 }
 
 void Thing::setDextmul(float _dextmul)
@@ -380,20 +295,10 @@ void Thing::setDextmul(float _dextmul)
 	valid_status = Unknow;
 }
 
-int Thing::intell()
-{
-	return intell_;
-}
-
 void Thing::setIntell(int _intell)
 {
 	intell_ = _intell;
 	valid_status = Unknow;
-}
-
-float Thing::intellmul()
-{
-	return intell_mul;
 }
 
 void Thing::setIntellmul(float _intellmul)
@@ -402,61 +307,16 @@ void Thing::setIntellmul(float _intellmul)
 	valid_status = Unknow;
 }
 
-QString Thing::othermodif()
-{
-	return param_str;
-}
-
-void Thing::setOthermodif(QString _othermodif)
+void Thing::setOthermodif(QString &_othermodif)
 {
 	param_str = _othermodif;
 	valid_status = Unknow;
 }
 
-int Thing::reqlevel()
-{
-	return req_level;
-}
-
-void Thing::setReqlevel(int _reqlevel)
-{
-	req_level = _reqlevel;
-}
-
-int Thing::reqforce()
-{
-	return req_force;
-}
-
-void Thing::setReqforce(int _reqforce)
-{
-	req_force = _reqforce;
-}
-
-int Thing::reqdext()
-{
-	return req_dext;
-}
-
-void Thing::setReqdext(int _reqdext)
-{
-	req_dext = _reqdext;
-}
-
-int Thing::reqintell()
-{
-	return req_intell;
-}
-
-void Thing::setReqintell(int _reqintell)
-{
-	req_intell = _reqintell;
-}
-
 /**
  * Генерация строки с описанием вещи
  */
-QString Thing::toString(QFlags<enum ToStringFlag> flags)
+QString Thing::toString(QFlags<enum ToStringFlag> flags) const
 {
 	QString res = "";
 	if (!isValid()) return res;
@@ -689,112 +549,114 @@ void  Thing::importFromXml(const QDomElement &eThing)
 /**
  * Экспортирует параметры вещи в DOM элемент
  */
-void Thing::exportToXml(QDomDocument* xmlDoc, QDomElement* eThing)
+QDomElement Thing::exportToXml(QDomDocument &xmlDoc) const
 {
-	eThing->setAttribute("number", QString::number(number_));
-	eThing->setAttribute("name", name_.trimmed());
+	QDomElement eThing = xmlDoc.createElement("fing");
+	eThing.setAttribute("number", QString::number(number_));
+	eThing.setAttribute("name", name_.trimmed());
 	QString sType = thingTypeToString(type_);
 	if (!sType.isEmpty()) {
-		eThing->setAttribute("type", sType);
+		eThing.setAttribute("type", sType);
 	}
-	eThing->setAttribute("count", QString::number(count_));
+	eThing.setAttribute("count", QString::number(count_));
 	if (up_level > 0) {
-		eThing->setAttribute("named-level", QString::number(up_level));
+		eThing.setAttribute("named-level", QString::number(up_level));
 	}
 	// Одета вещь или нет
 	if (dressed_) {
-		eThing->setAttribute("dressed", "yes");
+		eThing.setAttribute("dressed", "yes");
 	}
 	// Модификаторы
 	if (loss_ != 0 || loss_mul != 0.0f || protect_ != 0 || protect_mul != 0.0f || force_ != 0 || force_mul != 0.0f || dext_ != 0 || dext_mul != 0.0f || intell_ != 0 || intell_mul != 0.0f || !param_str.isEmpty()) {
-		QDomElement eModif = xmlDoc->createElement("modifiers");
+		QDomElement eModif = xmlDoc.createElement("modifiers");
 		// Урон вещи
 		if (loss_ != 0) {
-			QDomElement domElement = xmlDoc->createElement("loss");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(loss_)));
+			QDomElement domElement = xmlDoc.createElement("loss");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(loss_)));
 			eModif.appendChild(domElement);
 		}
 		if (loss_mul != 0.0f) {
-			QDomElement domElement = xmlDoc->createElement("loss-mul");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(loss_mul)));
+			QDomElement domElement = xmlDoc.createElement("loss-mul");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(loss_mul)));
 			eModif.appendChild(domElement);
 		}
 		// Защита вещи
 		if (protect_ != 0) {
-			QDomElement domElement = xmlDoc->createElement("protect");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(protect_)));
+			QDomElement domElement = xmlDoc.createElement("protect");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(protect_)));
 			eModif.appendChild(domElement);
 		}
 		if (protect_mul != 0.0f) {
-			QDomElement domElement = xmlDoc->createElement("protect-mul");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(protect_mul)));
+			QDomElement domElement = xmlDoc.createElement("protect-mul");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(protect_mul)));
 			eModif.appendChild(domElement);
 		}
 		// Сила вещи
 		if (force_ != 0) {
-			QDomElement domElement = xmlDoc->createElement("force");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(force_)));
+			QDomElement domElement = xmlDoc.createElement("force");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(force_)));
 			eModif.appendChild(domElement);
 		}
 		if (force_mul != 0.0f) {
-			QDomElement domElement = xmlDoc->createElement("force-mul");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(force_mul)));
+			QDomElement domElement = xmlDoc.createElement("force-mul");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(force_mul)));
 			eModif.appendChild(domElement);
 		}
 		// Ловкость вещи
 		if (dext_ != 0) {
-			QDomElement domElement = xmlDoc->createElement("dext");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(dext_)));
+			QDomElement domElement = xmlDoc.createElement("dext");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(dext_)));
 			eModif.appendChild(domElement);
 		}
 		if (dext_mul != 0.0f) {
-			QDomElement domElement = xmlDoc->createElement("dext-mul");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(dext_mul)));
+			QDomElement domElement = xmlDoc.createElement("dext-mul");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(dext_mul)));
 			eModif.appendChild(domElement);
 		}
 		// Интеллект вещи
 		if (intell_ != 0) {
-			QDomElement domElement = xmlDoc->createElement("intell");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(intell_)));
+			QDomElement domElement = xmlDoc.createElement("intell");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(intell_)));
 			eModif.appendChild(domElement);
 		}
 		if (intell_mul != 0.0f) {
-			QDomElement domElement = xmlDoc->createElement("intell-mul");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(intell_mul)));
+			QDomElement domElement = xmlDoc.createElement("intell-mul");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(intell_mul)));
 			eModif.appendChild(domElement);
 		}
 		// Дополнительные параметры вещи
 		if (!param_str.isEmpty()) {
-			 QDomElement domElement = xmlDoc->createElement("other-modif");
-			 domElement.appendChild(xmlDoc->createTextNode(param_str));
+			 QDomElement domElement = xmlDoc.createElement("other-modif");
+			 domElement.appendChild(xmlDoc.createTextNode(param_str));
 			 eModif.appendChild(domElement);
 		}
-		eThing->appendChild(eModif);
+		eThing.appendChild(eModif);
 	}
 	// Требования
 	if (req_level != 0 || req_force != 0 || req_dext != 0 || req_intell != 0) {
-		QDomElement eRequ = xmlDoc->createElement("requirements");
+		QDomElement eRequ = xmlDoc.createElement("requirements");
 		// Уровень
 		if (req_level != 0) {
-			QDomElement domElement = xmlDoc->createElement("level");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(req_level)));
+			QDomElement domElement = xmlDoc.createElement("level");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(req_level)));
 			eRequ.appendChild(domElement);
 		}
 		if (req_force != 0) {
-			QDomElement domElement = xmlDoc->createElement("force");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(req_force)));
+			QDomElement domElement = xmlDoc.createElement("force");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(req_force)));
 			eRequ.appendChild(domElement);
 		}
 		if (req_dext != 0) {
-			QDomElement domElement = xmlDoc->createElement("dext");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(req_dext)));
+			QDomElement domElement = xmlDoc.createElement("dext");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(req_dext)));
 			eRequ.appendChild(domElement);
 		}
 		if (req_intell != 0) {
-			QDomElement domElement = xmlDoc->createElement("intell");
-			domElement.appendChild(xmlDoc->createTextNode(QString::number(req_intell)));
+			QDomElement domElement = xmlDoc.createElement("intell");
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(req_intell)));
 			eRequ.appendChild(domElement);
 		}
-		eThing->appendChild(eRequ);
+		eThing.appendChild(eRequ);
 	}
+	return eThing;
 }

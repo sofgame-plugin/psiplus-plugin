@@ -251,7 +251,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	// Распускаем полученное сообщение построчно
 	QStringList aMessage = message.split("\n");
 	// Просматриваем данные построчно
-	PersStatus nPersStatus = NotKnow;
+	Pers::PersStatus nPersStatus = Pers::NotKnow;
 	//int nParamLine = -1;
 	bool fName = false; QString sName = 0;
 	bool fLevel = false; int nLevel = 0;
@@ -301,11 +301,11 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				fHealth = true; nHealthC = parPersRegExp.cap(3).toInt(); nHealthF = parPersRegExp.cap(4).toInt();
 				fPower = true; nPowerC = parPersRegExp.cap(5).toInt(); nPowerF = parPersRegExp.cap(6).toInt();
 				//nParamLine = i; // Запомнили строку с полными параметрами персонажа
-				nPersStatus = Stand;
+				nPersStatus = Pers::Stand;
 			} else if (sMessage.startsWith(QString::fromUtf8("Бой открыт"))) {
-				nPersStatus = FightOpenBegin;
+				nPersStatus = Pers::FightOpenBegin;
 			} else if (sMessage.startsWith(QString::fromUtf8("Бой закрыт"))) {
-				nPersStatus = FightCloseBegin;
+				nPersStatus = Pers::FightCloseBegin;
 			} else if (persInfoReg.indexIn(sMessage, 0) != -1) {
 				// Информация о персонаже
 				QString sPersName = persInfoReg.cap(2).trimmed();
@@ -578,7 +578,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						persInfoPtr->setEquip(idx+1, &equipList[idx]);
 				}
 				i = nCount; // Блокируем дальнейший анализ
-				nPersStatus = PersInform;
+				nPersStatus = Pers::PersInform;
 			} else if (sMessage == QString::fromUtf8("Экипировка:")) {
 				// Список вещей персонажа
 				Pers::instance()->setFingsStart(true);
@@ -604,17 +604,17 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					i++;
 				}
 				Pers::instance()->setFingsEnd();
-				nPersStatus = ThingsList;
+				nPersStatus = Pers::ThingsList;
 			} else if (sMessage.startsWith(QString::fromUtf8("Выбрана вещь: "))) {
 				// Выбрана вещь: кровавый кристалл (вещь)
 
 				i = nCount; // Блокируем дальнейший анализ
-				nPersStatus = ThingIsTaken;
+				nPersStatus = Pers::ThingIsTaken;
 			} else if (fightShowReg.indexIn(sMessage, 0) != -1) {
 				// Режим просмотра чужого боя в 05 3
 
 				i = nCount; // Блокируем дальнейший анализ
-				nPersStatus = FightShow;
+				nPersStatus = Pers::FightShow;
 			} else if (otherPersPosReg1.indexIn(sMessage, 0) != -1) {
 				// Режим просмотра положения игроков по 05
 				i++;
@@ -636,27 +636,27 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					i++;
 				}
 				GameMap::instance()->setOtherPersPos(&aOtherPers);
-				nPersStatus = OtherPersPos;
+				nPersStatus = Pers::OtherPersPos;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("куплено!")) {
-				nPersStatus = BuyOk;
+				nPersStatus = Pers::BuyOk;
 			} else if (dealerBuyReg.indexIn(sMessage, 0) != -1) {
-				nPersStatus = DealerBuy;
+				nPersStatus = Pers::DealerBuy;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Выбери что нужно продать:")) { // Первая строка при продаже торговцу
-				nPersStatus = DealerSale;
+				nPersStatus = Pers::DealerSale;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Вы во дворе.")) {
-				nPersStatus = Yard;
+				nPersStatus = Pers::Yard;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Немного повозившись возле станка, Вы искусно наточили свое оружие.")) {
-				nPersStatus = MasterRoom2;
+				nPersStatus = Pers::MasterRoom2;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Немного повозившись возле станка, Вы искусно наточили свое оружие и отполировали всю броню.")) {
-				nPersStatus = MasterRoom3;
+				nPersStatus = Pers::MasterRoom3;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Ваше имя в кубке конторы убийц...")) {
-				nPersStatus = InKillersCup;
+				nPersStatus = Pers::InKillersCup;
 				if (settingInKillersCupPopup) {
 					initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Ваше имя в кубке конторы убийц!"), 60);
 				}
@@ -665,40 +665,40 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				if (settingKillerAttackPopup) {
 					initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("На вас совершено нападение! Убийца: ") + killerAttackReg.cap(1), 10);
 				}
-				nPersStatus = KillerAttack;
+				nPersStatus = Pers::KillerAttack;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Меню справки:")) {
-				nPersStatus = HelpMenu;
+				nPersStatus = Pers::HelpMenu;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Сильнейшие персонажи.")) {
-				nPersStatus = TopList;
+				nPersStatus = Pers::TopList;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Статистика")) {
-				nPersStatus = ServerStatistic1;
+				nPersStatus = Pers::ServerStatistic1;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Статистика по странам.")) {
-				nPersStatus = ServerStatistic2;
+				nPersStatus = Pers::ServerStatistic2;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Ваша недвижимость:")) {
-				nPersStatus = RealEstate;
+				nPersStatus = Pers::RealEstate;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Выберите полку:")) {
-				nPersStatus = Warehouse;
+				nPersStatus = Pers::Warehouse;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (warehouseShelfReg.indexIn(sMessage, 0) != -1) {
-				nPersStatus = WarehouseShelf;
+				nPersStatus = Pers::WarehouseShelf;
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage.startsWith(QString::fromUtf8("здесь идут сражения"))) {
-				nPersStatus = FightMultiSelect;
+				nPersStatus = Pers::FightMultiSelect;
 			} else if (sMessage.startsWith(QString::fromUtf8("новый бой"))) {
-				nPersStatus = FightOpenBegin;
+				nPersStatus = Pers::FightOpenBegin;
 				fNewFight = true;
 			} else if (sMessage.startsWith(QString::fromUtf8("Команды:"))) {
-				nPersStatus = FightFinish;
-			} else if (persStatus == SecretBefore) {
+				nPersStatus = Pers::FightFinish;
+			} else if (persStatus == Pers::SecretBefore) {
 				// Предыдущий статус  "перед тайником"
 				if (sMessage.contains(QString::fromUtf8("тайник"), Qt::CaseInsensitive) || sMessage.startsWith(QString::fromUtf8("с разбитого ящика"), Qt::CaseInsensitive) || sMessage.contains(QString::fromUtf8("сокровищниц"), Qt::CaseInsensitive)) {
-					nPersStatus = SecretGet;
+					nPersStatus = Pers::SecretGet;
 					if (fightDropMoneyReg2.indexIn(sMessage, 0) != -1) {
 						fDropMoneys = true;
 						nDropMoneys = nDropMoneys + fightDropMoneyReg2.cap(2).toInt();
@@ -710,9 +710,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						}
 					}
 				}
-			} else if (persStatus == TakeBefore) {
+			} else if (persStatus == Pers::TakeBefore) {
 				// Предыдущий статус  "перед отъемом"
-				nPersStatus = Take;
+				nPersStatus = Pers::Take;
 				if (fightDropMoneyReg2.indexIn(sMessage, 0) != -1) {
 					fDropMoneys = true;
 					nDropMoneys = nDropMoneys + fightDropMoneyReg2.cap(2).toInt();
@@ -724,7 +724,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					}
 				}
 			} else if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
-				nPersStatus = FightOpenBegin;
+				nPersStatus = Pers::FightOpenBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_OPEN);
 				i++;
@@ -732,7 +732,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				nTimeout = fight->timeout();
 				break;
 			} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
-				nPersStatus = FightCloseBegin;
+				nPersStatus = Pers::FightCloseBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_CLOSE);
 				i++;
@@ -743,7 +743,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				// Строчка первая, но статус не определен
 				// Статус не определяется на первой строке много где,
 				// но в данном случае нас интересует резутьтат удара в бою
-				if (fight->isActive() || persStatus == FightMultiSelect || persStatus == NotKnow) {
+				if (fight->isActive() || persStatus == Pers::FightMultiSelect || persStatus == Pers::NotKnow) {
 					// Сейчас статус не известен. На предыдущем ходе были в бою или не известно чего делали.
 					int p_cnt = parseFinghtStepResult(aMessage, i);
 					if (p_cnt != 0) { // Это был текст с результатами боя
@@ -762,7 +762,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						i += p_cnt;
 						sMessage = aMessage.at(i).trimmed();
 						if (sMessage.startsWith(QString::fromUtf8("Открытый бой"))) {
-							nPersStatus = FightOpenBegin;
+							nPersStatus = Pers::FightOpenBegin;
 							if (!fight->isActive())
 								fight->start();
 							fight->setMode(FIGHT_MODE_OPEN);
@@ -771,7 +771,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 							nTimeout = fight->timeout();
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"))) {
-							nPersStatus = FightCloseBegin;
+							nPersStatus = Pers::FightCloseBegin;
 							if (!fight->isActive())
 								fight->start();
 							fight->setMode(FIGHT_MODE_CLOSE);
@@ -781,7 +781,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Бой завершен!"))) {
 							// Бой завершен
-							nPersStatus = FightFinish;
+							nPersStatus = Pers::FightFinish;
 							fight->finish();
 							nTimeout = 0;
 							i++;
@@ -802,7 +802,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			// *** Строка уже НЕ ПЕРВАЯ в выборке и, скорее всего, статус персонажа уже известен ***
 			// Тут анализируем информацию, которая находится заведомо не в первой строке ответа сервера
 			// По хорошему эту логику нужно переносить в соответствующие блоки сразу после определения статуса
-			if (nPersStatus == Stand || nPersStatus == SecretBefore) {
+			if (nPersStatus == Pers::Stand || nPersStatus == Pers::SecretBefore) {
 				// Персонаж стоит
 				if (commandStrReg.indexIn(sMessage, 0) != -1) {
 					// Найдена строка команды для движения
@@ -843,13 +843,13 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						}
 					}
 				}
-			} else if (nPersStatus == SecretGet || nPersStatus == Take) {
+			} else if (nPersStatus == Pers::SecretGet || nPersStatus == Pers::Take) {
 				if (experienceDropReg2.indexIn(sMessage, 0) != -1) {
 					// Берем опыт, который дали в тайнике
 					statExperienceDropCount += experienceDropReg2.cap(1).toInt();
 					fExperienceDrop = true;
 				}
-			} else if (nPersStatus != FightFinish) {
+			} else if (nPersStatus != Pers::FightFinish) {
 				if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 					// Найден опыт, но не в бою (У Элементаля например)
 					statExperienceDropCount += experienceDropReg.cap(1).toInt();
@@ -857,32 +857,32 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				}
 			}
 		}
-		if (nPersStatus == NotKnow) {
+		if (nPersStatus == Pers::NotKnow) {
 			// Любая строка, статус еще не определен
 			// Бывает, попадает команда в строчку, потому "contains" а не "startsWith"
 			if (sMessage.contains(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
-				nPersStatus = FightOpenBegin;
+				nPersStatus = Pers::FightOpenBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_OPEN);
 			} else if (sMessage.contains(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
-				nPersStatus = FightCloseBegin;
+				nPersStatus = Pers::FightCloseBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_CLOSE);
 			}
-		} else if (nPersStatus == Stand) {
+		} else if (nPersStatus == Pers::Stand) {
 			// Статус персонажа определен как стоит
 			if (secretBeforeReg.indexIn(sMessage, 0) != -1  || secretBeforeReg2.indexIn(sMessage, 0) != -1) {
 				// Перед тайником
-				nPersStatus = SecretBefore;
+				nPersStatus = Pers::SecretBefore;
 			} else if (takeBeforeReg.indexIn(sMessage, 0) != -1) {
 				// перед грабежом побежденного
-				nPersStatus = TakeBefore;
+				nPersStatus = Pers::TakeBefore;
 			}
 		}
 		i++;
 	}
 	// Парсинг закончен, реагируем на результаты
-	if (nPersStatus == FightOpenBegin || nPersStatus == FightCloseBegin) {
+	if (nPersStatus == Pers::FightOpenBegin || nPersStatus == Pers::FightCloseBegin) {
 		if (!fight->isActive()) {
 			fight->start();
 		}
@@ -897,7 +897,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				}
 			}
 		}
-	} else if (nPersStatus != FightMultiSelect) {
+	} else if (nPersStatus != Pers::FightMultiSelect) {
 		if (fight->isActive()) {
 			fight->finish();
 		}
@@ -933,13 +933,12 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	}
 	// Сохраняем и отправляем текущий статус персонажа
 	if (persStatus != nPersStatus) {
-		if (nPersStatus == FightFinish) {
+		if (nPersStatus == Pers::FightFinish) {
 			statFightsCount = statFightsCount + 1;
 			valueChanged(VALUE_FIGHTS_COUNT, TYPE_INTEGER_FULL, statFightsCount);
 			statisticsChanged();
 		}
 		persStatus = nPersStatus;
-		//valueChanged(VALUE_PERS_STATUS, TYPE_INTEGER_FULL, nPersStatus);
 		Pers::instance()->setPersParams(VALUE_PERS_STATUS, TYPE_INTEGER_FULL, nPersStatus);
 	}
 	// Конец установки параметров персонажа
@@ -1011,14 +1010,14 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	if (fNewFight) {
 		// Если выбран новый бой, посылаем "0" чтобы показать список мобов
 		Sender::instance()->sendSystemString("0"); // Продолжение игры
-	} else if (nPersStatus == FightMultiSelect) {
+	} else if (nPersStatus == Pers::FightMultiSelect) {
 		if (settingFightSelectAction == 1 || settingFightSelectAction == 2) { // Всегда новый бой
 			Sender *sender = Sender::instance();
 			if (settingFightSelectAction == 2 || sender->getGameQueueLength() > 0) {
 				sender->sendSystemString("1"); // 1 - новый бой
 			}
 		}
-	} else if ((nPersStatus == NotKnow && settingResetQueueForUnknowStatus) || nPersStatus == KillerAttack) {
+	} else if ((nPersStatus == Pers::NotKnow && settingResetQueueForUnknowStatus) || nPersStatus == Pers::KillerAttack) {
 		// Если очередь не пуста, сбрасываем очередь
 		Sender *sender = Sender::instance();
 		int q_len = sender->getGameQueueLength();
@@ -1613,9 +1612,14 @@ bool PluginCore::savePersStatus()
 	}
 	if (Pers::instance() && settingSaveBackpack) {
 		// Сохраняем данные о вещах
-		QDomElement eFings = xmlDoc.createElement("backpack");
-		Pers::instance()->exportFingsToDomElement(&xmlDoc, &eFings);
-		eNewAccount.appendChild(eFings);
+		QDomElement eBackpack = xmlDoc.createElement("backpack");
+		eNewAccount.appendChild(eBackpack);
+		QDomElement eThings = Pers::instance()->exportThingsToDomElement(xmlDoc);
+		eBackpack.appendChild(eThings);
+		QDomElement ePrice = Pers::instance()->exportPriceToDomElement(xmlDoc);
+		if (!ePrice.isNull()) {
+			eBackpack.appendChild(ePrice);
+		}
 	}
 	if (!bReplace) {
 		// Если настройки не прочитались или они некорректные, то создаем новый xml документ
@@ -1795,9 +1799,10 @@ bool PluginCore::savePluginSettings()
 		eNewAccount.appendChild(eAppearance);
 	}
 	// Сохраняем настройки рюкзака
-	QDomElement eFings = xmlDoc.createElement("backpack");
-	Pers::instance()->exportBackpackSettingsToDomElement(&xmlDoc, &eFings);
-	eNewAccount.appendChild(eFings);
+	QDomElement eBackpack = xmlDoc.createElement("backpack");
+	eNewAccount.appendChild(eBackpack);
+	QDomElement eFilters = Pers::instance()->exportFiltersToDomElement(xmlDoc);
+	eBackpack.appendChild(eFilters);
 	// Сохраняем настройки карт
 	QDomElement eMaps = xmlDoc.createElement("maps");
 	eNewAccount.appendChild(eMaps);
@@ -1888,7 +1893,7 @@ bool PluginCore::loadPersStatus()
 	// Сброс статуса персонажа
 	lastGameJid = "";
 	lastChatJid = "";
-	persStatus = NotKnow;
+	persStatus = Pers::NotKnow;
 	statExperience = -1; statExperienceFull = -1;
 	statMessagesCount = 0;
 	statMoneysDropCount = 0;
@@ -1981,7 +1986,8 @@ bool PluginCore::loadPersStatus()
 				} else if (settingSaveBackpack && childAccountNode.toElement().tagName() == "backpack") {
 					// Обрабатываем данные о вещах
 					if (settingSaveBackpack) {
-						Pers::instance()->loadFingsFromDomNode(&childAccountNode);
+						QDomElement el = childAccountNode.toElement();
+						Pers::instance()->loadThingsFromDomElement(el);
 					}
 				}
 				childAccountNode = childAccountNode.nextSibling();
@@ -2198,9 +2204,8 @@ bool PluginCore::loadPluginSettings()
 						Aliases::instance()->loadFromDomElement(childJidNode.toElement());
 					} else if (childJidNode.toElement().tagName() == "backpack") {
 						// Обрабатываем настройки рюкзака
-						if (Pers::instance()) {
-							Pers::instance()->loadBackpackSettingsFromDomNode(&childJidNode);
-						}
+						QDomElement el = childJidNode.toElement();
+						Pers::instance()->loadBackpackSettingsFromDomNode(el);
 					} else if (childJidNode.toElement().tagName() == "appearance") {
 						appearaceSettings = childJidNode.toElement();
 					} else if (childJidNode.toElement().tagName() == "maps") {
@@ -3395,7 +3400,7 @@ void PluginCore::fingsCommands(QStringList* args)
 				}
 				int fingsCnt = 0;
 				while (true) {
-					Thing* thing = Pers::instance()->getFingByRow(fingsCnt, iface);
+					const Thing* thing = Pers::instance()->getFingByRow(fingsCnt, iface);
 					if (!thing) break;
 					str1.append(thing->toString(Thing::ShowAll));
 					str1.append("\n");
@@ -3441,7 +3446,7 @@ void PluginCore::fingsCommands(QStringList* args)
 	} else if ((*args)[1] == "price") {
 		str1.append(QString::fromUtf8("--- Цены вещей ---\n"));
 		if (argsCount == 2 && (*args)[2] == "list") {
-			QVector<Pers::price_item>* priceListPrt = Pers::instance()->getFingsPrice();
+			const QVector<Pers::price_item>* priceListPrt = Pers::instance()->getFingsPrice();
 			int sizePrice = priceListPrt->size();
 			if (sizePrice > 0) {
 				for (int i = 0; i < sizePrice; i++) {

@@ -761,10 +761,7 @@ void SofMainWindow::getAllDataFromCore() {
 	saveStatistic_checkbox->setCheckState(state);
 	// *** Основные данные ***
 	Pers *pers = Pers::instance();
-	if (!pers->getIntParamValue(VALUE_PERS_STATUS, &newIntValue)) {
-		newIntValue = NotKnow;
-	}
-	changePersStatus(newIntValue);
+	changePersStatus();
 	if (!pers->getStringParamValue(VALUE_PERS_NAME, &newStrValue)) {
 		newStrValue = NA_TEXT;
 	}
@@ -1031,74 +1028,9 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 	}
 }
 
-void SofMainWindow::changePersStatus(int status)
+void SofMainWindow::changePersStatus()
 {
-	PersStatus status_ = (PersStatus)status;
-	if (status_ == Stand) {
-		persStatusLabel->setText(QString::fromUtf8("Стоим..."));
-	} else if (status_ == FightMultiSelect) {
-		persStatusLabel->setText(QString::fromUtf8("Тут идут бои..."));
-	} else if (status_ == FightOpenBegin) {
-		persStatusLabel->setText(QString::fromUtf8("В бою! (Открытый)"));
-	} else if (status_ == FightCloseBegin) {
-		persStatusLabel->setText(QString::fromUtf8("В бою! (Закрытый)"));
-	} else if (status_ == FightFinish) {
-		persStatusLabel->setText(QString::fromUtf8("Бой завершен!"));
-	} else if (status_ == Miniforum) {
-		persStatusLabel->setText(QString::fromUtf8("Минифорум"));
-	} else if (status_ == SecretBefore) {
-		persStatusLabel->setText(QString::fromUtf8("Перед тайником"));
-	} else if (status_ == SecretGet) {
-		persStatusLabel->setText(QString::fromUtf8("Грабим тайник :)"));
-	} else if (status_ == ThingsList) {
-		persStatusLabel->setText(QString::fromUtf8("Список вещей"));
-	} else if (status_ == ThingIsTaken) {
-		persStatusLabel->setText(QString::fromUtf8("Выбрана вещь"));
-	} else if (status_ == PersInform) {
-		persStatusLabel->setText(QString::fromUtf8("Информация о персонаже"));
-	} else if (status_ == FightShow) {
-		persStatusLabel->setText(QString::fromUtf8("Просмотр боя"));
-	} else if (status_ == OtherPersPos) {
-		persStatusLabel->setText(QString::fromUtf8("Осматриваемся"));
-	} else if (status_ == TakeBefore) {
-		persStatusLabel->setText(QString::fromUtf8("Будем брать завоеванное"));
-	} else if (status_ == Take) {
-		persStatusLabel->setText(QString::fromUtf8("Забираем завоеванное"));
-	} else if (status_ == InKillersCup) {
-		persStatusLabel->setText(QString::fromUtf8("Вас заказали"));
-	} else if (status_ == KillerAttack) {
-		persStatusLabel->setText(QString::fromUtf8("Нападение убийцы"));
-	} else if (status_ == Yard) {
-		persStatusLabel->setText(QString::fromUtf8("Во дворе"));
-	} else if (status_ == MasterRoom1) {
-		persStatusLabel->setText(QString::fromUtf8("Станок"));
-	} else if (status_ == MasterRoom2) {
-		persStatusLabel->setText(QString::fromUtf8("Малая мастерская"));
-	} else if (status_ == MasterRoom3) {
-		persStatusLabel->setText(QString::fromUtf8("Мастерская"));
-	} else if (status_ == DealerBuy) {
-		persStatusLabel->setText(QString::fromUtf8("Покупка у торговца"));
-	} else if (status_ == BuyOk) {
-		persStatusLabel->setText(QString::fromUtf8("Куплено"));
-	} else if (status_ == DealerSale) {
-		persStatusLabel->setText(QString::fromUtf8("Продажа торговцу"));
-	} else if (status_ == HelpMenu) {
-		persStatusLabel->setText(QString::fromUtf8("Меню по 09"));
-	} else if (status_ == TopList) {
-		persStatusLabel->setText(QString::fromUtf8("Сильнейшие персонажи"));
-	} else if (status_ == ServerStatistic1) {
-		persStatusLabel->setText(QString::fromUtf8("Статистика игры"));
-	} else if (status_ == ServerStatistic2) {
-		persStatusLabel->setText(QString::fromUtf8("Статистика по странам"));
-	} else if (status_ == RealEstate) {
-		persStatusLabel->setText(QString::fromUtf8("Ваша недвижимость"));
-	} else if (status_ == Warehouse) {
-		persStatusLabel->setText(QString::fromUtf8("Склад"));
-	} else if (status_ == WarehouseShelf) {
-		persStatusLabel->setText(QString::fromUtf8("Полка с вещами на складе"));
-	} else {
-		persStatusLabel->setText(QString::fromUtf8("???"));
-	}
+	persStatusLabel->setText(Pers::instance()->getPersStatusString());
 }
 
 void SofMainWindow::setGameText(QString gameText, int type)
@@ -1204,6 +1136,7 @@ void SofMainWindow::setAppearanceSetting(QDomElement &xml)
 				if (f.fromString(fontStr)) {
 					gameTextFont_label->setFont(f.toString());
 					serverTextLabel->setFont(f);
+					console_textedit->setFont(f);
 				}
 			}
 		}
@@ -2058,7 +1991,7 @@ void SofMainWindow::setFingPrice()
 	// Получаем номер строки
 	int row = fingsTable->currentIndex().row();
 	// Получаем указатель на вещь
-	Thing *thg = pers->getFingByRow(row, thingsIface);
+	const Thing *thg = pers->getFingByRow(row, thingsIface);
 	if (!thg || !thg->isValid())
 		return;
 	// Получаем имя выбранной вещи и цену
@@ -2080,7 +2013,7 @@ void SofMainWindow::setFingPrice()
 void SofMainWindow::fingParamToConsole()
 {
 	int row = fingsTable->currentIndex().row();
-	Thing *thg = Pers::instance()->getFingByRow(row, thingsIface);
+	const Thing *thg = Pers::instance()->getFingByRow(row, thingsIface);
 	if (thg) {
 		if (thg->isValid()) {
 			setConsoleText(thg->toString(Thing::ShowAll), 2, true);
@@ -2115,7 +2048,7 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 	if (paramType == TYPE_INTEGER_FULL) {
 		if (paramId == VALUE_PERS_STATUS) {
 			// Статус персонажа
-			changePersStatus(paramValue);
+			changePersStatus();
 		} else if (paramId == VALUE_HEALTH_CURR) {
 			// Текущее здоровье
 			setCurrentHealth(paramValue);

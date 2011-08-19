@@ -40,87 +40,99 @@ class Pers: public QObject
 {
   Q_OBJECT
 
-	public:
-		struct price_item {
-			int      type;
-			QString  name;
-			int      price;
-		};
-		static Pers *instance();
-		static void reset();
-		void init();
-		void setName(QString);
-		QString name();
-		void setFingsStart(bool clear);
-		void setFingsEnd();
-		void setFingElement(int, Thing*);
-		int  getFingsCount(int);
-		int  getPriceAll(int);
-		int  getNoPriceCount(int);
-		Thing* getFingByRow(int, int);
-		void getFingsFiltersEx(QList<FingFilter*>*);
-		void setFingsFiltersEx(QList<FingFilter*>);
-		QVector<price_item>* getFingsPrice();
-		void exportFingsToDomElement(QDomDocument*, QDomElement*);
-		void exportBackpackSettingsToDomElement(QDomDocument*, QDomElement*);
-		void loadFingsFromDomNode(QDomNode*);
-		void loadBackpackSettingsFromDomNode(QDomNode*);
-		void setFingPrice(int, int, int);
-		void beginSetPersParams();
-		void setPersParams(int, int, int);
-		void endSetPersParams();
-		bool getIntParamValue(int, int*);
-		bool getStringParamValue(int, QString*);
-		void setSetting(int, int);
-		int  getThingsInterface();
-		void setThingsInterfaceFilter(int, int);
-		void removeThingsInterface(int);
-		QSortFilterProxyModel* getThingsModel(int);
+public:
+	enum PersStatus {
+		NotKnow, Stand,
+		FightMultiSelect, FightOpenBegin, FightCloseBegin, FightFinish,
+		Miniforum, SecretBefore, SecretGet, ThingsList, PersInform,
+		FightShow, OtherPersPos, TakeBefore, Take, KillerAttack,
+		Yard, MasterRoom1, MasterRoom2, MasterRoom3, DealerBuy,
+		DealerSale, BuyOk, HelpMenu, TopList, ServerStatistic1, ServerStatistic2,
+		RealEstate, Warehouse, WarehouseShelf, InKillersCup, ThingIsTaken
+	};
+	struct price_item {
+		int      type;
+		QString  name;
+		int      price;
+	};
+	static Pers *instance();
+	static void reset();
+	void init();
+	void setName(const QString &);
+	QString name() const;
+	void setFingsStart(bool clear);
+	void setFingsEnd();
+	void setFingElement(int, Thing*);
+	int  getFingsCount(int) const;
+	int  getPriceAll(int) const;
+	int  getNoPriceCount(int) const;
+	const Thing* getFingByRow(int, int) const;
+	void getFingsFiltersEx(QList<FingFilter*>*) const;
+	void setFingsFiltersEx(QList<FingFilter*>);
+	const QVector<price_item>* getFingsPrice() const;
+	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
+	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
+	QDomElement exportFiltersToDomElement(QDomDocument &xmlDoc) const;
+	void loadThingsFromDomElement(QDomElement &);
+	void loadBackpackSettingsFromDomNode(QDomElement &);
+	void setFingPrice(int, int, int);
+	void beginSetPersParams();
+	void setPersParams(int, int, int);
+	void endSetPersParams();
+	bool getIntParamValue(int, int*) const;
+	bool getStringParamValue(int, QString*) const;
+	void setSetting(int, int);
+	int  getThingsInterface();
+	void setThingsInterfaceFilter(int, int);
+	void removeThingsInterface(int);
+	QSortFilterProxyModel* getThingsModel(int) const;
+	QString getPersStatusString();
 
-	private:
-		QString pers_name;
-		bool beginSetPersParamsFlag;
-		int  persLevelValue; int persLevelValue_; bool setPersLevelValueFlag;
-		PersStatus  persStatus; PersStatus  persStatus_; bool setPersStatusFlag;
-		int  persHealthMax; int persHealthMax_; bool setPersHealthMaxFlag;
-		int  persHealthCurr; int persHealthCurr_; bool setPersHealthCurrFlag;
-		int  persEnergyMax; int persEnergyMax_; bool setPersEnergyMaxFlag;
-		int  persEnergyCurr; int persEnergyCurr_; bool setPersEnergyCurrFlag;
-		bool setPersLevelFlag;
-		bool setPersExperienceMaxFlag;
-		bool setPersExperienceCurrFlag;
-		bool loadingFings;
-		bool fingChanged;
-		int  fingsPos;
-		int  fingsSize;
-		int  settingWatchRestHealthEnergy;
-		int  watchHealthStartValue;
-		int  watchHealthStartValue2;
-		float watchHealthSpeed;
-		int  watchHealthSpeedDelta;
-		QTimer *watchRestTimer;
-		QTimer *watchHealthRestTimer;
+private:
+	QString pers_name;
+	bool beginSetPersParamsFlag;
+	int  persLevelValue; int persLevelValue_; bool setPersLevelValueFlag;
+	PersStatus  persStatus; PersStatus  persStatus_; bool setPersStatusFlag;
+	int  persHealthMax; int persHealthMax_; bool setPersHealthMaxFlag;
+	int  persHealthCurr; int persHealthCurr_; bool setPersHealthCurrFlag;
+	int  persEnergyMax; int persEnergyMax_; bool setPersEnergyMaxFlag;
+	int  persEnergyCurr; int persEnergyCurr_; bool setPersEnergyCurrFlag;
+	bool setPersLevelFlag;
+	bool setPersExperienceMaxFlag;
+	bool setPersExperienceCurrFlag;
+	bool loadingFings;
+	bool fingChanged;
+	int  fingsPos;
+	int  fingsSize;
+	int  settingWatchRestHealthEnergy;
+	int  watchHealthStartValue;
+	int  watchHealthStartValue2;
+	float watchHealthSpeed;
+	int  watchHealthSpeedDelta;
+	QTimer *watchRestTimer;
+	QTimer *watchHealthRestTimer;
 
-		QTime watchHealthStartTime;
-		QTime watchHealthStartTime2;
-		ThingsModel* things;
-		QList<FingFilter*> fingFiltersEx;
-		QHash<int, ThingsProxyModel*> thingModels;
-		QVector<price_item> fingPrice;
-		static Pers *instance_;
+	QTime watchHealthStartTime;
+	QTime watchHealthStartTime2;
+	ThingsModel* things;
+	QList<FingFilter*> fingFiltersEx;
+	QHash<int, ThingsProxyModel*> thingModels;
+	QVector<price_item> fingPrice;
+	static Pers *instance_;
+	static QHash<PersStatus, QString> statusStrings;
 
-	private:
-		Pers(QObject *parent = 0);
-		~Pers();
+private:
+	Pers(QObject *parent = 0);
+	~Pers();
 
-	private slots:
-		void doWatchRestTime();
-		void doWatchHealthRestTime();
+private slots:
+	void doWatchRestTime();
+	void doWatchHealthRestTime();
 
-	signals:
-		void fingsChanged();
-		void filtersChanged();
-		void persParamChanged(int, int, int);
+signals:
+	void fingsChanged();
+	void filtersChanged();
+	void persParamChanged(int, int, int);
 
 };
 

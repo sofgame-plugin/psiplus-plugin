@@ -28,42 +28,6 @@
 
 #define QINT32_MIN                      qint32(1) << 31
 
-// Статусы персонажа
-enum PersStatus {
-	NotKnow,
-	Stand,
-	FightMultiSelect,
-	FightOpenBegin,
-	FightCloseBegin,
-	FightFinish,
-	Miniforum,
-	SecretBefore,
-	SecretGet,
-	ThingsList,
-	PersInform,
-	FightShow,
-	OtherPersPos,
-	TakeBefore,
-	Take,
-	KillerAttack,
-	Yard,
-	MasterRoom1,
-	MasterRoom2,
-	MasterRoom3,
-	DealerBuy,
-	DealerSale,
-	BuyOk,
-	HelpMenu,
-	TopList,
-	ServerStatistic1,
-	ServerStatistic2,
-	RealEstate,
-	Warehouse,
-	WarehouseShelf,
-	InKillersCup,
-	ThingIsTaken
-};
-
 // Типы данных, отправляемых окну
 #define TYPE_INTEGER_INC                1
 #define TYPE_INTEGER_FULL               2

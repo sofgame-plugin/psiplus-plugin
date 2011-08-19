@@ -39,7 +39,7 @@ public:
 	~ThingsProxyModel();
 	// --
 	void setFingsSource(ThingsModel*);
-	Thing* getThingByRow(int);
+	const Thing* getThingByRow(int) const;
 	void setFilter(FingFilter*);
 	void setPrice(int /*row*/, int /*price*/);
 private:

@@ -87,7 +87,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void setStatisticCaptionText();
 		void getAllDataFromCore();
 		void updateValue(int valueId, QString* valuePtr);
-		void changePersStatus(int status);
+		void changePersStatus();
 		void initEventSlots();
 		int  getEventSlot();
 		bool freeEventSlot(int id);

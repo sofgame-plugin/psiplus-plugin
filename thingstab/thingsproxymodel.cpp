@@ -47,7 +47,7 @@ bool ThingsProxyModel::filterAcceptsRow(int source_row, const QModelIndex &/*sou
 {
 	if (!thingsFilter)
 		return true; // Фильтр не задан
-	Thing* thg = thingsSource->getThingByRow(source_row);
+	const Thing* thg = thingsSource->getThingByRow(source_row);
 	if (thg) {
 		if (thingsFilter->isFingShow(thg)) {
 			return true;
@@ -58,8 +58,8 @@ bool ThingsProxyModel::filterAcceptsRow(int source_row, const QModelIndex &/*sou
 
 bool ThingsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
-	Thing *left_thg = thingsSource->getThingByRow(left.row());
-	Thing *right_thg = thingsSource->getThingByRow(right.row());
+	const Thing *left_thg = thingsSource->getThingByRow(left.row());
+	const Thing *right_thg = thingsSource->getThingByRow(right.row());
 	int col_role = left.column();
 	bool b_res = false;
 	switch (col_role) {
@@ -93,7 +93,7 @@ void ThingsProxyModel::setFingsSource(ThingsModel* things_model) {
 		setSourceModel(thingsSource);
 }
 
-Thing* ThingsProxyModel::getThingByRow(int row)
+const Thing* ThingsProxyModel::getThingByRow(int row) const
 {
 	if (thingsSource) {
 		QModelIndex proxy_index = index(row, 1);

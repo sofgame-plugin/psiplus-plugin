@@ -148,7 +148,7 @@ const struct FingFilter::fing_rule_ex* FingFilter::getRule(int rule_index)
 /**
  * Возвращает результат прохождения вещи (fingEl) про правилам rules
  */
-bool FingFilter::isFingShow(Thing* thing)
+bool FingFilter::isFingShow(const Thing* thing)
 {
 	int cnt = rules.size();
 	bool skeepNext = false;

@@ -77,7 +77,7 @@ public:
 	bool moveRuleUp(int index);
 	bool moveRuleDown(int index);
 	const struct fing_rule_ex* getRule(int);
-	bool isFingShow(Thing*);
+	bool isFingShow(const Thing*);
 
 private:
 	bool enabled;

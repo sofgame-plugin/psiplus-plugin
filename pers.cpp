@@ -32,8 +32,6 @@
 #include "fight.h"
 #include "utils.h"
 
-//Pers* myPers;
-
 Pers::Pers(QObject *parent):
 	QObject(parent),
 	pers_name(""),
@@ -151,7 +149,7 @@ void Pers::init()
 	pers_name = "";
 }
 
-void Pers::setName(QString new_name)
+void Pers::setName(const QString &new_name)
 {
 	if (pers_name != new_name) {
 		pers_name = new_name;
@@ -163,7 +161,7 @@ void Pers::setName(QString new_name)
 	}
 }
 
-QString Pers::name()
+QString Pers::name() const
 {
 	return pers_name;
 }
@@ -209,7 +207,7 @@ void Pers::setFingElement(int mode, Thing* thing)
 		if (mode == FING_APPEND) {
 			if (fingsPos < fingsSize) {
 				if (!fingChanged) {
-					Thing* old_thing = things->getThingByRow(fingsPos);
+					const Thing* old_thing = things->getThingByRow(fingsPos);
 					if (old_thing) {
 						if (!thing->isEqual(old_thing)) {
 							fingChanged = true;
@@ -249,14 +247,14 @@ void Pers::setFingElement(int mode, Thing* thing)
 /**
  * Возвращает общее количество вещей для указанного интерфейса
  */
-int Pers::getFingsCount(int iface)
+int Pers::getFingsCount(int iface) const
 {
 	int all_cnt = 0;
 	ThingsProxyModel *tpm = thingModels.value(iface, NULL);
 	if (tpm) {
 		int cnt = tpm->rowCount();
 		for (int i = 0; i < cnt; i++) {
-			Thing* thg = tpm->getThingByRow(i);
+			const Thing* thg = tpm->getThingByRow(i);
 			if (thg) {
 				if (thg->isValid()) {
 					all_cnt += thg->count();
@@ -270,14 +268,14 @@ int Pers::getFingsCount(int iface)
 /**
  * Возвращает полную стоимость вещей для указанного интерфейса
  */
-int Pers::getPriceAll(int iface)
+int Pers::getPriceAll(int iface) const
 {
 	int all_price = 0;
 	ThingsProxyModel *tpm = thingModels.value(iface, NULL);
 	if (tpm) {
 		int cnt = tpm->rowCount();
 		for (int i = 0; i < cnt; i++) {
-			Thing* thg = tpm->getThingByRow(i);
+			const Thing* thg = tpm->getThingByRow(i);
 			if (thg) {
 				if (thg->isValid()) {
 					int price = thg->price();
@@ -294,14 +292,14 @@ int Pers::getPriceAll(int iface)
 /**
  * Возвращает количество позиций вещей без цены для указанного интерфейса
  */
-int Pers::getNoPriceCount(int iface)
+int Pers::getNoPriceCount(int iface) const
 {
 	int no_price = 0;
 	ThingsProxyModel *tpm = thingModels.value(iface, NULL);
 	if (tpm) {
 		int cnt = tpm->rowCount();
 		for (int i = 0; i < cnt; i++) {
-			Thing* thg = tpm->getThingByRow(i);
+			const Thing* thg = tpm->getThingByRow(i);
 			if (thg) {
 				if (thg->isValid()) {
 					if (thg->price() == -1)
@@ -316,9 +314,9 @@ int Pers::getNoPriceCount(int iface)
 /**
  * Возвращает указатель на объект вещи, учитывая номер позиции и заданный интерфейс
  */
-Thing* Pers::getFingByRow(int row, int iface)
+const Thing* Pers::getFingByRow(int row, int iface) const
 {
-	Thing* thg = NULL;
+	const Thing* thg = NULL;
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
 	if (tpm)
 		thg = tpm->getThingByRow(row);
@@ -328,7 +326,7 @@ Thing* Pers::getFingByRow(int row, int iface)
 /**
  * Возращает список указателей на фильтры
  */
-void Pers::getFingsFiltersEx(QList<FingFilter*>* filtersPtr)
+void Pers::getFingsFiltersEx(QList<FingFilter*>* filtersPtr) const
 {
 	filtersPtr->clear();
 	int cnt = fingFiltersEx.size();
@@ -355,7 +353,7 @@ void Pers::setFingsFiltersEx(QList<FingFilter*> newFilters)
 /**
  * Возвращает указатель на список цен
  */
-QVector<Pers::price_item>* Pers::getFingsPrice()
+const QVector<Pers::price_item>* Pers::getFingsPrice() const
 {
 	return &fingPrice;
 }
@@ -363,24 +361,31 @@ QVector<Pers::price_item>* Pers::getFingsPrice()
 /**
  * Выгружает данные о вещах в DOM элемент
  */
-void Pers::exportFingsToDomElement(QDomDocument* xmlDoc, QDomElement* eBackpack)
+QDomElement Pers::exportThingsToDomElement(QDomDocument &xmlDoc) const
 {
-	QDomElement eFings = xmlDoc->createElement("fings");
+	QDomElement eThings = xmlDoc.createElement("fings");
 	int thingsCnt = things->rowCount();
 	for (int i = 0; i < thingsCnt; i++) {
-		Thing* thing = things->getThingByRow(i);
+		const Thing* thing = things->getThingByRow(i);
 		if (!thing) continue;
 		if (!thing->isValid()) continue;
-		QDomElement eThing = xmlDoc->createElement("fing");
-		thing->exportToXml(xmlDoc, &eThing);
-		eFings.appendChild(eThing);
+		QDomElement eThing = thing->exportToXml(xmlDoc);
+		eThings.appendChild(eThing);
 	}
-	eBackpack->appendChild(eFings);
+	return eThings;
+}
+
+/**
+ * Выгружает данные о ценах в DOM элемент
+ */
+QDomElement Pers::exportPriceToDomElement(QDomDocument &xmlDoc) const
+{
+	QDomElement ePrice;
 	int priceCnt = fingPrice.size();
 	if (priceCnt > 0) {
-		QDomElement ePrice = xmlDoc->createElement("price");
+		ePrice = xmlDoc.createElement("price");
 		for (int i = 0; i < priceCnt; i++) {
-			QDomElement ePriceItem = xmlDoc->createElement("item");
+			QDomElement ePriceItem = xmlDoc.createElement("item");
 			int nType = fingPrice[i].type;
 			QString sType = thingTypeToString(nType);
 			if (!sType.isEmpty()) {
@@ -390,39 +395,34 @@ void Pers::exportFingsToDomElement(QDomDocument* xmlDoc, QDomElement* eBackpack)
 				ePrice.appendChild(ePriceItem);
 			}
 		}
-		eBackpack->appendChild(ePrice);
 	}
+	return ePrice;
 }
 
-void Pers::exportBackpackSettingsToDomElement(QDomDocument* xmlDoc, QDomElement* eBackpack)
+/**
+ * Выгружает настройки рюкзака в DOM элемент
+ */
+QDomElement Pers::exportFiltersToDomElement(QDomDocument &xmlDoc) const
 {
-	/**
-	* Выгружает настройки рюкзака в DOM элемент
-	**/
-	QDomElement eFilters = xmlDoc->createElement("filters");
-	eBackpack->appendChild(eFilters);
+	QDomElement eFilters = xmlDoc.createElement("filters");
 	int filtersCnt = fingFiltersEx.size();
 	for (int i = 0; i < filtersCnt; i++) {
 		FingFilter* oFilter = fingFiltersEx.at(i);
-		QDomElement eFilter = xmlDoc->createElement("filter");
+		QDomElement eFilter = xmlDoc.createElement("filter");
 		if (!oFilter->isActive())
 			eFilter.setAttribute("disabled", "true");
 		eFilter.setAttribute("name", oFilter->name());
-		/*int nIndex = fingFilters[i].index;
-		if (nIndex > 0) {
-			eFilter.setAttribute("index", QString::number(nIndex));
-		}*/
 		eFilters.appendChild(eFilter);
 		int rulesCnt = oFilter->rulesCount();
 		if (rulesCnt > 0) {
-			QDomElement eRules = xmlDoc->createElement("rules");
+			QDomElement eRules = xmlDoc.createElement("rules");
 			eFilter.appendChild(eRules);
 			int ruleIndex = 0;
 			while (true) {
 				const struct FingFilter::fing_rule_ex* fre = oFilter->getRule(ruleIndex++);
 				if (!fre)
 					break;
-				QDomElement eRule = xmlDoc->createElement("rule");
+				QDomElement eRule = xmlDoc.createElement("rule");
 				QString str1 = "";
 				FingFilter::ParamRole nParam = fre->param;
 				if (nParam == FingFilter::NameRole) {
@@ -480,56 +480,51 @@ void Pers::exportBackpackSettingsToDomElement(QDomDocument* xmlDoc, QDomElement*
 			}
 		}
 	}
+	return eFilters;
 }
 
-void Pers::loadFingsFromDomNode(QDomNode* backpackNode)
+/**
+ * Получает данные о содержимом рюкзака персонажа из DOM элемента
+ */
+void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 {
-	/**
-	* Получает данные о содержимом рюкзака персонажа из DOM ноды
-	**/
 	things->clear();
 	fingPrice.clear();
-	QDomNode childNode1 = backpackNode->firstChild();
-	while (!childNode1.isNull()) {
-		QString sTagName = childNode1.toElement().tagName();
+	QDomElement eChild1 = eBackpack.firstChildElement();
+	while (!eChild1.isNull()) {
+		const QString sTagName = eChild1.tagName();
 		if (sTagName == "fings") {
-			QDomNode fingNode = childNode1.firstChild();
-			while (!fingNode.isNull()) {
-				QDomElement fingDomEl = fingNode.toElement();
-				if (fingDomEl.tagName() == "fing") {
-					Thing* thing = new Thing();
-					thing->importFromXml(fingDomEl);
-					if (thing->isValid()) {
-						things->insertThing(thing, things->rowCount());
-					} else {
-						delete thing;
-					}
+			QDomElement eThing = eChild1.firstChildElement("fing");
+			while (!eThing.isNull()) {
+				Thing* thing = new Thing();
+				thing->importFromXml(eThing);
+				if (thing->isValid()) {
+					things->insertThing(thing, things->rowCount());
+				} else {
+					delete thing;
 				}
-				fingNode = fingNode.nextSibling();
+				eThing = eThing.nextSiblingElement("fing");
 			}
 		} else if (sTagName == "price") {
 			// Просматриваем прайс и создаем массив с ценами
-			QDomNode priceItemNode = childNode1.firstChild();
-			while (!priceItemNode.isNull()) {
-				QDomElement priceItemEl = priceItemNode.toElement();
-				if (priceItemEl.tagName() == "item") {
-					struct price_item priceItem;
-					priceItem.type = thingTypeFromString(priceItemEl.attribute("type"));
-					if (priceItem.type != -1) {
-						priceItem.name = priceItemEl.attribute("name").trimmed();
-						if (!priceItem.name.isEmpty()) {
-							bool fOk = false;
-							priceItem.price = priceItemEl.attribute("price").toInt(&fOk);
-							if (fOk && priceItem.price >= 0) {
-								fingPrice.push_back(priceItem);
-							}
+			QDomElement ePriceItem = eChild1.firstChildElement("item");
+			while (!ePriceItem.isNull()) {
+				struct price_item priceItem;
+				priceItem.type = thingTypeFromString(ePriceItem.attribute("type"));
+				if (priceItem.type != -1) {
+					priceItem.name = ePriceItem.attribute("name").trimmed();
+					if (!priceItem.name.isEmpty()) {
+						bool fOk = false;
+						priceItem.price = ePriceItem.attribute("price").toInt(&fOk);
+						if (fOk && priceItem.price >= 0) {
+							fingPrice.push_back(priceItem);
 						}
 					}
 				}
-				priceItemNode = priceItemNode.nextSibling();
+				ePriceItem = ePriceItem.nextSiblingElement("item");
 			}
 		}
-		childNode1 = childNode1.nextSibling();
+		eChild1 = eChild1.nextSiblingElement();
 	}
 	// Заполняем цены вещей из прайса
 	int thingsCnt = things->rowCount();
@@ -552,93 +547,75 @@ void Pers::loadFingsFromDomNode(QDomNode* backpackNode)
 /**
  * Получает настройки рюкзака персонажа из DOM ноды
  */
-void Pers::loadBackpackSettingsFromDomNode(QDomNode* backpackNode)
+void Pers::loadBackpackSettingsFromDomNode(QDomElement &eBackpack)
 {
 	// Очищаем старые настройки
 	while (!fingFiltersEx.isEmpty()) {
 		delete fingFiltersEx.takeFirst();
 	}
 	// Анализируем DOM ноду
-	QDomNode childNode1 = backpackNode->firstChild();
-	while (!childNode1.isNull()) {
-		if (childNode1.toElement().tagName() == "filters") {
-			QDomNode filterNode = childNode1.firstChild();
-			while (!filterNode.isNull()) {
-				QDomElement eFilter = filterNode.toElement();
-				if (eFilter.tagName() == "filter") {
-					//int nIndex = eFilter.attribute("index").toInt(&fOk);
-					//if (fOk && nIndex > 0) {
-						QString sName = eFilter.attribute("name");
-						if (!sName.isEmpty()) {
-							FingFilter* ffe = new FingFilter();
-							ffe->setName(sName);
-							if (eFilter.attribute("disabled").toLower() == "true")
-								ffe->setActive(false);
-							// Теперь ищем правила
-							QDomNode childNode2 = filterNode.firstChild();
-							while (!childNode2.isNull()) {
-								if (childNode2.toElement().tagName() == "rules") {
-									QDomNode ruleNode = childNode2.firstChild();
-									while (!ruleNode.isNull()) {
-										QDomElement eRule = ruleNode.toElement();
-										if (eRule.tagName() == "rule") {
-											// Грузим элемент правила
-											QString str1 = eRule.attribute("field").trimmed().toLower();
-											FingFilter::ParamRole nField = FingFilter::NoParamRole;
-											if (str1 == "name") {
-												nField = FingFilter::NameRole;
-											} else if (str1 == "type") {
-												nField = FingFilter::TypeRole;
-											} else if (str1 == "named-level") {
-												nField = FingFilter::NamedRole;
-											} else if (str1 == "dressed") {
-												nField = FingFilter::DressedRole;
-											} else if (str1 == "price") {
-												nField = FingFilter::PriceRole;
-											} else if (str1 == "count") {
-												nField = FingFilter::CountRole;
-											}
-											str1 = eRule.attribute("not");
-											bool fNot = false;
-											if (!str1.isEmpty())
-												fNot = true;
-											FingFilter::OperandRole nOperand = FingFilter::NoOperRole;
-											str1 = eRule.attribute("operand").trimmed().toLower();
-											if (str1 == "contains") {
-												nOperand = FingFilter::ContainsRole;
-											} else if (str1 == "equal") {
-												nOperand = FingFilter::EqualRole;
-											} else if (str1 == "above") {
-												nOperand = FingFilter::AboveRole;
-											} else if (str1 == "low") {
-												nOperand = FingFilter::LowRole;
-											}
-											str1 = eRule.attribute("action").trimmed().toLower();
-											FingFilter::ActionRole nAction = FingFilter::NoActionRole;
-											if (str1 == "yes") {
-												nAction = FingFilter::YesRole;
-											} else if (str1 == "no") {
-												nAction = FingFilter::NoRole;
-											} else if (str1 == "next") {
-												nAction = FingFilter::NextRole;
-											}
-											str1 = eRule.attribute("value");
-											ffe->appendRule(nField, fNot, nOperand, str1, nAction);
-										}
-										ruleNode = ruleNode.nextSibling();
-									}
-								}
-								childNode2 = childNode2.nextSibling();
-							}
-							//fingFilters.push_back(ff);
-							fingFiltersEx.push_back(ffe);
-						}
-					//}
+	QDomElement eFilters = eBackpack.firstChildElement("filters");
+	if (eFilters.isNull())
+		return;
+	QDomElement eFilter = eFilters.firstChildElement("filter");
+	while (!eFilter.isNull()) {
+		const QString sName = eFilter.attribute("name");
+		if (!sName.isEmpty()) {
+			FingFilter* ffe = new FingFilter();
+			ffe->setName(sName);
+			if (eFilter.attribute("disabled").toLower() == "true")
+				ffe->setActive(false);
+			// Теперь ищем правила
+			QDomElement eRules = eFilter.firstChildElement("rules");
+			if (!eRules.isNull()) {
+				QDomElement eRule = eRules.firstChildElement("rule");
+				while (!eRule.isNull()) {
+					// Грузим элемент правила
+					QString str1 = eRule.attribute("field").trimmed().toLower();
+					FingFilter::ParamRole nField = FingFilter::NoParamRole;
+					if (str1 == "name") {
+						nField = FingFilter::NameRole;
+					} else if (str1 == "type") {
+						nField = FingFilter::TypeRole;
+					} else if (str1 == "named-level") {
+						nField = FingFilter::NamedRole;
+					} else if (str1 == "dressed") {
+						nField = FingFilter::DressedRole;
+					} else if (str1 == "price") {
+						nField = FingFilter::PriceRole;
+					} else if (str1 == "count") {
+						nField = FingFilter::CountRole;
+					}
+					str1 = eRule.attribute("not");
+					bool fNot = !str1.isEmpty();
+					FingFilter::OperandRole nOperand = FingFilter::NoOperRole;
+					str1 = eRule.attribute("operand").trimmed().toLower();
+					if (str1 == "contains") {
+						nOperand = FingFilter::ContainsRole;
+					} else if (str1 == "equal") {
+						nOperand = FingFilter::EqualRole;
+					} else if (str1 == "above") {
+						nOperand = FingFilter::AboveRole;
+					} else if (str1 == "low") {
+						nOperand = FingFilter::LowRole;
+					}
+					str1 = eRule.attribute("action").trimmed().toLower();
+					FingFilter::ActionRole nAction = FingFilter::NoActionRole;
+					if (str1 == "yes") {
+						nAction = FingFilter::YesRole;
+					} else if (str1 == "no") {
+						nAction = FingFilter::NoRole;
+					} else if (str1 == "next") {
+						nAction = FingFilter::NextRole;
+					}
+					str1 = eRule.attribute("value");
+					ffe->appendRule(nField, fNot, nOperand, str1, nAction);
+					eRule = eRule.nextSiblingElement("rule");
 				}
-				filterNode = filterNode.nextSibling();
 			}
+			fingFiltersEx.push_back(ffe);
 		}
-		childNode1 = childNode1.nextSibling();
+		eFilter = eFilter.nextSiblingElement("filter");
 	}
 	emit filtersChanged();
 }
@@ -653,7 +630,7 @@ void Pers::setFingPrice(int iface, int row, int price)
 		return;
 	tpm->setPrice(row, price);
 	// Правим прайс
-	Thing *thg = tpm->getThingByRow(row);
+	const Thing *thg = tpm->getThingByRow(row);
 	if (!thg || !thg->isValid())
 		return;
 	int n_type = thg->type();
@@ -918,7 +895,7 @@ void Pers::endSetPersParams()
 	}
 }
 
-bool Pers::getIntParamValue(int paramId, int *paramValue)
+bool Pers::getIntParamValue(int paramId, int *paramValue) const
 {
 	if (paramId == VALUE_PERS_STATUS) {
 		*paramValue = persStatus;
@@ -943,7 +920,7 @@ bool Pers::getIntParamValue(int paramId, int *paramValue)
 	return true;
 }
 
-bool Pers::getStringParamValue(int paramId, QString *paramValue)
+bool Pers::getStringParamValue(int paramId, QString *paramValue) const
 {
 	if (paramId == VALUE_PERS_NAME) {
 		if (pers_name.isEmpty()) return false;
@@ -1051,13 +1028,54 @@ void Pers::removeThingsInterface(int index)
 /**
  * Возвращает указатель на модель по индексу интерфейса
  */
-QSortFilterProxyModel* Pers::getThingsModel(int index)
+QSortFilterProxyModel* Pers::getThingsModel(int index) const
 {
 	ThingsProxyModel* tpm = thingModels.value(index, NULL);
 	if (tpm) {
 		return tpm;
 	}
 	return NULL;
+}
+
+QHash<Pers::PersStatus, QString> Pers::statusStrings;
+
+QString Pers::getPersStatusString()
+{
+	if (Pers::statusStrings.size() == 0) {
+		// Таблица пуста, заполняем
+		Pers::statusStrings[Stand]            = QString::fromUtf8("Стоим...");
+		Pers::statusStrings[FightMultiSelect] = QString::fromUtf8("Тут идут бои...");
+		Pers::statusStrings[FightOpenBegin]   = QString::fromUtf8("В бою! (Открытый)");
+		Pers::statusStrings[FightCloseBegin]  = QString::fromUtf8("В бою! (Закрытый)");
+		Pers::statusStrings[FightFinish]      = QString::fromUtf8("Бой завершен!");
+		Pers::statusStrings[Miniforum]        = QString::fromUtf8("Минифорум");
+		Pers::statusStrings[SecretBefore]     = QString::fromUtf8("Перед тайником");
+		Pers::statusStrings[SecretGet]        = QString::fromUtf8("Грабим тайник :)");
+		Pers::statusStrings[ThingsList]       = QString::fromUtf8("Список вещей");
+		Pers::statusStrings[ThingIsTaken]     = QString::fromUtf8("Выбрана вещь");
+		Pers::statusStrings[PersInform]       = QString::fromUtf8("Информация о персонаже");
+		Pers::statusStrings[FightShow]        = QString::fromUtf8("Просмотр боя");
+		Pers::statusStrings[OtherPersPos]     = QString::fromUtf8("Осматриваемся");
+		Pers::statusStrings[TakeBefore]       = QString::fromUtf8("Будем брать завоеванное");
+		Pers::statusStrings[Take]             = QString::fromUtf8("Забираем завоеванное");
+		Pers::statusStrings[InKillersCup]     = QString::fromUtf8("Вас заказали");
+		Pers::statusStrings[KillerAttack]     = QString::fromUtf8("Нападение убийцы");
+		Pers::statusStrings[Yard]             = QString::fromUtf8("Во дворе");
+		Pers::statusStrings[MasterRoom1]      = QString::fromUtf8("Станок");
+		Pers::statusStrings[MasterRoom2]      = QString::fromUtf8("Малая мастерская");
+		Pers::statusStrings[MasterRoom3]      = QString::fromUtf8("Мастерская");
+		Pers::statusStrings[DealerBuy]        = QString::fromUtf8("Покупка у торговца");
+		Pers::statusStrings[BuyOk]            = QString::fromUtf8("Куплено");
+		Pers::statusStrings[DealerSale]       = QString::fromUtf8("Продажа торговцу");
+		Pers::statusStrings[HelpMenu]         = QString::fromUtf8("Меню по 09");
+		Pers::statusStrings[TopList]          = QString::fromUtf8("Сильнейшие персонажи");
+		Pers::statusStrings[ServerStatistic1] = QString::fromUtf8("Статистика игры");
+		Pers::statusStrings[ServerStatistic2] = QString::fromUtf8("Статистика по странам");
+		Pers::statusStrings[RealEstate]       = QString::fromUtf8("Ваша недвижимость");
+		Pers::statusStrings[Warehouse]        = QString::fromUtf8("Склад");
+		Pers::statusStrings[WarehouseShelf]   = QString::fromUtf8("Полка с вещами на складе");
+	}
+	return Pers::statusStrings.value(persStatus, "???");
 }
 
 void Pers::doWatchRestTime()
