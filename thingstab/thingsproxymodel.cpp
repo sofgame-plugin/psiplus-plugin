@@ -63,22 +63,26 @@ bool ThingsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
 	int col_role = left.column();
 	bool b_res = false;
 	switch (col_role) {
-		case ThingsModel::NumberRole:
-			if (left_thg->number() < right_thg->number())
-				b_res = true;
-			break;
-		case ThingsModel::CountRole:
-			if (left_thg->count() < right_thg->count())
-				b_res = true;
-			break;
-		case ThingsModel::PriceRole:
-			if (left_thg->price() < right_thg->price())
-				b_res = true;
-			break;
-		case ThingsModel::NameRole:
-			if (left_thg->name().toLower() < right_thg->name().toLower())
-				b_res = true;
-			break;
+	case ThingsModel::NumberRole:
+		if (left_thg->number() < right_thg->number())
+			b_res = true;
+		break;
+	case ThingsModel::CountRole:
+		if (left_thg->count() < right_thg->count())
+			b_res = true;
+		break;
+	case ThingsModel::PriceRole:
+		if (left_thg->price() < right_thg->price())
+			b_res = true;
+		break;
+	case ThingsModel::NameRole:
+		if (left_thg->name().toLower() < right_thg->name().toLower())
+			b_res = true;
+		break;
+	case ThingsModel::TypeRole:
+		if (left_thg->toString(Thing::ShowType).toLower() < right_thg->toString(Thing::ShowType).toLower())
+			b_res = true;
+		break;
 	}
 	return b_res;
 }
