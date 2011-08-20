@@ -42,13 +42,14 @@ class Pers: public QObject
 
 public:
 	enum PersStatus {
-		NotKnow, Stand,
-		FightMultiSelect, FightOpenBegin, FightCloseBegin, FightFinish,
-		Miniforum, SecretBefore, SecretGet, ThingsList, PersInform,
-		FightShow, OtherPersPos, TakeBefore, Take, KillerAttack,
-		Yard, MasterRoom1, MasterRoom2, MasterRoom3, DealerBuy,
-		DealerSale, BuyOk, HelpMenu, TopList, ServerStatistic1, ServerStatistic2,
-		RealEstate, Warehouse, WarehouseShelf, InKillersCup, ThingIsTaken
+		StatusNotKnow, StatusStand,
+		StatusFightMultiSelect, StatusFightOpenBegin, StatusFightCloseBegin, StatusFightFinish,
+		StatusMiniforum, StatusSecretBefore, StatusSecretGet, StatusThingsList, StatusPersInform,
+		StatusFightShow, StatusOtherPersPos, StatusTakeBefore, StatusTake, StatusKillerAttack,
+		StatusYard, StatusMasterRoom1, StatusMasterRoom2, StatusMasterRoom3, StatusDealerBuy,
+		StatusDealerSale, StatusBuyOk, StatusHelpMenu, StatusTopList,
+		StatusServerStatistic1, StatusServerStatistic2, StatusRealEstate, StatusWarehouse,
+		StatusWarehouseShelf, StatusInKillersCup, StatusThingIsTaken, StatusAtHome
 	};
 	struct price_item {
 		int      type;

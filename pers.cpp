@@ -37,7 +37,7 @@ Pers::Pers(QObject *parent):
 	pers_name(""),
 	beginSetPersParamsFlag(false),
 	persLevelValue(-1), persLevelValue_(-1), setPersLevelValueFlag(false),
-	persStatus(NotKnow), persStatus_(NotKnow), setPersStatusFlag(false),
+	persStatus(StatusNotKnow), persStatus_(StatusNotKnow), setPersStatusFlag(false),
 	persHealthMax(QINT32_MIN), persHealthMax_(QINT32_MIN), setPersHealthMaxFlag(false),
 	persHealthCurr(QINT32_MIN), persHealthCurr_(QINT32_MIN), setPersHealthCurrFlag(false),
 	persEnergyMax(QINT32_MIN), persEnergyMax_(QINT32_MIN), setPersEnergyMaxFlag(false),
@@ -123,7 +123,7 @@ void Pers::init()
 	// --
 	while (!fingFiltersEx.isEmpty())
 		delete fingFiltersEx.takeFirst();
-	persStatus = NotKnow;
+	persStatus = StatusNotKnow;
 	persHealthCurr = QINT32_MIN;
 	persHealthMax = QINT32_MIN;
 	persEnergyCurr = QINT32_MIN;
@@ -797,7 +797,7 @@ void Pers::endSetPersParams()
 	if (settingWatchRestHealthEnergy >= 2) {
 		if (setPersEnergyCurrFlag || setPersHealthCurrFlag || setPersHealthMaxFlag || setPersEnergyMaxFlag) {
 			// Простое периодическое отслеживание здоровья и энергии
-			if (persStatus == Stand) {
+			if (persStatus == StatusStand) {
 				// Запускаем таймер, если неполное здоровье или энергия
 				if (persHealthCurr < persHealthMax || persEnergyCurr < persEnergyMax) {
 					if (watchRestTimer->isActive()) watchRestTimer->stop();
@@ -835,7 +835,7 @@ void Pers::endSetPersParams()
 					if (watchHealthSpeedDelta == 0 && watchHealthStartValue == QINT32_MIN) {
 						// У нас нет стартового значения здоровья и нет и замеров скорости,
 						// надо запускать принудительный замер
-						if (persStatus == Stand) {
+						if (persStatus == StatusStand) {
 							if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
 							if (persHealthCurr < persHealthMax) {
 								watchHealthStartValue = persHealthCurr;
@@ -1043,44 +1043,45 @@ QString Pers::getPersStatusString()
 {
 	if (Pers::statusStrings.size() == 0) {
 		// Таблица пуста, заполняем
-		Pers::statusStrings[Stand]            = QString::fromUtf8("Стоим...");
-		Pers::statusStrings[FightMultiSelect] = QString::fromUtf8("Тут идут бои...");
-		Pers::statusStrings[FightOpenBegin]   = QString::fromUtf8("В бою! (Открытый)");
-		Pers::statusStrings[FightCloseBegin]  = QString::fromUtf8("В бою! (Закрытый)");
-		Pers::statusStrings[FightFinish]      = QString::fromUtf8("Бой завершен!");
-		Pers::statusStrings[Miniforum]        = QString::fromUtf8("Минифорум");
-		Pers::statusStrings[SecretBefore]     = QString::fromUtf8("Перед тайником");
-		Pers::statusStrings[SecretGet]        = QString::fromUtf8("Грабим тайник :)");
-		Pers::statusStrings[ThingsList]       = QString::fromUtf8("Список вещей");
-		Pers::statusStrings[ThingIsTaken]     = QString::fromUtf8("Выбрана вещь");
-		Pers::statusStrings[PersInform]       = QString::fromUtf8("Информация о персонаже");
-		Pers::statusStrings[FightShow]        = QString::fromUtf8("Просмотр боя");
-		Pers::statusStrings[OtherPersPos]     = QString::fromUtf8("Осматриваемся");
-		Pers::statusStrings[TakeBefore]       = QString::fromUtf8("Будем брать завоеванное");
-		Pers::statusStrings[Take]             = QString::fromUtf8("Забираем завоеванное");
-		Pers::statusStrings[InKillersCup]     = QString::fromUtf8("Вас заказали");
-		Pers::statusStrings[KillerAttack]     = QString::fromUtf8("Нападение убийцы");
-		Pers::statusStrings[Yard]             = QString::fromUtf8("Во дворе");
-		Pers::statusStrings[MasterRoom1]      = QString::fromUtf8("Станок");
-		Pers::statusStrings[MasterRoom2]      = QString::fromUtf8("Малая мастерская");
-		Pers::statusStrings[MasterRoom3]      = QString::fromUtf8("Мастерская");
-		Pers::statusStrings[DealerBuy]        = QString::fromUtf8("Покупка у торговца");
-		Pers::statusStrings[BuyOk]            = QString::fromUtf8("Куплено");
-		Pers::statusStrings[DealerSale]       = QString::fromUtf8("Продажа торговцу");
-		Pers::statusStrings[HelpMenu]         = QString::fromUtf8("Меню по 09");
-		Pers::statusStrings[TopList]          = QString::fromUtf8("Сильнейшие персонажи");
-		Pers::statusStrings[ServerStatistic1] = QString::fromUtf8("Статистика игры");
-		Pers::statusStrings[ServerStatistic2] = QString::fromUtf8("Статистика по странам");
-		Pers::statusStrings[RealEstate]       = QString::fromUtf8("Ваша недвижимость");
-		Pers::statusStrings[Warehouse]        = QString::fromUtf8("Склад");
-		Pers::statusStrings[WarehouseShelf]   = QString::fromUtf8("Полка с вещами на складе");
+		Pers::statusStrings[StatusStand]            = QString::fromUtf8("Стоим...");
+		Pers::statusStrings[StatusFightMultiSelect] = QString::fromUtf8("Тут идут бои...");
+		Pers::statusStrings[StatusFightOpenBegin]   = QString::fromUtf8("В бою! (Открытый)");
+		Pers::statusStrings[StatusFightCloseBegin]  = QString::fromUtf8("В бою! (Закрытый)");
+		Pers::statusStrings[StatusFightFinish]      = QString::fromUtf8("Бой завершен!");
+		Pers::statusStrings[StatusMiniforum]        = QString::fromUtf8("Минифорум");
+		Pers::statusStrings[StatusSecretBefore]     = QString::fromUtf8("Перед тайником");
+		Pers::statusStrings[StatusSecretGet]        = QString::fromUtf8("Грабим тайник :)");
+		Pers::statusStrings[StatusThingsList]       = QString::fromUtf8("Список вещей");
+		Pers::statusStrings[StatusThingIsTaken]     = QString::fromUtf8("Выбрана вещь");
+		Pers::statusStrings[StatusPersInform]       = QString::fromUtf8("Информация о персонаже");
+		Pers::statusStrings[StatusFightShow]        = QString::fromUtf8("Просмотр боя");
+		Pers::statusStrings[StatusOtherPersPos]     = QString::fromUtf8("Осматриваемся");
+		Pers::statusStrings[StatusTakeBefore]       = QString::fromUtf8("Будем брать завоеванное");
+		Pers::statusStrings[StatusTake]             = QString::fromUtf8("Забираем завоеванное");
+		Pers::statusStrings[StatusInKillersCup]     = QString::fromUtf8("Вас заказали");
+		Pers::statusStrings[StatusKillerAttack]     = QString::fromUtf8("Нападение убийцы");
+		Pers::statusStrings[StatusYard]             = QString::fromUtf8("Во дворе");
+		Pers::statusStrings[StatusMasterRoom1]      = QString::fromUtf8("Станок");
+		Pers::statusStrings[StatusMasterRoom2]      = QString::fromUtf8("Малая мастерская");
+		Pers::statusStrings[StatusMasterRoom3]      = QString::fromUtf8("Мастерская");
+		Pers::statusStrings[StatusDealerBuy]        = QString::fromUtf8("Покупка у торговца");
+		Pers::statusStrings[StatusBuyOk]            = QString::fromUtf8("Куплено");
+		Pers::statusStrings[StatusDealerSale]       = QString::fromUtf8("Продажа торговцу");
+		Pers::statusStrings[StatusHelpMenu]         = QString::fromUtf8("Меню по 09");
+		Pers::statusStrings[StatusTopList]          = QString::fromUtf8("Сильнейшие персонажи");
+		Pers::statusStrings[StatusServerStatistic1] = QString::fromUtf8("Статистика игры");
+		Pers::statusStrings[StatusServerStatistic2] = QString::fromUtf8("Статистика по странам");
+		Pers::statusStrings[StatusRealEstate]       = QString::fromUtf8("Ваша недвижимость");
+		Pers::statusStrings[StatusWarehouse]        = QString::fromUtf8("Склад");
+		Pers::statusStrings[StatusWarehouseShelf]   = QString::fromUtf8("Полка с вещами на складе");
+		Pers::statusStrings[StatusAtHome]           = QString::fromUtf8("Дома");
 	}
 	return Pers::statusStrings.value(persStatus, "???");
 }
 
 void Pers::doWatchRestTime()
 {
-	if (persStatus == Stand) {
+	if (persStatus == StatusStand) {
 		QString str1 = "0";
 		PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
 	}
@@ -1089,7 +1090,7 @@ void Pers::doWatchRestTime()
 void Pers::doWatchHealthRestTime()
 {
 	if (settingWatchRestHealthEnergy == 1 && watchHealthSpeedDelta == 0) {
-		if (persStatus == Stand) {
+		if (persStatus == StatusStand) {
 			QString str1 = "0";
 			PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
 		}
