@@ -79,8 +79,10 @@ public:
 	void setFingPrice(int, int, int);
 	void beginSetPersParams();
 	void setPersParams(int, int, int);
+	void setPersParams(int, int, long long);
 	void endSetPersParams();
 	bool getIntParamValue(int, int*) const;
+	bool getLongParamValue(int, long long*) const;
 	bool getStringParamValue(int, QString*) const;
 	void setSetting(int, int);
 	int  getThingsInterface();
@@ -93,14 +95,14 @@ private:
 	QString pers_name;
 	bool beginSetPersParamsFlag;
 	int  persLevelValue; int persLevelValue_; bool setPersLevelValueFlag;
+	long long  persExperienceMax; long long persExperienceMax_; bool setPersExperienceMaxFlag;
+	long long  persExperienceCurr; long long persExperienceCurr_; bool setPersExperienceCurrFlag;
 	PersStatus  persStatus; PersStatus  persStatus_; bool setPersStatusFlag;
 	int  persHealthMax; int persHealthMax_; bool setPersHealthMaxFlag;
 	int  persHealthCurr; int persHealthCurr_; bool setPersHealthCurrFlag;
 	int  persEnergyMax; int persEnergyMax_; bool setPersEnergyMaxFlag;
 	int  persEnergyCurr; int persEnergyCurr_; bool setPersEnergyCurrFlag;
 	bool setPersLevelFlag;
-	bool setPersExperienceMaxFlag;
-	bool setPersExperienceCurrFlag;
 	bool loadingFings;
 	bool fingChanged;
 	int  fingsPos;

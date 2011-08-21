@@ -255,7 +255,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	//int nParamLine = -1;
 	bool fName = false; QString sName = 0;
 	bool fLevel = false; int nLevel = 0;
-	bool fExperience = false; qint64 nExperience = 0; qint64 nExperienceFull = 0;
+	bool fExperience = false; long long nExperience = 0; long long nExperienceFull = 0;
 	bool fHealth = false; int nHealthC = 0; int nHealthF = 0;
 	bool fPower = false; int nPowerC = 0; int nPowerF = 0;
 	bool fDropMoneys = false; int nDropMoneys = 0;
@@ -312,7 +312,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				int nLevel = -1;
 				int nHealthCurr = QINT32_MIN; int nHealthMax = QINT32_MIN;
 				int nEnergyCurr = QINT32_MIN; int nEnergyMax = QINT32_MIN;
-				qint64 nExperienceCurr = -1; qint64 nExperienceRemain = -1; bool fExperienceRemain = false;
+				long long nExperienceCurr = -1; long long nExperienceRemain = -1; bool fExperienceRemain = false;
 				int nPower1 = QINT32_MIN; int nPower2 = QINT32_MIN; bool fPower = false;
 				int nDext1 = QINT32_MIN; int nDext2 = QINT32_MIN; bool fDext = false;
 				int nIntell1 = QINT32_MIN; int nIntell2 = QINT32_MIN; bool fIntell = false;
@@ -794,7 +794,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 								sMessage = aMessage.at(i).trimmed();
 								if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 									// Берем опыт, который дали в конце боя
-									statExperienceDropCount += experienceDropReg.cap(1).toInt();
+									statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
 									fExperienceDrop = true;
 								}
 							}
@@ -851,13 +851,13 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			} else if (nPersStatus == Pers::StatusSecretGet || nPersStatus == Pers::StatusTake) {
 				if (experienceDropReg2.indexIn(sMessage, 0) != -1) {
 					// Берем опыт, который дали в тайнике
-					statExperienceDropCount += experienceDropReg2.cap(1).toInt();
+					statExperienceDropCount += experienceDropReg2.cap(1).toLongLong();
 					fExperienceDrop = true;
 				}
 			} else if (nPersStatus != Pers::StatusFightFinish) {
 				if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 					// Найден опыт, но не в бою (У Элементаля например)
-					statExperienceDropCount += experienceDropReg.cap(1).toInt();
+					statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
 					fExperienceDrop = true;
 				}
 			}
@@ -925,16 +925,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	}
 	// Отправляем опыт
 	if (fExperience) {
-		if (statExperienceFull == -1 || statExperienceFull != nExperienceFull) {
-			statExperienceFull = nExperienceFull;
-			valueChanged(VALUE_EXPERIENCE_MAX, TYPE_INTEGER_FULL, nExperienceFull);
-			persParamChanged();
-		}
-		if (statExperience == -1 || statExperience != nExperience) {
-			statExperience = nExperience;
-			valueChanged(VALUE_EXPERIENCE_CURR, TYPE_INTEGER_FULL, nExperience);
-			persParamChanged();
-		}
+		Pers *pers = Pers::instance();
+		pers->setPersParams(VALUE_EXPERIENCE_MAX, TYPE_LONGLONG_FULL, nExperienceFull);
+		pers->setPersParams(VALUE_EXPERIENCE_CURR, TYPE_LONGLONG_FULL, nExperience);
 	}
 	// Сохраняем и отправляем текущий статус персонажа
 	if (persStatus != nPersStatus) {
@@ -981,7 +974,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	}
 	// Отправляем упавший опыт
 	if (fExperienceDrop) {
-		valueChanged(VALUE_EXPERIENCE_DROP_COUNT, TYPE_INTEGER_FULL, statExperienceDropCount);
+		valueChanged(VALUE_EXPERIENCE_DROP_COUNT, TYPE_LONGLONG_FULL, 0);
 		statisticsChanged();
 	}
 	// Отправляем значение таймаута
@@ -1137,29 +1130,21 @@ bool PluginCore::getIntValue(int valueId, int* valuePtr)
 		*valuePtr = statFightsCount;
 		return true;
 	}
-	if (valueId == VALUE_EXPERIENCE_CURR) {
-		if (statExperience == -1) {
-			return false;
-		}
-		*valuePtr = statExperience;
-		return true;
-	}
-	if (valueId == VALUE_EXPERIENCE_MAX) {
-		if (statExperienceFull == -1) {
-			return false;
-		}
-		*valuePtr = statExperienceFull;
-		return true;
-	}
-	if (valueId == VALUE_EXPERIENCE_DROP_COUNT) {
-		*valuePtr = statExperienceDropCount;
-		return true;
-	}
 	if (valueId == VALUE_KILLED_ENEMIES) {
 		*valuePtr = statKilledEnemies;
 		return true;
 	}
 	return false;
+}
+
+bool PluginCore::getLongValue(int valueId, long long *valuePtr) const
+{
+	if (valueId == VALUE_EXPERIENCE_DROP_COUNT) {
+		*valuePtr = statExperienceDropCount;
+	} else {
+		return false;
+	}
+	return true;
 }
 
 bool PluginCore::getTextValue(int valueId, QString* valuePtr)
@@ -1227,7 +1212,7 @@ void PluginCore::resetStatistic(int valueId)
 		valueChanged(VALUE_LAST_CHAT_JID, TYPE_NA, 0);
 	} else if (valueId == VALUE_EXPERIENCE_DROP_COUNT) {
 		statExperienceDropCount = 0;
-		valueChanged(VALUE_EXPERIENCE_DROP_COUNT, TYPE_INTEGER_FULL, statExperienceDropCount);
+		valueChanged(VALUE_EXPERIENCE_DROP_COUNT, TYPE_LONGLONG_FULL, 0);
 	} else if (valueId == VALUE_KILLED_ENEMIES) {
 		statKilledEnemies = 0;
 		valueChanged(VALUE_KILLED_ENEMIES, TYPE_INTEGER_FULL, statKilledEnemies);
@@ -1511,46 +1496,48 @@ bool PluginCore::savePersStatus()
 	QDomElement eNewAccount = xmlDoc.createElement("account");
 	eNewAccount.setAttribute("jid", accJid);
 	QDomElement domElement;
+	Pers *pers = Pers::instance();
 	if (settingSavePersParam) {
 		QDomElement eMain = xmlDoc.createElement("main");
 		eNewAccount.appendChild(eMain);
-		if (!Pers::instance()->name().isEmpty()) {
+		if (!pers->name().isEmpty()) {
 			domElement = xmlDoc.createElement("pers-name");
-			domElement.appendChild(xmlDoc.createTextNode(Pers::instance()->name()));
+			domElement.appendChild(xmlDoc.createTextNode(pers->name()));
 			eMain.appendChild(domElement);
 		}
 		int num1;
-		if (Pers::instance()->getIntParamValue(VALUE_PERS_LEVEL, &num1)) {
+		if (pers->getIntParamValue(VALUE_PERS_LEVEL, &num1)) {
 			domElement = xmlDoc.createElement("pers-level");
 			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
 			eMain.appendChild(domElement);
 		}
-		if (statExperience != -1) {
+		long long experience;
+		if (pers->getLongParamValue(VALUE_EXPERIENCE_CURR, &experience)) {
 			domElement = xmlDoc.createElement("pers-experience-curr");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statExperience)));
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(experience)));
 			eMain.appendChild(domElement);
 		}
-		if (statExperienceFull != -1) {
+		if (pers->getLongParamValue(VALUE_EXPERIENCE_MAX, &experience)) {
 			domElement = xmlDoc.createElement("pers-experience-max");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statExperienceFull)));
+			domElement.appendChild(xmlDoc.createTextNode(QString::number(experience)));
 			eMain.appendChild(domElement);
 		}
-		if (Pers::instance()->getIntParamValue(VALUE_HEALTH_CURR, &num1)) {
+		if (pers->getIntParamValue(VALUE_HEALTH_CURR, &num1)) {
 			domElement = xmlDoc.createElement("pers-health-curr");
 			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
 			eMain.appendChild(domElement);
 		}
-		if (Pers::instance()->getIntParamValue(VALUE_HEALTH_MAX, &num1)) {
+		if (pers->getIntParamValue(VALUE_HEALTH_MAX, &num1)) {
 			domElement = xmlDoc.createElement("pers-health-max");
 			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
 			eMain.appendChild(domElement);
 		}
-		if (Pers::instance()->getIntParamValue(VALUE_ENERGY_CURR, &num1)) {
+		if (pers->getIntParamValue(VALUE_ENERGY_CURR, &num1)) {
 			domElement = xmlDoc.createElement("pers-energy-curr");
 			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
 			eMain.appendChild(domElement);
 		}
-		if (Pers::instance()->getIntParamValue(VALUE_ENERGY_MAX, &num1)) {
+		if (pers->getIntParamValue(VALUE_ENERGY_MAX, &num1)) {
 			domElement = xmlDoc.createElement("pers-energy-max");
 			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
 			eMain.appendChild(domElement);
@@ -1615,13 +1602,13 @@ bool PluginCore::savePersStatus()
 			eStat.appendChild(domElement);
 		}
 	}
-	if (Pers::instance() && settingSaveBackpack) {
+	if (pers && settingSaveBackpack) {
 		// Сохраняем данные о вещах
 		QDomElement eBackpack = xmlDoc.createElement("backpack");
 		eNewAccount.appendChild(eBackpack);
-		QDomElement eThings = Pers::instance()->exportThingsToDomElement(xmlDoc);
+		QDomElement eThings = pers->exportThingsToDomElement(xmlDoc);
 		eBackpack.appendChild(eThings);
-		QDomElement ePrice = Pers::instance()->exportPriceToDomElement(xmlDoc);
+		QDomElement ePrice = pers->exportPriceToDomElement(xmlDoc);
 		if (!ePrice.isNull()) {
 			eBackpack.appendChild(ePrice);
 		}
@@ -1899,7 +1886,6 @@ bool PluginCore::loadPersStatus()
 	lastGameJid = "";
 	lastChatJid = "";
 	persStatus = Pers::StatusNotKnow;
-	statExperience = -1; statExperienceFull = -1;
 	statMessagesCount = 0;
 	statMoneysDropCount = 0;
 	statFightsCount = 0;
@@ -1926,7 +1912,8 @@ bool PluginCore::loadPersStatus()
 	QDomNode childStatNode;
 	QString str1, sTagName;
 
-	Pers::instance()->beginSetPersParams();
+	Pers *pers = Pers::instance();
+	pers->beginSetPersParams();
 	while (!childStatusNode.isNull()) {
 		if (childStatusNode.toElement().tagName() == "account" && childStatusNode.toElement().attribute("jid") == accJid) {
 			QDomNode childAccountNode = childStatusNode.firstChild();
@@ -1934,28 +1921,26 @@ bool PluginCore::loadPersStatus()
 				if (settingSavePersParam && childAccountNode.toElement().tagName() == "main") {
 					if (settingSavePersParam) {
 						childMainNode = childAccountNode.firstChild();
-						Pers::instance()->beginSetPersParams();
 						while (!childMainNode.isNull()) {
 							if (childMainNode.toElement().tagName() == "pers-name") {
-								Pers::instance()->setName(getTextFromNode(&childMainNode));
+								pers->setName(getTextFromNode(&childMainNode));
 							} else if (childMainNode.toElement().tagName() == "pers-level") {
-								Pers::instance()->setPersParams(VALUE_PERS_LEVEL, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(VALUE_PERS_LEVEL, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-experience-curr") {
-								statExperience = getTextFromNode(&childMainNode).toInt();
+								pers->setPersParams(VALUE_EXPERIENCE_CURR, TYPE_LONGLONG_FULL, getTextFromNode(&childMainNode).toLongLong());
 							} else if (childMainNode.toElement().tagName() == "pers-experience-max") {
-								statExperienceFull = getTextFromNode(&childMainNode).toInt();
+								pers->setPersParams(VALUE_EXPERIENCE_MAX, TYPE_LONGLONG_FULL, getTextFromNode(&childMainNode).toLongLong());
 							} else if (childMainNode.toElement().tagName() == "pers-health-curr") {
-								Pers::instance()->setPersParams(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-health-max") {
-								Pers::instance()->setPersParams(VALUE_HEALTH_MAX, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(VALUE_HEALTH_MAX, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-energy-curr") {
-								Pers::instance()->setPersParams(VALUE_ENERGY_CURR, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(VALUE_ENERGY_CURR, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-energy-max") {
-								Pers::instance()->setPersParams(VALUE_ENERGY_MAX, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(VALUE_ENERGY_MAX, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							}
 							childMainNode = childMainNode.nextSibling();
 						}
-						Pers::instance()->endSetPersParams();
 					}
 				} else if (settingSaveStat && childAccountNode.toElement().tagName() == "statistic") {
 					if (settingSaveStat) {
@@ -1981,7 +1966,7 @@ bool PluginCore::loadPersStatus()
 							} else if (sTagName == "fing-drop-last") {
 								statFingDropLast = getTextFromNode(&childStatNode);
 							} else if (sTagName == "experience-drop-count") {
-								statExperienceDropCount = getTextFromNode(&childStatNode).toInt();
+								statExperienceDropCount = getTextFromNode(&childStatNode).toLongLong();
 							} else if (sTagName == "killed-enemies") {
 								statKilledEnemies = getTextFromNode(&childStatNode).toInt();
 							}
@@ -1992,7 +1977,7 @@ bool PluginCore::loadPersStatus()
 					// Обрабатываем данные о вещах
 					if (settingSaveBackpack) {
 						QDomElement el = childAccountNode.toElement();
-						Pers::instance()->loadThingsFromDomElement(el);
+						pers->loadThingsFromDomElement(el);
 					}
 				}
 				childAccountNode = childAccountNode.nextSibling();
@@ -2000,7 +1985,7 @@ bool PluginCore::loadPersStatus()
 		}
 		childStatusNode = childStatusNode.nextSibling();
 	}
-	Pers::instance()->endSetPersParams();
+	pers->endSetPersParams();
 	return true;
 }
 
@@ -2418,7 +2403,8 @@ void PluginCore::getStatistics(QString* commandPtr)
 			stat_str.append(NA_TEXT);
 		}
 		stat_str.append(QString::fromUtf8("\nПолученный опыт: "));
-		if (getIntValue(VALUE_EXPERIENCE_DROP_COUNT, &i)) {
+		long long i2;
+		if (getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &i2)) {
 			stat_str.append(numToStr(i, "'"));
 		} else {
 			stat_str.append(NA_TEXT);

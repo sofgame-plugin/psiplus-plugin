@@ -37,14 +37,14 @@ Pers::Pers(QObject *parent):
 	pers_name(""),
 	beginSetPersParamsFlag(false),
 	persLevelValue(-1), persLevelValue_(-1), setPersLevelValueFlag(false),
+	persExperienceMax(-1), persExperienceMax_(-1), setPersExperienceMaxFlag(false),
+	persExperienceCurr(-1), persExperienceCurr_(-1), setPersExperienceCurrFlag(false),
 	persStatus(StatusNotKnow), persStatus_(StatusNotKnow), setPersStatusFlag(false),
 	persHealthMax(QINT32_MIN), persHealthMax_(QINT32_MIN), setPersHealthMaxFlag(false),
 	persHealthCurr(QINT32_MIN), persHealthCurr_(QINT32_MIN), setPersHealthCurrFlag(false),
 	persEnergyMax(QINT32_MIN), persEnergyMax_(QINT32_MIN), setPersEnergyMaxFlag(false),
 	persEnergyCurr(QINT32_MIN), persEnergyCurr_(QINT32_MIN), setPersEnergyCurrFlag(false),
 	setPersLevelFlag(false),
-	setPersExperienceMaxFlag(false),
-	setPersExperienceCurrFlag(false),
 	loadingFings(false),
 	fingChanged(false),
 	fingsPos(0), fingsSize(0),
@@ -673,7 +673,7 @@ void Pers::beginSetPersParams()
 /**
  * Устанавливает основные параметры персонажа
  */
-void Pers::setPersParams(int valueId, int valueType, int value)
+void Pers::setPersParams(int valueId, int valueType, int value) // TODO Переписать на массив!
 {
 	if (!beginSetPersParamsFlag) return;
 	if (valueType == TYPE_INTEGER_FULL) {
@@ -716,6 +716,30 @@ void Pers::setPersParams(int valueId, int valueType, int value)
 		}
 	}
 }
+
+/**
+ * Устанавливает основные параметры персонажа
+ */
+void Pers::setPersParams(int valueId, int valueType, long long value) // TODO Переписать на массив!
+{
+	if (!beginSetPersParamsFlag) return;
+	if (valueType == TYPE_LONGLONG_FULL) {
+		if (valueId == VALUE_EXPERIENCE_MAX) {
+			if (persExperienceMax != value) {
+				// Изменился максимальный опыт персонажа
+				setPersExperienceMaxFlag = true;
+				persExperienceMax_ = value;
+			}
+		} else if (valueId == VALUE_EXPERIENCE_CURR) {
+			if (persExperienceCurr != value) {
+				// Изменился текущий опыт персонажа
+				setPersExperienceCurrFlag = true;
+				persExperienceCurr_ = value;
+			}
+		}
+	}
+}
+
 /**
  * Фиксация изменений параметров персонажа
  */
@@ -753,6 +777,8 @@ void Pers::endSetPersParams()
 	if (setPersEnergyMaxFlag) persEnergyMax = persEnergyMax_;
 	if (setPersEnergyCurrFlag) persEnergyCurr = persEnergyCurr_;
 	if (setPersLevelValueFlag) persLevelValue = persLevelValue_;
+	if (setPersExperienceMaxFlag) persExperienceMax = persExperienceMax_;
+	if (setPersExperienceCurrFlag) persExperienceCurr = persExperienceCurr_;
 	// Фиксируем изменения на сигналах
 	// и реагируем на изменения согласно настроек
 	if (setPersStatusFlag) {
@@ -794,6 +820,21 @@ void Pers::endSetPersParams()
 			emit persParamChanged(VALUE_PERS_LEVEL, TYPE_NA, 0);
 		}
 	}
+	if (setPersExperienceMaxFlag) {
+		if (persExperienceMax != -1) {
+			emit persParamChanged(VALUE_EXPERIENCE_MAX, TYPE_LONGLONG_FULL, 0);
+		} else {
+			emit persParamChanged(VALUE_EXPERIENCE_MAX, TYPE_NA, 0);
+		}
+	}
+	if (setPersExperienceCurrFlag) {
+		if (persExperienceCurr != -1) {
+			emit persParamChanged(VALUE_EXPERIENCE_CURR, TYPE_LONGLONG_FULL, 0);
+		} else {
+			emit persParamChanged(VALUE_EXPERIENCE_CURR, TYPE_NA, 0);
+		}
+	}
+	//--
 	if (settingWatchRestHealthEnergy >= 2) {
 		if (setPersEnergyCurrFlag || setPersHealthCurrFlag || setPersHealthMaxFlag || setPersEnergyMaxFlag) {
 			// Простое периодическое отслеживание здоровья и энергии
@@ -914,6 +955,22 @@ bool Pers::getIntParamValue(int paramId, int *paramValue) const
 	} else if (paramId == VALUE_PERS_LEVEL) {
 		if (persLevelValue == -1) return false;
 		*paramValue = persLevelValue;
+	} else {
+		return false;
+	}
+	return true;
+}
+
+bool Pers::getLongParamValue(int paramId, long long *paramValue) const
+{
+	if (paramId == VALUE_EXPERIENCE_MAX) {
+		if (persExperienceMax == -1)
+			return false;
+		*paramValue = persExperienceMax;
+	} else if (paramId == VALUE_EXPERIENCE_CURR) {
+		if (persExperienceCurr == -1)
+			return false;
+		*paramValue = persExperienceCurr;
 	} else {
 		return false;
 	}

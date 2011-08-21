@@ -97,6 +97,8 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void scrollMapToPersPosition();
 		void setCurrentHealth(int);
 		void setCurrentEnergy(int);
+		void setCurrentExperience(long long);
+		void setMaximumExperience(long long);
 		void showThingsSummary();
 
 	private:
@@ -132,6 +134,8 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		bool autoEnterMode;
 		int  thingsIface;
 		QString lastMapForMoveElement; // Запоминается имя карты последнего переноса элемента
+		long long experienceMax; // Нужно для расчета делителя в QProgressBar
+		long long experienceCurr;
 
 	public slots:
 		void valueChanged(int eventId, int valueType, int value); // Приходят сообщения и событиях, часто об обновлении статистики.

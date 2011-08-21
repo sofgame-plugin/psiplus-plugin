@@ -31,8 +31,10 @@
 // Типы данных, отправляемых окну
 #define TYPE_INTEGER_INC                1
 #define TYPE_INTEGER_FULL               2
-#define TYPE_STRING                     3
-#define TYPE_NA                         4
+#define TYPE_LONGLONG_INC               3
+#define TYPE_LONGLONG_FULL              4
+#define TYPE_STRING                     5
+#define TYPE_NA                         6
 
 //--------------------
 #define STAT_PARAMS_COUNT               11

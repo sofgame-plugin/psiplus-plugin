@@ -52,6 +52,7 @@ class PluginCore: public QObject
 		void setAccountStatus(int status);
 		void setGameJidStatus(int, qint32);
 		bool getIntValue(int valueId, int* valuePtr);
+		bool getLongValue(int valueId, long long *valuePtr) const;
 		bool getTextValue(int valueId, QString* valuePtr);
 		void resetStatistic(int valueId);
 		bool setIntSettingValue(qint32 settingId, int settingValue);
@@ -70,15 +71,13 @@ class PluginCore: public QObject
 		QString lastChatJid;
 		int statMessagesCount;
 		int persStatus;
-		int statExperience;
-		int statExperienceFull;
 		int statMoneysDropCount;
 		int statFightsCount;
 		int statFightDamageMin;
 		int statFightDamageMax;
 		int statFingsDropCount;
 		QString statFingDropLast;
-		int statExperienceDropCount;
+		long long statExperienceDropCount;
 		int statKilledEnemies;
 		QString settingPersName;
 		QVector<quint32> settingSlots;

@@ -281,6 +281,8 @@ void SofMainWindow::init()
 	timeoutEventSlot = 0;
 	queueEventSlot = 0;
 	queueShowFlag = false;
+	experienceMax = -1;
+	experienceCurr = -1;
 	// Настройки шрифтов
 	QFont f = persNameLabel->font();
 	persNameFont_label->setFont(f.toString());
@@ -772,15 +774,15 @@ void SofMainWindow::getAllDataFromCore() {
 		newStrValue = QString::number(newIntValue);
 	}
 	levelLabel->setText(newStrValue);
-	if (!core->getIntValue(VALUE_EXPERIENCE_CURR, &newIntValue)) {
-		newIntValue = 0;
+	long long newLongValue;
+	if (!pers->getLongParamValue(VALUE_EXPERIENCE_CURR, &newLongValue)) {
+		newLongValue = 0;
 	}
-	experienceLabel->setText(numToStr(newIntValue, "'"));
-	experienceBar->setValue(newIntValue);
-	if (!core->getIntValue(VALUE_EXPERIENCE_MAX, &newIntValue)) {
-		newIntValue = 0;
+	setCurrentExperience(newLongValue);
+	if (!pers->getLongParamValue(VALUE_EXPERIENCE_MAX, &newLongValue)) {
+		newLongValue = 0;
 	}
-	experienceBar->setRange(0, newIntValue);
+	setMaximumExperience(newLongValue);
 	if (!pers->getIntParamValue(VALUE_HEALTH_CURR, &newIntValue)) {
 		newIntValue = 0;
 	}
@@ -852,8 +854,8 @@ void SofMainWindow::getAllDataFromCore() {
 		newStrValue = statisticStartValue.at(VALUE_FING_DROP_LAST);
 	}
 	updateValue(VALUE_FING_DROP_LAST, &newStrValue);
-	if (core->getIntValue(VALUE_EXPERIENCE_DROP_COUNT, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
+	if (core->getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &newLongValue)) {
+		newStrValue = numToStr(newLongValue, "'");
 	} else {
 		newStrValue = statisticStartValue.at(VALUE_EXPERIENCE_DROP_COUNT);
 	}
@@ -933,18 +935,11 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			// Перемещение персонажа
 			//scrollMapNewPosition(value % 100000, value / 100000);
 			scrollMapToPersPosition();
-		} else if (eventId == VALUE_EXPERIENCE_CURR) {
-			// Изменился опыт
-			experienceLabel->setText(numToStr(value, "'"));
-			experienceBar->setValue(value);
 		} else if (eventId == VALUE_TIMEOUT) {
 			// Пришло событие таймаута
 			if (settingTimeOutDisplay != 0) {
 				setTimeout(value);
 			}
-		} else if (eventId == VALUE_EXPERIENCE_DROP_COUNT) {
-			// Добавился опыт после боя
-			updateValue(VALUE_EXPERIENCE_DROP_COUNT, &str1);
 		} else if (eventId == VALUE_DAMAGE_MIN_FROM_PERS) {
 			// Минимальный урон от персонажа
 			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, &str1);
@@ -964,12 +959,17 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			updateValue(VALUE_FING_DROP_LAST, &str1);
 		} else if (eventId == VALUE_FIGHTS_COUNT) {
 			updateValue(VALUE_FIGHTS_COUNT, &str1);
-		} else if (eventId == VALUE_EXPERIENCE_MAX) {
-			// Изменился максимальный опыт для уровня
-			int i = experienceBar->value();
-			experienceBar->setValue(0);
-			experienceBar->setRange(0, value);
-			experienceBar->setValue(i);
+		}
+	} else if (valueType == TYPE_LONGLONG_FULL) {
+		if (eventId == VALUE_EXPERIENCE_DROP_COUNT) {
+			// Добавился опыт после боя
+			long long exp;
+			if (PluginCore::instance()->getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &exp)) {
+				str1 = numToStr(exp, "'");
+			} else {
+				str1 = NA_TEXT;
+			}
+			updateValue(VALUE_EXPERIENCE_DROP_COUNT, &str1);
 		}
 	} else if (valueType == TYPE_STRING) {
 		// Строковые данные. За значением нужно обращаться к ядру плагина.
@@ -1000,13 +1000,6 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		} else if (eventId == VALUE_FING_DROP_LAST) {
 			// Последняя найденная вещь
 			updateValue(VALUE_FING_DROP_LAST, &str1);
-		} else if (eventId == VALUE_EXPERIENCE_CURR) {
-			// Максимальный опыт для уровня
-			experienceLabel->setText(str1);
-			experienceBar->setValue(0);
-		} else if (eventId == VALUE_EXPERIENCE_MAX) {
-			// Максимальный опыт для уровня
-			experienceBar->setRange(0, 0);
 		} else if (eventId == VALUE_HEALTH_CURR) {
 			// Текущее здоровье
 			healthLabel->setText(str1);
@@ -1375,6 +1368,42 @@ void SofMainWindow::setCurrentEnergy(int energy)
 		energyBar->setValue(energy);
 	} else {
 		energyBar->setValue(0);
+	}
+}
+
+/**
+ * Прописывает текущее значение опыта в виджеты окна
+ */
+void SofMainWindow::setCurrentExperience(long long exp)
+{
+	experienceCurr = exp;
+	if (experienceMax != -1 ) {
+		// Формируем делитель, чтоб вписаться в значение int
+		long long div = experienceMax / 1000000000 + 1;
+		long long val = exp / div;
+		if (exp % div >= 500000000) // Округляем
+			++val;
+		if (val < 0) {
+			val = 0;
+		} else if (val > experienceMax) {
+			val = experienceMax;
+		}
+		experienceBar->setValue(val);
+	}
+	experienceLabel->setText(numToStr(exp, "'"));
+}
+
+void SofMainWindow::setMaximumExperience(long long mExp)
+{
+	experienceMax = mExp;
+	if (mExp != -1) {
+		long long div = mExp / 1000000000 + 1;
+		long long max = mExp / div;
+		if (mExp % div >= 500000000) // Округляем
+			++max;
+		experienceBar->setValue(0);
+		experienceBar->setRange(0, max);
+		setCurrentExperience(experienceCurr);
 	}
 }
 
@@ -2071,6 +2100,22 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			// Смена уровня персонажа
 			levelLabel->setText(QString::number(paramValue));
 		}
+	} else if (paramType == TYPE_LONGLONG_FULL) {
+		if (paramId == VALUE_EXPERIENCE_CURR) {
+			// Изменился опыт
+			long long exp;
+			if (!Pers::instance()->getLongParamValue(VALUE_EXPERIENCE_CURR, &exp)) {
+				exp = 0;
+			}
+			setCurrentExperience(exp);
+		} else if (paramId == VALUE_EXPERIENCE_MAX) {
+			// Изменился максимальный опыт для уровня
+			long long exp;
+			if (!Pers::instance()->getLongParamValue(VALUE_EXPERIENCE_MAX, &exp)) {
+				exp = 0;
+			}
+			setMaximumExperience(exp);
+		}
 	} else if (paramType == TYPE_STRING) {
 		if (paramId == VALUE_PERS_NAME) {
 			// Имя персонажа
@@ -2085,6 +2130,12 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			levelLabel->setText(NA_TEXT);
 		} else if (paramId == VALUE_PERS_NAME) {
 			persNameLabel->setText(NA_TEXT);
+		} else if (paramId == VALUE_EXPERIENCE_CURR) {
+			// Максимальный опыт для уровня
+			setCurrentExperience(0);
+		} else if (paramId == VALUE_EXPERIENCE_MAX) {
+			// Максимальный опыт для уровня
+			setMaximumExperience(0);
 		}
 	}
 }
