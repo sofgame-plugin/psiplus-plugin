@@ -458,7 +458,7 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 bool SofGamePlugin::outgoingStanza(int account, QDomElement& stanza)
 {
 	if (enabled && account == currentAccount) {
-		if (stanza.tagName() == "presence") {
+		if (stanza.tagName() == "presence" && stanza.attribute("to").isEmpty()) {
 			if (stanza.attribute("type") == "unavailable") {
 				if (currAccActive) {
 					// Произошло отключение аккаунта пользователем
