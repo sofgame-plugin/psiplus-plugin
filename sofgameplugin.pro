@@ -8,7 +8,8 @@ HEADERS += sofgameplugin.h \
     utils.h \
     sender.h \
     pers.h \
-    pers_info.h
+    pers_info.h \
+    cmdlineedit.h
 SOURCES += sofgameplugin.cpp \
     plugin_core.cpp \
     main_window.cpp \
@@ -16,7 +17,8 @@ SOURCES += sofgameplugin.cpp \
     utils.cpp \
     sender.cpp \
     pers.cpp \
-    pers_info.cpp
+    pers_info.cpp \
+    cmdlineedit.cpp
 FORMS += main_window.ui
 
 # Resources

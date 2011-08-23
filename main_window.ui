@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>707</width>
-    <height>763</height>
+    <width>637</width>
+    <height>607</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,10 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_33">
+   <property name="margin">
+    <number>4</number>
+   </property>
    <item>
     <widget class="QFrame" name="header">
      <property name="sizePolicy">
@@ -242,15 +245,12 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="spacing">
-      <number>4</number>
-     </property>
      <item>
       <widget class="QFrame" name="mainFrame">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
+         <verstretch>1</verstretch>
         </sizepolicy>
        </property>
        <property name="styleSheet">
@@ -262,28 +262,37 @@
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <layout class="QGridLayout" name="gridLayout_8" rowstretch="0" columnminimumwidth="0">
-        <property name="margin">
-         <number>2</number>
-        </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
          <number>2</number>
         </property>
-        <item row="0" column="0">
+        <property name="margin">
+         <number>2</number>
+        </property>
+        <item>
          <widget class="QStackedWidget" name="stackedWidget">
           <property name="enabled">
            <bool>true</bool>
-          </property>
-          <property name="lineWidth">
-           <number>1</number>
           </property>
           <property name="currentIndex">
            <number>0</number>
           </property>
           <widget class="QWidget" name="page_1">
-           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>1</number>
+            </property>
+            <property name="margin">
+             <number>2</number>
+            </property>
             <item>
              <widget class="QSplitter" name="mapSplitter">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                <horstretch>0</horstretch>
+                <verstretch>100</verstretch>
+               </sizepolicy>
+              </property>
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
@@ -324,15 +333,9 @@
                 <attribute name="title">
                  <string>Текст игры</string>
                 </attribute>
-                <layout class="QGridLayout" name="gridLayout_4">
-                 <item row="0" column="0">
+                <layout class="QVBoxLayout" name="verticalLayout_31">
+                 <item>
                   <widget class="QPlainTextEdit" name="serverTextLabel">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
                    <property name="cursor" stdset="0">
                     <cursorShape>ArrowCursor</cursorShape>
                    </property>
@@ -345,9 +348,6 @@
                    <property name="readOnly">
                     <bool>true</bool>
                    </property>
-                   <property name="plainText">
-                    <string/>
-                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -356,8 +356,8 @@
                 <attribute name="title">
                  <string>Текст плагина</string>
                 </attribute>
-                <layout class="QGridLayout" name="gridLayout_5">
-                 <item row="0" column="0">
+                <layout class="QVBoxLayout" name="verticalLayout_32">
+                 <item>
                   <widget class="QPlainTextEdit" name="console_textedit">
                    <property name="cursor" stdset="0">
                     <cursorShape>ArrowCursor</cursorShape>
@@ -385,61 +385,69 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_47">
-              <property name="spacing">
-               <number>6</number>
+             <widget class="QWidget" name="" native="true">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>120</height>
+               </size>
               </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLineEdit" name="userCommandLine"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="cmd_send">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>26</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>26</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::CustomContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Отправить</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="icon">
-                 <iconset resource="sofgameplugin.qrc">
-                  <normaloff>:/icons/action_button_send.png</normaloff>:/icons/action_button_send.png</iconset>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
+              <layout class="QHBoxLayout" name="horizontalLayout_47">
+               <property name="spacing">
+                <number>4</number>
+               </property>
+               <property name="margin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="CmdLineEdit" name="userCommandLine"/>
+               </item>
+               <item>
+                <widget class="QPushButton" name="cmd_send">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>26</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>26</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::NoFocus</enum>
+                 </property>
+                 <property name="contextMenuPolicy">
+                  <enum>Qt::CustomContextMenu</enum>
+                 </property>
+                 <property name="toolTip">
+                  <string>Отправить</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="sofgameplugin.qrc">
+                   <normaloff>:/icons/action_button_send.png</normaloff>:/icons/action_button_send.png</iconset>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -2615,7 +2623,7 @@
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
          <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
+         <verstretch>1</verstretch>
         </sizepolicy>
        </property>
        <property name="minimumSize">
@@ -2640,6 +2648,9 @@
         <number>1</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>2</number>
+        </property>
         <property name="margin">
          <number>2</number>
         </property>
@@ -2917,22 +2928,10 @@ p, li { white-space: pre-wrap; }
    <item>
     <widget class="QFrame" name="footer">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>65</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>65</height>
-      </size>
      </property>
      <property name="styleSheet">
       <string notr="true"/>
@@ -2946,8 +2945,14 @@ p, li { white-space: pre-wrap; }
      <layout class="QHBoxLayout" name="horizontalLayout_27">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_25">
+        <property name="spacing">
+         <number>4</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_17">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="event1Caption">
             <property name="font">
@@ -2979,6 +2984,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_28">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="event2Caption">
             <property name="font">
@@ -3010,6 +3018,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_26">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="event3Caption">
             <property name="font">
@@ -3039,19 +3050,6 @@ p, li { white-space: pre-wrap; }
           </item>
          </layout>
         </item>
-        <item>
-         <spacer name="verticalSpacer_12">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>17</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </item>
       <item>
@@ -3076,8 +3074,14 @@ p, li { white-space: pre-wrap; }
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_5">
+        <property name="spacing">
+         <number>4</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_15">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot1Caption_label">
             <property name="font">
@@ -3097,8 +3101,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3119,6 +3123,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_16">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot2Caption_label">
             <property name="font">
@@ -3138,8 +3145,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3159,7 +3166,10 @@ p, li { white-space: pre-wrap; }
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_29">
+         <layout class="QHBoxLayout" name="horizontalLayout_29" stretch="0,0,0">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot3Caption_label">
             <property name="font">
@@ -3179,8 +3189,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3199,19 +3209,6 @@ p, li { white-space: pre-wrap; }
           </item>
          </layout>
         </item>
-        <item>
-         <spacer name="verticalSpacer_13">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </item>
       <item>
@@ -3223,8 +3220,14 @@ p, li { white-space: pre-wrap; }
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <property name="spacing">
+         <number>4</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot4Caption_label">
             <property name="font">
@@ -3244,8 +3247,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3266,6 +3269,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot5Caption_label">
             <property name="font">
@@ -3285,8 +3291,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3307,6 +3313,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot6Caption_label">
             <property name="font">
@@ -3326,8 +3335,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3346,19 +3355,6 @@ p, li { white-space: pre-wrap; }
           </item>
          </layout>
         </item>
-        <item>
-         <spacer name="verticalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </item>
       <item>
@@ -3370,8 +3366,14 @@ p, li { white-space: pre-wrap; }
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_7">
+        <property name="spacing">
+         <number>4</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_12">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot7Caption_label">
             <property name="font">
@@ -3391,8 +3393,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>18</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3413,6 +3415,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_13">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot8Caption_label">
             <property name="font">
@@ -3432,8 +3437,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3454,6 +3459,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_14">
+          <property name="spacing">
+           <number>2</number>
+          </property>
           <item>
            <widget class="QLabel" name="slot9Caption_label">
             <property name="font">
@@ -3473,8 +3481,8 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
-              <height>20</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
@@ -3492,19 +3500,6 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <spacer name="verticalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </item>
@@ -3534,6 +3529,11 @@ p, li { white-space: pre-wrap; }
    <extends>QLineEdit</extends>
    <header>subclasses/fontlabel.h</header>
   </customwidget>
+  <customwidget>
+   <class>CmdLineEdit</class>
+   <extends>QTextEdit</extends>
+   <header>cmdlineedit.h</header>
+  </customwidget>
  </customwidgets>
  <tabstops>
   <tabstop>mainModeBtn</tabstop>
@@ -3544,7 +3544,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>settingsModeBtn</tabstop>
   <tabstop>text_tabWidget</tabstop>
   <tabstop>userCommandLine</tabstop>
-  <tabstop>fingsTable</tabstop>
   <tabstop>resetCommonStatBtn</tabstop>
   <tabstop>resetFightsStatBtn</tabstop>
   <tabstop>settingTab</tabstop>
@@ -3586,6 +3585,10 @@ p, li { white-space: pre-wrap; }
   <tabstop>maxTextBlocksCount</tabstop>
   <tabstop>settingSaveBtn</tabstop>
   <tabstop>settingApplyBtn</tabstop>
+  <tabstop>checkbox_ResetQueuePopup</tabstop>
+  <tabstop>mapsParamSaveMode</tabstop>
+  <tabstop>mapsParamAutosavePeriod</tabstop>
+  <tabstop>fingsTable</tabstop>
  </tabstops>
  <resources>
   <include location="sofgameplugin.qrc"/>

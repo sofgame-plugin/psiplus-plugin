@@ -109,7 +109,7 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect (console_textedit, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
 	// Строка команд
 	connect(userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
-	connect(userCommandLine, SIGNAL(textChanged(QString)), SLOT(userCommandChanged()));
+	connect(userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
 	// Кнопка ввода команд
 	connect(cmd_send, SIGNAL(clicked()), SLOT(userCommandReturnPressed()));
 	// Таббар вещей (фильтры)
@@ -341,8 +341,8 @@ void SofMainWindow::init()
 	}
 	// Размеры сплиттера
 	QList<int> sizes;
-	sizes.push_back(1);
-	sizes.push_back(1);
+	sizes.push_back(100);
+	sizes.push_back(100);
 	mapSplitter->setSizes(sizes);
 	// Инициируем Label-ы
 	fullUpdateFooterStatistic();
@@ -1724,7 +1724,7 @@ void SofMainWindow::userCommandChanged()
 {
 	if (!autoEnterMode)
 		return;
-	QString sText = userCommandLine->text().trimmed();
+	QString sText = userCommandLine->toPlainText().trimmed();
 	int strLen = sText.length();
 	if (strLen == 1) {
 		if (sText != "/") {
@@ -1739,8 +1739,9 @@ void SofMainWindow::userCommandChanged()
 
 void SofMainWindow::userCommandReturnPressed()
 {
-	QString sText = userCommandLine->text().trimmed();
+	QString sText = userCommandLine->toPlainText().trimmed();
 	if (!sText.isEmpty()) {
+		userCommandLine->appendMessageHistory(sText);
 		if (sText.startsWith("/")) {
 			if (sText == "/1+") {
 				setAutoEnterMode(true);
