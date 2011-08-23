@@ -57,7 +57,7 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(mainModeBtn, SIGNAL(released()), SLOT(activateMainPage()));
 	connect(fightModeBtn, SIGNAL(released()), SLOT(activateFightPage()));
 	connect(persInfoModeBtn, SIGNAL(released()), SLOT(activatePersInfoPage()));
-	connect(fingsModeBtn, SIGNAL(released()), SLOT(activateFingsPage()));
+	connect(thingsModeBtn, SIGNAL(released()), SLOT(activateFingsPage()));
 	connect(statModeBtn, SIGNAL(released()), SLOT(activateStatPage()));
 	connect(settingsModeBtn, SIGNAL(released()), SLOT(activateSettingsPage()));
 	// Страницы плагина
@@ -354,14 +354,8 @@ void SofMainWindow::init()
 	fingsTable->init();
 	// Убираем табы фильтров вещей
 	updateFingFiltersTab();
-	// Меняем цвет текста кнопки вещей
-	QPalette palette;
-	QBrush brush;
-	brush.setColor(QColor(0, 0, 0, 255)); // Черный
-	brush.setStyle(Qt::SolidPattern);
-	palette.setBrush(QPalette::Active, QPalette::ButtonText, brush);
-	palette.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
-	fingsModeBtn->setPalette(palette);
+	// Сбрасываем цвет текста кнопки вещей
+	thingsModeBtn->setStyleSheet(QString());
 	// Сбрасываем режим автоввода
 	setAutoEnterMode(false);
 	// Инициируем слоты событий и уведомлений
@@ -1417,14 +1411,8 @@ void SofMainWindow::changePage(int index)
 	currentPage = index;
 	if (currentPage == 3) { // Вещи
 		if (fingsChanged) { // Список вещей менялся
-			// Меняем цвет текста кнопки
-			QPalette palette;
-			QBrush brush;
-			brush.setColor(QColor(0, 0, 0, 255)); // Черный
-			brush.setStyle(Qt::SolidPattern);
-			palette.setBrush(QPalette::Active, QPalette::ButtonText, brush);
-			palette.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
-			fingsModeBtn->setPalette(palette);
+			// Сбрасываем цвет текста кнопки
+			thingsModeBtn->setStyleSheet(QString());
 		}
 		// Инициируем табы и таблицу
 		if (fingsTabBar->count() == 0) {
@@ -2060,13 +2048,7 @@ void SofMainWindow::persFingsChanged()
 		// Если текущая страница не вещи
 		fingsChanged = true;
 		// Меняем цвет текста кнопки
-		QPalette palette;
-		QBrush brush;
-		brush.setColor(QColor(255, 0, 0, 255)); // Красный
-		brush.setStyle(Qt::SolidPattern);
-		palette.setBrush(QPalette::Active, QPalette::ButtonText, brush);
-		palette.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
-		fingsModeBtn->setPalette(palette);
+		thingsModeBtn->setStyleSheet("color:red;");
 	}
 }
 
