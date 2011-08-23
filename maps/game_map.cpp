@@ -1418,11 +1418,11 @@ void GameMap::redrawMap()
 			}
 		}
 		drawMapName();
+		// Устанавливаем позицию персонажа
+		setPersPos(persPosX, persPosY);
+		// --
+		mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 	}
-	// Устанавливаем позицию персонажа
-	setPersPos(persPosX, persPosY);
-	// --
-	mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 }
 
 void GameMap::addMapElement(qint32 x, qint32 y)
