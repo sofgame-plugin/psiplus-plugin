@@ -67,13 +67,18 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		QDomElement getAppearanceSettings(QDomDocument &xmlDoc) const;
 		void setAppearanceSetting(QDomElement &xml);
 	protected:
-		QVector<QLabel*> statLabelsCaption; // Для хранения указателей на элементы QLabel окна статистики
-		QVector<QLabel*> statLabelsValues;  // Для хранения указателей на элементы QLabel окна статистики
-		QVector<QLabel*> footerStatLabels;  // Для хранения указателей на элементы QLabel footer-а
-		QVector<int> footerStatSettings;    // Индексы массива статистики
-		QVector<int> statisticFooterPos;    // Номер позиции элемента статистики в fotter-е
-		QStringList statisticCaption;       // Заголовок элемента статистики
-		QStringList statisticStartValue;    // Начальные значения для статистики
+		struct StatWidgets {
+			QLabel *caption;
+			QLabel *value;
+		};
+		struct StatCapInitVal {
+			QString caption;
+			QString initVal;
+		};
+		QHash<int, StatWidgets> footerStatWidgets;
+		QHash<int, int> statisticFooterPos;             // Номер позиции элемента статистики в footer-е
+		QHash<int, StatCapInitVal> statisticCapInitVal; // Название элемента статистики и начальные значения
+		QHash<int, StatWidgets> statisticWidgets;       // Для хранения указателей на элементы QLabel окна статистики
 		int  maxEventSlotId;                // Максимальный текущий идентификатор слота
 		int usedEventSlots;                 // Использовано слотов
 		QVector<int> eventSlots;            // Cлужебные структуры слотов событий и уведомлений
@@ -81,12 +86,12 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void closeEvent(QCloseEvent *evnt);
 		void initStatisticData();           // Заполнение массивов статистики начальными значениями
 		void fillSlotCombo(QComboBox* slotCombo);
-		void setFooterStatisticValue(int statisticId, QString* valuePtr);
-		void setStatisticValue(int statisticId, QString* valuePtr);
+		void setFooterStatisticValue(int statisticId, const QString &valString);
+		void setStatisticValue(int statisticId, const QString &valString);
 		void fullUpdateFooterStatistic();
 		void setStatisticCaptionText();
 		void getAllDataFromCore();
-		void updateValue(int valueId, QString* valuePtr);
+		void updateValue(int valueId, const QString &valString);
 		void changePersStatus();
 		void initEventSlots();
 		int  getEventSlot();

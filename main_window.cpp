@@ -50,9 +50,6 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	footer->setFrameShape(QFrame::Panel);
 #endif
 	initStatisticData();
-	statLabelsCaption.fill(0, STAT_PARAMS_COUNT);
-	statLabelsValues.fill(0, STAT_PARAMS_COUNT);
-	footerStatLabels.fill(0, SLOT_ITEMS_COUNT * 2);
 	// Верхние кнопочки
 	connect(mainModeBtn, SIGNAL(released()), SLOT(activateMainPage()));
 	connect(fightModeBtn, SIGNAL(released()), SLOT(activateFightPage()));
@@ -147,29 +144,18 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	fontButtonGroup->addButton(gameTextFont_button);
 	connect(fontButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(chooseFont(QAbstractButton*)));
 	// Виджеты страницы статистики
-	statLabelsCaption[VALUE_LAST_GAME_JID] = lastGameJidCaption_label;
-	statLabelsValues[VALUE_LAST_GAME_JID] = lastGameJidValue_label;
-	statLabelsCaption[VALUE_LAST_CHAT_JID] = lastGameChatCaption_label;
-	statLabelsValues[VALUE_LAST_CHAT_JID] = lastGameChatValue_label;
-	statLabelsCaption[VALUE_MESSAGES_COUNT] = gameMessagesCountCaption_label;
-	statLabelsValues[VALUE_MESSAGES_COUNT] = gameMessagesCountValue_label;
+	statisticWidgets[VALUE_LAST_GAME_JID] = (StatWidgets) {lastGameJidCaption_label, lastGameJidValue_label};
+	statisticWidgets[VALUE_LAST_CHAT_JID] = (StatWidgets) {lastGameChatCaption_label, lastGameChatValue_label};
+	statisticWidgets[VALUE_MESSAGES_COUNT] = (StatWidgets) {gameMessagesCountCaption_label, gameMessagesCountValue_label};
 	connect(resetCommonStatBtn, SIGNAL(released()), SLOT(resetCommonStatistic()));
-	statLabelsCaption[VALUE_FIGHTS_COUNT] = fingsCountCaption_label;
-	statLabelsValues[VALUE_FIGHTS_COUNT] = fingsCountValue_label;
-	statLabelsCaption[VALUE_DAMAGE_MAX_FROM_PERS] = damageMaxFromPersCaption_label;
-	statLabelsValues[VALUE_DAMAGE_MAX_FROM_PERS] = damageMaxFromPersValue_label;
-	statLabelsCaption[VALUE_DAMAGE_MIN_FROM_PERS] = damageMinFromPersCaption_label;
-	statLabelsValues[VALUE_DAMAGE_MIN_FROM_PERS] = damageMinFromPersValue_label;
-	statLabelsCaption[VALUE_DROP_MONEYS] = dropMoneysCaption_label;
-	statLabelsValues[VALUE_DROP_MONEYS] = dropMoneysValue_label;
-	statLabelsCaption[VALUE_FINGS_DROP_COUNT] = fingsDropCountCaption_label;
-	statLabelsValues[VALUE_FINGS_DROP_COUNT] = fingsDropCountValue_label;
-	statLabelsCaption[VALUE_FING_DROP_LAST] = fingDropLastCaption_label;
-	statLabelsValues[VALUE_FING_DROP_LAST] = fingDropLastValue_label;
-	statLabelsCaption[VALUE_EXPERIENCE_DROP_COUNT] = experienceDropCountCaption_label;
-	statLabelsValues[VALUE_EXPERIENCE_DROP_COUNT] = experienceDropCountValue_label;
-	statLabelsCaption[VALUE_KILLED_ENEMIES] = killedEnemiesCaption_label;
-	statLabelsValues[VALUE_KILLED_ENEMIES] = killedEnemiesValue_label;
+	statisticWidgets[VALUE_FIGHTS_COUNT] = (StatWidgets) {fingsCountCaption_label, fingsCountValue_label};
+	statisticWidgets[VALUE_DAMAGE_MAX_FROM_PERS] = (StatWidgets) {damageMaxFromPersCaption_label, damageMaxFromPersValue_label};
+	statisticWidgets[VALUE_DAMAGE_MIN_FROM_PERS] = (StatWidgets) {damageMinFromPersCaption_label, damageMinFromPersValue_label};
+	statisticWidgets[VALUE_DROP_MONEYS] = (StatWidgets) {dropMoneysCaption_label, dropMoneysValue_label};
+	statisticWidgets[VALUE_FINGS_DROP_COUNT] = (StatWidgets) {fingsDropCountCaption_label, fingsDropCountValue_label};
+	statisticWidgets[VALUE_FING_DROP_LAST] = (StatWidgets) {fingDropLastCaption_label, fingDropLastValue_label};
+	statisticWidgets[VALUE_EXPERIENCE_DROP_COUNT] = (StatWidgets) {experienceDropCountCaption_label, experienceDropCountValue_label};
+	statisticWidgets[VALUE_KILLED_ENEMIES] = (StatWidgets) {killedEnemiesCaption_label, killedEnemiesValue_label};
 	connect(resetFightsStatBtn, SIGNAL(released()), SLOT(resetFightStatistic()));
 	// Таблицы для настройки фильтров
 	fingFiltersTable->init(&filtersList);
@@ -189,24 +175,15 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(settingSaveBtn, SIGNAL(released()), SLOT(saveSettings()));
 	connect(settingApplyBtn, SIGNAL(released()), SLOT(applySettings()));
 	// Нижние слоты статистики
-	footerStatLabels[0] = slot1Caption_label;
-	footerStatLabels[1] = slot1Value_label;
-	footerStatLabels[2] = slot2Caption_label;
-	footerStatLabels[3] = slot2Value_label;
-	footerStatLabels[4] = slot3Caption_label;
-	footerStatLabels[5] = slot3Value_label;
-	footerStatLabels[6] = slot4Caption_label;
-	footerStatLabels[7] = slot4Value_label;
-	footerStatLabels[8] = slot5Caption_label;
-	footerStatLabels[9] = slot5Value_label;
-	footerStatLabels[10] = slot6Caption_label;
-	footerStatLabels[11] = slot6Value_label;
-	footerStatLabels[12] = slot7Caption_label;
-	footerStatLabels[13] = slot7Value_label;
-	footerStatLabels[14] = slot8Caption_label;
-	footerStatLabels[15] = slot8Value_label;
-	footerStatLabels[16] = slot9Caption_label;
-	footerStatLabels[17] = slot9Value_label;
+	footerStatWidgets[SETTING_SLOT1] = (StatWidgets) {slot1Caption_label, slot1Value_label};
+	footerStatWidgets[SETTING_SLOT2] = (StatWidgets) {slot2Caption_label, slot2Value_label};
+	footerStatWidgets[SETTING_SLOT3] = (StatWidgets) {slot3Caption_label, slot3Value_label};
+	footerStatWidgets[SETTING_SLOT4] = (StatWidgets) {slot4Caption_label, slot4Value_label};
+	footerStatWidgets[SETTING_SLOT5] = (StatWidgets) {slot5Caption_label, slot5Value_label};
+	footerStatWidgets[SETTING_SLOT6] = (StatWidgets) {slot6Caption_label, slot6Value_label};
+	footerStatWidgets[SETTING_SLOT7] = (StatWidgets) {slot7Caption_label, slot7Value_label};
+	footerStatWidgets[SETTING_SLOT8] = (StatWidgets) {slot8Caption_label, slot8Value_label};
+	footerStatWidgets[SETTING_SLOT9] = (StatWidgets) {slot9Caption_label, slot9Value_label};
 	// Окно статистики
 	setStatisticCaptionText();
 	// Виджеты параметров персонажа
@@ -421,96 +398,116 @@ void SofMainWindow::closeEvent(QCloseEvent *evnt)
 void SofMainWindow::fillSlotCombo(QComboBox* slotCombo)
 {
 	slotCombo->clear();
-	slotCombo->insertItem(0, QString::fromUtf8("* Пустой *"));
-	slotCombo->insertItem(1, statisticCaption.at(VALUE_LAST_GAME_JID));
-	slotCombo->insertItem(2, statisticCaption.at(VALUE_LAST_CHAT_JID));
-	slotCombo->insertItem(3, statisticCaption.at(VALUE_MESSAGES_COUNT));
-	slotCombo->insertItem(4, statisticCaption.at(VALUE_DAMAGE_MAX_FROM_PERS));
-	slotCombo->insertItem(5, statisticCaption.at(VALUE_DAMAGE_MIN_FROM_PERS));
-	slotCombo->insertItem(6, statisticCaption.at(VALUE_FIGHTS_COUNT));
-	slotCombo->insertItem(7, statisticCaption.at(VALUE_DROP_MONEYS));
-	slotCombo->insertItem(8, statisticCaption.at(VALUE_FINGS_DROP_COUNT));
-	slotCombo->insertItem(9, statisticCaption.at(VALUE_FING_DROP_LAST));
-	slotCombo->insertItem(10, statisticCaption.at(VALUE_EXPERIENCE_DROP_COUNT));
-	slotCombo->insertItem(11, statisticCaption.at(VALUE_KILLED_ENEMIES));
+	slotCombo->addItem(QString::fromUtf8("* Пустой *"), -1);
+	foreach (int key, statisticCapInitVal.keys()) {
+		slotCombo->addItem(statisticCapInitVal.value(key).caption, key);
+	}
 }
 
 void SofMainWindow::initStatisticData()
 {
-	// Заполняем заголовки наименований элементов статистики
-	statisticCaption.push_back(QString::fromUtf8("JID игры"));
-	statisticStartValue.push_back(QString::fromUtf8("n/a"));
-	statisticCaption.push_back(QString::fromUtf8("JID чата"));
-	statisticStartValue.push_back(QString::fromUtf8("n/a"));
-	statisticCaption.push_back(QString::fromUtf8("Сообщений"));
-	statisticStartValue.push_back(QString::fromUtf8("0"));
-	statisticCaption.push_back(QString::fromUtf8("Лучший удар"));
-	statisticStartValue.push_back(QString::fromUtf8("n/a"));
-	statisticCaption.push_back(QString::fromUtf8("Худший удар"));
-	statisticStartValue.push_back(QString::fromUtf8("n/a"));
-	statisticCaption.push_back(QString::fromUtf8("Всего боев"));
-	statisticStartValue.push_back(QString::fromUtf8("0"));
-	statisticCaption.push_back(QString::fromUtf8("Денег собрано"));
-	statisticStartValue.push_back(QString::fromUtf8("0"));
-	statisticCaption.push_back(QString::fromUtf8("Вещей собрано"));
-	statisticStartValue.push_back(QString::fromUtf8("0"));
-	statisticCaption.push_back(QString::fromUtf8("Последняя вещь"));
-	statisticStartValue.push_back(QString::fromUtf8("n/a"));
-	statisticCaption.push_back(QString::fromUtf8("Полученный опыт"));
-	statisticStartValue.push_back(QString::fromUtf8("0"));
-	statisticCaption.push_back(QString::fromUtf8("Противников повержено"));
-	statisticStartValue.push_back(QString::fromUtf8("0"));
-	// Заполняем привязку статистики к fotter-у начальными данными
-	statisticFooterPos.fill(-1, STAT_PARAMS_COUNT);
-	// Заполняем массив индекса fotter-а начальными значениями
-	footerStatSettings.fill(-1, SLOT_ITEMS_COUNT);
+	// Заполняем заголовки наименований элементов статистики и начальные значения
+	statisticCapInitVal[VALUE_LAST_GAME_JID] = (StatCapInitVal) {QString::fromUtf8("JID игры"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_LAST_CHAT_JID] = (StatCapInitVal) {QString::fromUtf8("JID чата"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_MESSAGES_COUNT] = (StatCapInitVal) {QString::fromUtf8("Сообщений"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_DAMAGE_MAX_FROM_PERS] = (StatCapInitVal) {QString::fromUtf8("Лучший удар"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_DAMAGE_MIN_FROM_PERS] = (StatCapInitVal) {QString::fromUtf8("Худший удар"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_FIGHTS_COUNT] = (StatCapInitVal) {QString::fromUtf8("Всего боев"), QString::fromUtf8("0")};
+	statisticCapInitVal[VALUE_DROP_MONEYS] = (StatCapInitVal) {QString::fromUtf8("Денег собрано"), QString::fromUtf8("0")};
+	statisticCapInitVal[VALUE_FINGS_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Вещей собрано"), QString::fromUtf8("0")};
+	statisticCapInitVal[VALUE_FING_DROP_LAST] = (StatCapInitVal) {QString::fromUtf8("Последняя вещь"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_EXPERIENCE_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Полученный опыт"), QString::fromUtf8("0")};
+	statisticCapInitVal[VALUE_KILLED_ENEMIES] = (StatCapInitVal) {QString::fromUtf8("Противников повержено"), QString::fromUtf8("0")};
 }
 
 void SofMainWindow::setStatisticCaptionText()
 {
 	// Заполняем текст статистики в окне статистика
-	for (int i = 0; i < STAT_PARAMS_COUNT; i++) {
-		if (statLabelsCaption.at(i)) {
-			statLabelsCaption.at(i)->setText(statisticCaption[i] + ":");
+	foreach (int statKey, statisticWidgets.keys()) {
+		QString capt;
+		if (statisticCapInitVal.contains(statKey)) {
+			capt = statisticCapInitVal.value(statKey).caption;
+		} else {
+			capt = "?";
 		}
+		statisticWidgets.value(statKey).caption->setText(capt + ":");
 	}
 }
 
+/**
+ * Заполняет QLabel-ы слотов статистики согласно настроек
+ */
 void SofMainWindow::fullUpdateFooterStatistic()
 {
-	// Заполняем значения QLabel-ов данными из массива
 	// TODO Сделать нормальное обновление, в том числе скрывать неиспользуемые элементы и разделители
-	int j;
-	for (int i = 0; i < footerStatLabels.size(); i += 2) {
-		footerStatLabels.at(i)->setText(MINUS_TEXT);
-		footerStatLabels.at(i+1)->setText(MINUS_TEXT);
+	QList<int> slotKeys = footerStatWidgets.keys();
+	foreach (int slot, slotKeys) {
+		QString captText;
+		QString valText;
+		int statVal = statisticFooterPos.key(slot, -1);
+		if (statVal != -1) {
+			if (statisticCapInitVal.contains(statVal)) {
+				captText = statisticCapInitVal.value(statVal).caption;
+			} else {
+				captText = "?";
+			}
+			captText.append(":");
+			if (statisticWidgets.contains(statVal)) {
+				valText = statisticWidgets.value(statVal).value->text();
+			} else {
+				valText = "?";
+			}
+		} else {
+			captText = "-";
+			valText = "-";
+		}
+		footerStatWidgets.value(slot).caption->setText(captText);
+		footerStatWidgets.value(slot).value->setText(valText);
 	}
-	for (int i = 0; i < STAT_PARAMS_COUNT; i++) {
-		j = statisticFooterPos[i];
-		if (j >= 0 && j < SLOT_ITEMS_COUNT) {
-			footerStatLabels.at(j*2)->setText(statisticCaption[i] + ":");
-			footerStatLabels.at(j*2+1)->setText(statLabelsValues[i]->text());
+	// Скрываем неиспользуемые виджеты слотов
+	if (statisticFooterPos.key(SETTING_SLOT1, -1) == -1 &&
+	    statisticFooterPos.key(SETTING_SLOT2, -1) == -1 &&
+	    statisticFooterPos.key(SETTING_SLOT3, -1) == -1) {
+		slotsWidget1->setHidden(true);
+	} else {
+		slotsWidget1->setHidden(false);
+	}
+	if (statisticFooterPos.key(SETTING_SLOT4, -1) == -1 &&
+	    statisticFooterPos.key(SETTING_SLOT5, -1) == -1 &&
+	    statisticFooterPos.key(SETTING_SLOT6, -1) == -1) {
+		slotsWidget2->setHidden(true);
+	} else {
+		slotsWidget2->setHidden(false);
+	}
+	if (statisticFooterPos.key(SETTING_SLOT7, -1) == -1 &&
+	    statisticFooterPos.key(SETTING_SLOT8, -1) == -1 &&
+	    statisticFooterPos.key(SETTING_SLOT9, -1) == -1) {
+		slotsWidget3->setHidden(true);
+	} else {
+		slotsWidget3->setHidden(false);
+	}
+}
+
+/**
+ * Отображает значение статистики в слотах подвала, если она там настроена
+ */
+void SofMainWindow::setFooterStatisticValue(int statisticId, const QString &valString)
+{
+	if (statisticFooterPos.contains(statisticId)) {
+		int slotId = statisticFooterPos.value(statisticId);
+		if (footerStatWidgets.contains(slotId)) {
+			footerStatWidgets.value(slotId).value->setText(valString);
 		}
 	}
 }
 
-void SofMainWindow::setFooterStatisticValue(int statisticId, QString* valuePtr)
+/**
+ * Обновляет значения статистики в окне статистики
+ */
+void SofMainWindow::setStatisticValue(int statisticId, const QString &valString)
 {
-	// Функция обновляет значения статистики в футере, если эта статистика там отображается
-	int i;
-	i = statisticFooterPos[statisticId];
-	if (i >= 0 && i < SLOT_ITEMS_COUNT) {
-		footerStatLabels.at(i*2+1)->setText(*valuePtr);
-	}
-}
-
-void SofMainWindow::setStatisticValue(int statisticId, QString* valuePtr)
-{
-	// Функция обновляет значения статистики в в окне статистики
-	if (statisticId >= 0 && statisticId < STAT_PARAMS_COUNT) {
-		if (statLabelsValues.at(statisticId)) {
-			statLabelsValues.at(statisticId)->setText(*valuePtr);
-		}
+	if (statisticWidgets.contains(statisticId)) {
+		statisticWidgets.value(statisticId).value->setText(valString);
 	}
 }
 
@@ -618,106 +615,52 @@ void SofMainWindow::getAllDataFromCore() {
 		checkbox_ResetQueuePopup->setChecked(true);
 	}
 	// Позиции в слотах
-	statisticFooterPos.fill(-1, STAT_PARAMS_COUNT);
-	if (core->getIntSettingValue(SETTING_SLOT1, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 0;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos.clear();
+	if (!core->getIntSettingValue(SETTING_SLOT1, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot1Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT2, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 1;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT1;
+	slot1Combo->setCurrentIndex(slot1Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT2, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot2Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT3, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 2;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT2;
+	slot2Combo->setCurrentIndex(slot2Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT3, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot3Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT4, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 3;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT3;
+	slot3Combo->setCurrentIndex(slot3Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT4, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot4Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT5, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 4;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT4;
+	slot4Combo->setCurrentIndex(slot4Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT5, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot5Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT6, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 5;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT5;
+	slot5Combo->setCurrentIndex(slot5Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT6, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot6Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT7, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 6;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT6;
+	slot6Combo->setCurrentIndex(slot6Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT7, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot7Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT8, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 7;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT7;
+	slot7Combo->setCurrentIndex(slot7Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT8, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot8Combo->setCurrentIndex(newIntValue);
-	if (core->getIntSettingValue(SETTING_SLOT9, &newIntValue)) {
-		if (newIntValue >= 0 && newIntValue < STAT_PARAMS_COUNT) {
-			statisticFooterPos[newIntValue] = 8;
-			++newIntValue;
-		} else {
-			newIntValue = 0;
-		}
-	} else {
-		newIntValue = 0;
+	statisticFooterPos[newIntValue] = SETTING_SLOT8;
+	slot8Combo->setCurrentIndex(slot8Combo->findData(newIntValue));
+	if (!core->getIntSettingValue(SETTING_SLOT9, &newIntValue)) {
+		newIntValue = -1;
 	}
-	slot9Combo->setCurrentIndex(newIntValue);
+	statisticFooterPos[newIntValue] = SETTING_SLOT9;
+	slot9Combo->setCurrentIndex(slot9Combo->findData(newIntValue));
 	// Сохранение статистики
 	//if (!core->getIntSettingValue(SETTING_SAVE_STAT, &newIntValue)) {
 	//	newIntValue = 0;
@@ -803,63 +746,63 @@ void SofMainWindow::getAllDataFromCore() {
 	if (core->getIntValue(VALUE_DROP_MONEYS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_DROP_MONEYS);
+		newStrValue = statisticCapInitVal.value(VALUE_DROP_MONEYS).initVal;
 	}
-	updateValue(VALUE_DROP_MONEYS, &newStrValue);
+	updateValue(VALUE_DROP_MONEYS, newStrValue);
 	if (core->getIntValue(VALUE_MESSAGES_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_MESSAGES_COUNT);
+		newStrValue = statisticCapInitVal.value(VALUE_MESSAGES_COUNT).initVal;
 	}
-	updateValue(VALUE_MESSAGES_COUNT, &newStrValue);
+	updateValue(VALUE_MESSAGES_COUNT, newStrValue);
 	if (!core->getTextValue(VALUE_LAST_GAME_JID, &newStrValue)) {
-		newStrValue = statisticStartValue.at(VALUE_LAST_GAME_JID);
+		newStrValue = statisticCapInitVal.value(VALUE_LAST_GAME_JID).initVal;
 	}
-	updateValue(VALUE_LAST_GAME_JID, &newStrValue);
+	updateValue(VALUE_LAST_GAME_JID, newStrValue);
 	if (!core->getTextValue(VALUE_LAST_CHAT_JID, &newStrValue)) {
-		newStrValue = statisticStartValue.at(VALUE_LAST_CHAT_JID);
+		newStrValue = statisticCapInitVal.value(VALUE_LAST_CHAT_JID).initVal;
 	}
-	updateValue(VALUE_LAST_CHAT_JID, &newStrValue);
+	updateValue(VALUE_LAST_CHAT_JID, newStrValue);
 	if (core->getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_DAMAGE_MIN_FROM_PERS);
+		newStrValue = statisticCapInitVal.value(VALUE_DAMAGE_MIN_FROM_PERS).initVal;
 	}
-	updateValue(VALUE_DAMAGE_MIN_FROM_PERS, &newStrValue);
+	updateValue(VALUE_DAMAGE_MIN_FROM_PERS, newStrValue);
 	if (core->getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_DAMAGE_MAX_FROM_PERS);
+		newStrValue = statisticCapInitVal.value(VALUE_DAMAGE_MAX_FROM_PERS).initVal;
 	}
-	updateValue(VALUE_DAMAGE_MAX_FROM_PERS, &newStrValue);
+	updateValue(VALUE_DAMAGE_MAX_FROM_PERS, newStrValue);
 	if (core->getIntValue(VALUE_FINGS_DROP_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_FINGS_DROP_COUNT);
+		newStrValue = statisticCapInitVal.value(VALUE_FINGS_DROP_COUNT).initVal;
 	}
-	updateValue(VALUE_FINGS_DROP_COUNT, &newStrValue);
+	updateValue(VALUE_FINGS_DROP_COUNT, newStrValue);
 	if (core->getIntValue(VALUE_FIGHTS_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_FIGHTS_COUNT);
+		newStrValue = statisticCapInitVal.value(VALUE_FIGHTS_COUNT).initVal;
 	}
-	updateValue(VALUE_FIGHTS_COUNT, &newStrValue);
+	updateValue(VALUE_FIGHTS_COUNT, newStrValue);
 	if (!core->getTextValue(VALUE_FING_DROP_LAST, &newStrValue)) {
-		newStrValue = statisticStartValue.at(VALUE_FING_DROP_LAST);
+		newStrValue = statisticCapInitVal.value(VALUE_FING_DROP_LAST).initVal;
 	}
-	updateValue(VALUE_FING_DROP_LAST, &newStrValue);
+	updateValue(VALUE_FING_DROP_LAST, newStrValue);
 	if (core->getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &newLongValue)) {
 		newStrValue = numToStr(newLongValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_EXPERIENCE_DROP_COUNT);
+		newStrValue = statisticCapInitVal.value(VALUE_EXPERIENCE_DROP_COUNT).initVal;
 	}
-	updateValue(VALUE_EXPERIENCE_DROP_COUNT, &newStrValue);
+	updateValue(VALUE_EXPERIENCE_DROP_COUNT, newStrValue);
 	if (core->getIntValue(VALUE_KILLED_ENEMIES, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticStartValue.at(VALUE_KILLED_ENEMIES);
+		newStrValue = statisticCapInitVal.value(VALUE_KILLED_ENEMIES).initVal;
 	}
-	updateValue(VALUE_KILLED_ENEMIES, &newStrValue);
+	updateValue(VALUE_KILLED_ENEMIES, newStrValue);
 	// Шрифты
 	if (core->getStringSettingValue(SETTING_PERS_NAME_FONT, &newStrValue)) {
 		persNameFont_label->setFont(newStrValue);
@@ -894,18 +837,15 @@ void SofMainWindow::getAllDataFromCore() {
 	mapsParamSaveMode->setCurrentIndex(newIntValue);
 }
 
-void SofMainWindow::updateValue(int valueId, QString* valuePtr) {
-	// Функция обновляет элементы отображения данных. В том числе и в footer-е.
+/**
+ * Обновляет значения статистики в виджетах, в том числе и в footer-е.
+ */
+void SofMainWindow::updateValue(int valueId, const QString &valString) {
 
-	// Проверка выхода индекса за пределы массива
-	if (valueId < 0 || valueId >= STAT_PARAMS_COUNT) {
-		return;
-	}
-	// Обновляем основной элемент
-	QString str1 = *valuePtr;
-	setStatisticValue(valueId, valuePtr);
+	// Обновляем основной виджет статистики
+	setStatisticValue(valueId, valString);
 	// Обновляем footer
-	setFooterStatisticValue(valueId, valuePtr);
+	setFooterStatisticValue(valueId, valString);
 }
 
 void SofMainWindow::valueChanged(int eventId, int valueType, int value)
@@ -918,13 +858,13 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		str1 = numToStr(value, "'");
 		if (eventId == VALUE_DROP_MONEYS) {
 			// Это упавшие деньги
-			updateValue(VALUE_DROP_MONEYS, &str1);
+			updateValue(VALUE_DROP_MONEYS, str1);
 		} else if (eventId == VALUE_MESSAGES_COUNT) {
 			// Счетчик сообщений
-			updateValue(VALUE_MESSAGES_COUNT, &str1);
+			updateValue(VALUE_MESSAGES_COUNT, str1);
 		} else if (eventId == VALUE_KILLED_ENEMIES) {
 			// Повержено противников
-			updateValue(VALUE_KILLED_ENEMIES, &str1);
+			updateValue(VALUE_KILLED_ENEMIES, str1);
 		} else if (eventId == VALUE_CHANGE_PERS_POS) {
 			// Перемещение персонажа
 			//scrollMapNewPosition(value % 100000, value / 100000);
@@ -936,23 +876,23 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			}
 		} else if (eventId == VALUE_DAMAGE_MIN_FROM_PERS) {
 			// Минимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, &str1);
+			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, str1);
 		} else if (eventId == VALUE_DAMAGE_MAX_FROM_PERS) {
 			// Максимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, &str1);
+			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, str1);
 		} else if (eventId == VALUE_FINGS_DROP_COUNT) {
 			// Количество упавших вещей
 			statFingsCount = value;
-			updateValue(VALUE_FINGS_DROP_COUNT, &str1);
+			updateValue(VALUE_FINGS_DROP_COUNT, str1);
 			// Последняя упавшая вещь
 			if (PluginCore::instance()->getTextValue(VALUE_FING_DROP_LAST, &str1)) {
 				str1 = str1.left(20);
 			} else {
 				str1 = NA_TEXT;
 			}
-			updateValue(VALUE_FING_DROP_LAST, &str1);
+			updateValue(VALUE_FING_DROP_LAST, str1);
 		} else if (eventId == VALUE_FIGHTS_COUNT) {
-			updateValue(VALUE_FIGHTS_COUNT, &str1);
+			updateValue(VALUE_FIGHTS_COUNT, str1);
 		}
 	} else if (valueType == TYPE_LONGLONG_FULL) {
 		if (eventId == VALUE_EXPERIENCE_DROP_COUNT) {
@@ -963,7 +903,7 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			} else {
 				str1 = NA_TEXT;
 			}
-			updateValue(VALUE_EXPERIENCE_DROP_COUNT, &str1);
+			updateValue(VALUE_EXPERIENCE_DROP_COUNT, str1);
 		}
 	} else if (valueType == TYPE_STRING) {
 		// Строковые данные. За значением нужно обращаться к ядру плагина.
@@ -974,26 +914,26 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			} else {
 				str1 = NA_TEXT;
 			}
-			updateValue(VALUE_LAST_GAME_JID, &str1);
+			updateValue(VALUE_LAST_GAME_JID, str1);
 		}
 	} else if (valueType == TYPE_NA) {
 		// Данные недоступны или неопределены (n/a)
 		str1 = NA_TEXT;
 		if (eventId == VALUE_DAMAGE_MIN_FROM_PERS) {
 			// Минимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, &str1);
+			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, str1);
 		} else if (eventId == VALUE_DAMAGE_MAX_FROM_PERS) {
 			// Максимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, &str1);
+			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, str1);
 		} else if (eventId == VALUE_LAST_GAME_JID) {
 			// JID игры
-			updateValue(VALUE_LAST_GAME_JID, &str1);
+			updateValue(VALUE_LAST_GAME_JID, str1);
 		} else if (eventId == VALUE_LAST_CHAT_JID) {
 			// JID чата
-			updateValue(VALUE_LAST_CHAT_JID, &str1);
+			updateValue(VALUE_LAST_CHAT_JID, str1);
 		} else if (eventId == VALUE_FING_DROP_LAST) {
 			// Последняя найденная вещь
-			updateValue(VALUE_FING_DROP_LAST, &str1);
+			updateValue(VALUE_FING_DROP_LAST, str1);
 		} else if (eventId == VALUE_HEALTH_CURR) {
 			// Текущее здоровье
 			healthLabel->setText(str1);
@@ -1502,7 +1442,7 @@ void SofMainWindow::resetFightStatistic()
 void SofMainWindow::applySettings()
 {
 	// *** Отправляем новые настройки ядру плагина ***
-	int i, j;
+	int i;
 	PluginCore *core = PluginCore::instance();
 	// Имя персонажа
 	QString str1 = setPersName->text();
@@ -1579,65 +1519,52 @@ void SofMainWindow::applySettings()
 	i = (checkbox_ResetQueuePopup->isChecked()) ? 1 : 0;
 	core->setIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, i);
 	// Настройка слотов
-	statisticFooterPos.fill(-1, STAT_PARAMS_COUNT);
-	j = slot1Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 0;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT1, 0);
+	statisticFooterPos.clear();
+	int statParam = slot1Combo->itemData(slot1Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT1;
 	}
-	j = slot2Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 1;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT2, 0);
+	core->setIntSettingValue(SETTING_SLOT1, statParam);
+	statParam = slot2Combo->itemData(slot2Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT2;
 	}
-	j = slot3Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 2;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT3, 0);
+	core->setIntSettingValue(SETTING_SLOT2, statParam);
+	statParam = slot3Combo->itemData(slot3Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT3;
 	}
-	j = slot4Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 3;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT4, 0);
+	core->setIntSettingValue(SETTING_SLOT3, statParam);
+	statParam = slot4Combo->itemData(slot4Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT4;
 	}
-	j = slot5Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 4;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT5, 0);
+	core->setIntSettingValue(SETTING_SLOT4, statParam);
+	statParam = slot5Combo->itemData(slot5Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT5;
 	}
-	j = slot6Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 5;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT6, 0);
+	core->setIntSettingValue(SETTING_SLOT5, statParam);
+	statParam = slot6Combo->itemData(slot6Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT6;
 	}
-	j = slot7Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 6;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT7, 0);
+	core->setIntSettingValue(SETTING_SLOT6, statParam);
+	statParam = slot7Combo->itemData(slot7Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT7;
 	}
-	j = slot8Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 7;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT8, 0);
+	core->setIntSettingValue(SETTING_SLOT7, statParam);
+	statParam = slot8Combo->itemData(slot8Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT8;
 	}
-	j = slot9Combo->currentIndex() - 1;
-	if (j >= 0 && j < STAT_PARAMS_COUNT) {
-		statisticFooterPos[j] = 8;
-	} else {
-		core->setIntSettingValue(SETTING_SLOT9, 0);
+	core->setIntSettingValue(SETTING_SLOT8, statParam);
+	statParam = slot9Combo->itemData(slot9Combo->currentIndex()).toInt();
+	if (statParam != -1) {
+		statisticFooterPos[statParam] = SETTING_SLOT9;
 	}
-	for (i = 0; i < STAT_PARAMS_COUNT; i++) {
-		j = statisticFooterPos[i];
-		core->setIntSettingValue(j + SETTING_SLOT1, i);
-	}
+	core->setIntSettingValue(SETTING_SLOT9, statParam);
 	fullUpdateFooterStatistic();
 	// Режим сохранения параметров персонажа
 	i = persParamSaveMode_combo->currentIndex();
