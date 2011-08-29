@@ -36,20 +36,12 @@
 #include "fight.h"
 #include "textparsing/fightparse.h"
 #include "aliases/aliases.h"
+#include "settings.h"
 
 
 // Глобальные переменные (знаю что не кошерно, зато работает быстро и... удобно)
 PopupAccessingHost *myPopupHost;
 OptionAccessingHost* psiOptions;
-
-// Глобальные константы
-QStringList valueXmlStrings = (QStringList() << "last-game-jid" << "last-chat-jid" << "messages-count" << "damage-max-from-pers" << "damage-min-from-pers" << "fights-count" << "drop-moneys" << "fings-drop-count" << "fing-drop-last" << "experience-drop-count" << "killed-enemies");
-QStringList persSaveModeStrings = (QStringList() << "none" << "save-at-exit" << "each-5-min-if-change");
-QStringList mirrorChangeModeStrings = (QStringList() << "first-accessible" << "auto-select-optimal");
-QStringList fightTimerStrings = (QStringList() << "not-to-display" << "seconds-only" << "minutes-and-seconds");
-QStringList fightAutoCloseStrings = (QStringList() << "not-close" << "if-one-opposite-mob");
-QStringList watchRestHealthEnergyStrings = (QStringList() << "no-watch" << "intell-watch" << "each-10-secs" << "each-30-secs" << "each-60-secs");
-QStringList fightSelectActionStrings = (QStringList() << "no-action" << "new-if-queue-not-empty" << "always-new");
 //-----
 
 PluginCore *PluginCore::instance_ = NULL;
@@ -76,6 +68,7 @@ PluginCore::PluginCore()
 	accJid = "";
 	mainWindow = 0;
 	fight = new Fight();
+	connect(fight, SIGNAL(fightStart(int)), this, SLOT(fightStarted(int)));
 	// Сброс статусов изменений
 	persStatusChangedFlag = false;
 	persBackpackChangedFlag = false;
@@ -148,12 +141,13 @@ PluginCore::~PluginCore()
 	savePersStatus();
 	Pers::reset();
 	Aliases::reset();
+	Settings::reset();
 	int cnt = persInfoList.size();
 	for (int i = 0; i < cnt; i++) {
-		if (persInfoList[i])
-			delete persInfoList[i];
+		PersInfo *pinf = persInfoList[i];
+		if (pinf != NULL)
+			delete pinf;
 	}
-	saveWindowSettings();
 }
 
 void PluginCore::updateRegExpForPersName()
@@ -172,8 +166,6 @@ void PluginCore::doShortCut()
 {
 	if (!mainWindow) {
 		mainWindow = new SofMainWindow();
-		mainWindow->setAppearanceSetting(appearaceSettings);
-		appearaceSettings.clear();
 	}
 	mainWindow->show();
 }
@@ -181,22 +173,25 @@ void PluginCore::doShortCut()
 void PluginCore::changeAccountJid(const QString newJid)
 {
 	// *** В настройках плагина сменился игровой аккаунт ***
-	if (!accJid.isEmpty()) {
-		// Сохраняем статус текущего персонажа
-		savePersStatus();
-	}
+	// Сохраняем статус текущего персонажа
+	savePersStatus();
 	accJid = newJid;
-	// Сбрасываем объект персонажа
-	Pers::instance()->init();
+	Settings *settings = Settings::instance();
 	// Загрузить новые настройки
-	loadPluginSettings();
+	settings->init(newJid);
+	// Установка нового режима управления зеркалами игры
+	Sender::instance()->setGameMirrorsMode(settings->getIntSetting(Settings::SettingMirrorSwitchMode));
+	// Сбрасываем объект персонажа
+	Pers *pers = Pers::instance();
+	pers->init();
 	// Загрузить новые данные персонажа
 	loadPersStatus();
 	// Обновить регулярки зависящие он имени персонажа
 	updateRegExpForPersName();
 	// Перегрузить карты
 	GameMap::instance()->init(accJid);
-	GameMap::instance()->setMapsParams(GameMap::AutoSaveMode, settingMapsSaveMode);
+	// Обновить алиасы
+	Aliases::instance()->init();
 	// Уведомить окно о переключении персонажа
 	if (mainWindow)
 		mainWindow->init();
@@ -662,12 +657,12 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Ваше имя в кубке конторы убийц...")) {
 				nPersStatus = Pers::StatusInKillersCup;
-				if (settingInKillersCupPopup) {
+				if (Settings::instance()->getBoolSetting(Settings::SettingInKillersCupPopup)) {
 					initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Ваше имя в кубке конторы убийц!"), 60);
 				}
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (killerAttackReg.indexIn(sMessage, 0) != -1) {
-				if (settingKillerAttackPopup) {
+				if (Settings::instance()->getBoolSetting(Settings::SettingKillerAttackPopup)) {
 					initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("На вас совершено нападение! Убийца: ") + killerAttackReg.cap(1), 10);
 				}
 				nPersStatus = Pers::StatusKillerAttack;
@@ -710,7 +705,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					} else if (secretDropFingReg.indexIn(sMessage, 0) != -1) {
 						++nFingsDropCount;
 						sFingDropLast = secretDropFingReg.cap(2);
-						if (settingFingDropPopup) {
+						if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
 							initPopup(QString::fromUtf8("Sof game"), "+" + sFingDropLast, 3);
 						}
 					}
@@ -724,7 +719,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				} else if (secretDropFingReg.indexIn(sMessage, 0) != -1) {
 					++nFingsDropCount;
 					sFingDropLast = secretDropFingReg.cap(2);
-					if (settingFingDropPopup) {
+					if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
 						initPopup(QString::fromUtf8("Sof game"), "+" + sFingDropLast, 3);
 					}
 				}
@@ -908,26 +903,26 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		}
 	}
 	// Начало установки параметров персонажа
-	Pers::instance()->beginSetPersParams();
+	Pers *pers = Pers::instance();
+	pers->beginSetPersParams();
 	// Отправляем здоровье
 	if (fHealth) {
-		Pers::instance()->setPersParams(VALUE_HEALTH_MAX, TYPE_INTEGER_FULL, nHealthF);
-		Pers::instance()->setPersParams(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, nHealthC);
+		pers->setPersParams(Pers::ParamHealthMax, TYPE_INTEGER_FULL, nHealthF);
+		pers->setPersParams(Pers::ParamHealthCurr, TYPE_INTEGER_FULL, nHealthC);
 	}
 	// Отправляем энергию
 	if (fPower) {
-		Pers::instance()->setPersParams(VALUE_ENERGY_MAX, TYPE_INTEGER_FULL, nPowerF);
-		Pers::instance()->setPersParams(VALUE_ENERGY_CURR, TYPE_INTEGER_FULL, nPowerC);
+		pers->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, nPowerF);
+		pers->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, nPowerC);
 	}
 	// Отправляем уровень персонажа
 	if (fLevel) {
-		Pers::instance()->setPersParams(VALUE_PERS_LEVEL, TYPE_INTEGER_FULL, nLevel);
+		pers->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, nLevel);
 	}
 	// Отправляем опыт
 	if (fExperience) {
-		Pers *pers = Pers::instance();
-		pers->setPersParams(VALUE_EXPERIENCE_MAX, TYPE_LONGLONG_FULL, nExperienceFull);
-		pers->setPersParams(VALUE_EXPERIENCE_CURR, TYPE_LONGLONG_FULL, nExperience);
+		pers->setPersParams(Pers::ParamExperienceMax, TYPE_LONGLONG_FULL, nExperienceFull);
+		pers->setPersParams(Pers::ParamExperienceCurr, TYPE_LONGLONG_FULL, nExperience);
 	}
 	// Сохраняем и отправляем текущий статус персонажа
 	if (persStatus != nPersStatus) {
@@ -937,14 +932,13 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			statisticsChanged();
 		}
 		persStatus = nPersStatus;
-		Pers::instance()->setPersParams(VALUE_PERS_STATUS, TYPE_INTEGER_FULL, nPersStatus);
+		pers->setPersParams(Pers::ParamPersStatus, TYPE_INTEGER_FULL, nPersStatus);
 	}
 	// Конец установки параметров персонажа
-	Pers::instance()->endSetPersParams();
+	pers->endSetPersParams();
 	// Отправляем имя персонажа
 	if (fName && (sName != Pers::instance()->name())) {
-		Pers::instance()->setName(sName);
-		valueChanged(VALUE_PERS_NAME, TYPE_STRING, 0);
+		pers->setName(sName);
 		persParamChanged();
 		// Обновляем регулярки
 		updateRegExpForPersName();
@@ -1009,20 +1003,22 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		// Если выбран новый бой, посылаем "0" чтобы показать список мобов
 		Sender::instance()->sendSystemString("0"); // Продолжение игры
 	} else if (nPersStatus == Pers::StatusFightMultiSelect) {
-		if (settingFightSelectAction == 1 || settingFightSelectAction == 2) { // Всегда новый бой
+		int mode = Settings::instance()->getIntSetting(Settings::SettingFightSelectAction);
+		if (mode == 1 || mode == 2) { // Всегда новый бой
 			Sender *sender = Sender::instance();
-			if (settingFightSelectAction == 2 || sender->getGameQueueLength() > 0) {
+			if (mode == 2 || sender->getGameQueueLength() > 0) {
 				sender->sendSystemString("1"); // 1 - новый бой
 			}
 		}
-	} else if ((nPersStatus == Pers::StatusNotKnow && settingResetQueueForUnknowStatus) || nPersStatus == Pers::StatusKillerAttack) {
+	} else if ((nPersStatus == Pers::StatusNotKnow && Settings::instance()->getBoolSetting(Settings::SettingResetQueueForUnknowStatus))
+		|| nPersStatus == Pers::StatusKillerAttack) {
 		// Если очередь не пуста, сбрасываем очередь
 		Sender *sender = Sender::instance();
 		int q_len = sender->getGameQueueLength();
 		if (q_len > 0) {
 			sender->resetGameQueue();
-			if (settingResetQueuePopup) {
-				initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Очередь сброшена"), 60);
+			if (Settings::instance()->getBoolSetting(Settings::SettingResetQueuePopup)) {
+				initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Очередь сброшена"), 30);
 			}
 			QString str1 = QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len);
 			setGameText(str1);
@@ -1053,14 +1049,14 @@ void PluginCore::processError(int errorNum)
 	setConsoleText(errStr, false);
 }
 
+/**
+ * Обрабатывает событие начала боя
+ */
 void PluginCore::fightStarted(int mode)
 {
-	/**
-	* Обрабатывает событие начала боя
-	**/
 	if (mode == FIGHT_MODE_OPEN) {
-		if (fight->isPersInFight()) { // Наш персонаж в бою?
-			if (settingFightAutoClose == 1) { // Автозакрытие боя если один против мобов
+		if (Settings::instance()->getIntSetting(Settings::SettingFightAutoClose) == 1) { // Автозакрытие боя если один против мобов
+			if (fight->isPersInFight()) { // Наш персонаж в бою?
 				if (fight->gameMobEnemyCount() > 0 && fight->gameHumanEnemyCount() == 0) { // В противниках только мобы
 					if (fight->gameMobAllyCount() == 0 && fight->gameHumanAllyCount() == 0) { // В нашей команде никого нет
 						Sender *sender = Sender::instance();
@@ -1096,10 +1092,6 @@ void PluginCore::setConsoleText(QString message, bool switch_)
 
 bool PluginCore::getIntValue(int valueId, int* valuePtr)
 {
-	if (valueId == VALUE_PERS_STATUS) {
-		*valuePtr = persStatus;
-		return true;
-	}
 	if (valueId == VALUE_DROP_MONEYS) {
 		*valuePtr = statMoneysDropCount;
 		return true;
@@ -1170,14 +1162,6 @@ bool PluginCore::getTextValue(int valueId, QString* valuePtr)
 		*valuePtr = lastChatJid;
 		return true;
 	}
-	if (valueId == VALUE_PERS_NAME) {
-		QString s_name = Pers::instance()->name();
-		if (s_name.isEmpty()) {
-			return false;
-		}
-		*valuePtr = s_name;
-		return true;
-	}
 	return false;
 }
 
@@ -1219,247 +1203,11 @@ void PluginCore::resetStatistic(int valueId)
 	}
 }
 
-bool PluginCore::setIntSettingValue(qint32 settingId, int settingValue)
-{
-	// Если settingPtr == 0 то значение выставляется по-умолчанию
-	//--
-	if (settingId >= SETTING_SLOT1 && settingId <= SETTING_SLOT9) {
-		int i = settingId - SETTING_SLOT1;
-		settingSlots[i] = settingValue;
-	} else if (settingId == SETTING_PERS_PARAM_SAVE_MODE) {
-		settingPersSaveMode = 0;
-		settingPersSaveMode = settingValue;
-		if (settingPersSaveMode == 2) {
-			if (!saveStatusTimer.isActive()) {
-				saveStatusTimer.start(5000*60);
-			}
-		} else {
-			if (saveStatusTimer.isActive()) {
-				saveStatusTimer.stop();
-			}
-		}
-	} else if (settingId == SETTING_SAVE_PERS_PARAM) {
-		settingSavePersParam = false;
-		if (settingValue == 1) {
-			settingSavePersParam = true;
-		}
-	} else if (settingId == SETTING_SAVE_PERS_BACKPACK) {
-		settingSaveBackpack = false;
-		if (settingValue == 1) {
-			settingSaveBackpack = true;
-		}
-	} else if (settingId == SETTING_SAVE_PERS_STAT) {
-		settingSaveStat = false;
-		if (settingValue == 1) {
-			settingSaveStat = true;
-		}
-	} else if (settingId == SETTING_CHANGE_MIRROR_MODE) {
-		settingChangeMirrorMode = 0;
-		settingChangeMirrorMode = settingValue;
-		return Sender::instance()->changeGameMirrorsMode(settingChangeMirrorMode);
-	} else if (settingId == SETTING_WINDOW_SIZE_POS) {
-		settingWindowSizePos = 0;
-			settingWindowSizePos = settingValue;
-	} else if (settingId == SETTING_WINDOW_POS_X) {
-		settingWindowPosX = QINT32_MIN;
-		settingWindowPosX = settingValue;
-	} else if (settingId == SETTING_WINDOW_POS_Y) {
-		settingWindowPosY = QINT32_MIN;
-		settingWindowPosY = settingValue;
-	} else if (settingId == SETTING_WINDOW_WIDTH) {
-		settingWindowWidth = QINT32_MIN;
-		settingWindowWidth = settingValue;
-	} else if (settingId == SETTING_WINDOW_HEIGHT) {
-		settingWindowHeight = QINT32_MIN;
-		settingWindowHeight = settingValue;
-	} else if (settingId == SETTING_FIGHT_TIMER) {
-		settingFightTimer = 0;
-		settingFightTimer = settingValue;
-	} else if (settingId == SETTING_AUTOCLOSE_FIGHT) {
-		if (settingValue == 0) {
-			if (settingFightAutoClose != 0) {
-				disconnect(fight, SIGNAL(fightStart(int)), this, SLOT(fightStarted(int)));
-				settingFightAutoClose = 0;
-			}
-		} else {
-			if (settingFightAutoClose != settingValue) {
-				if (settingFightAutoClose == 0) {
-					connect(fight, SIGNAL(fightStart(int)), this, SLOT(fightStarted(int)));
-				}
-				settingFightAutoClose = settingValue;
-			}
-		}
-	} else if (settingId == SETTING_FING_DROP_POPUP) {
-		settingFingDropPopup = false;
-		if (settingValue == 1) {
-			settingFingDropPopup = true;
-		}
-	} else if (settingId == SETTING_REST_HEALTH_ENERGY) {
-		settingWatchRestHealthEnergy = 0;
-		settingWatchRestHealthEnergy = settingValue;
-		Pers::instance()->setSetting(SETTING_REST_HEALTH_ENERGY, settingValue);
-	} else if (settingId == SETTING_FIGHT_SELECT_ACTION) {
-		settingFightSelectAction = 0;
-		settingFightSelectAction = settingValue;
-	} else if (settingId == SETTING_IN_KILLERS_CUP_POPUP) {
-		settingInKillersCupPopup = false;
-		if (settingValue == 1) {
-			settingInKillersCupPopup = true;
-		}
-	} else if (settingId == SETTING_KILLER_ATTACK_POPUP) {
-		settingKillerAttackPopup = false;
-		if (settingValue == 1) {
-			settingKillerAttackPopup = true;
-		}
-	} else if (settingId == SETTING_SHOW_QUEUE_LENGTH) {
-		settingShowQueryLength = false;
-		if (settingValue == 1) {
-			settingShowQueryLength = true;
-		}
-	} else if (settingId == SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS) {
-		settingResetQueueForUnknowStatus = false;
-		if (settingValue != 0) {
-			settingResetQueueForUnknowStatus = true;
-		}
-	} else if (settingId == SETTING_RESET_QUEUE_POPUP_SHOW) {
-		settingResetQueuePopup = (settingValue != 0);
-	} else if (settingId == SETTING_SERVER_TEXT_BLOCKS_COUNT) {
-		settingServerTextBlocksCount = settingValue;
-	} else if (settingId == SETTING_MAPS_PARAM_SAVE_MODE) {
-		if (settingMapsSaveMode != settingValue) {
-			settingMapsSaveMode = settingValue;
-			GameMap::instance()->setMapsParams(GameMap::AutoSaveMode, settingValue);
-		}
-	} else {
-		return false;
-	}
-	return true;
-}
-
-bool PluginCore::setStringSettingValue(qint32 settingId, QString* settingPtr)
-{
-	if (settingId == SETTING_PERS_NAME) {
-		settingPersName = *settingPtr;
-	} else if (settingId == SETTING_PERS_NAME_FONT) {
-		settingPersNameFont = *settingPtr;
-	} else if (settingId == SETTING_SERVER_TEXT_FONT) {
-		settingServerTextFont = *settingPtr;
-	} else {
-		return false;
-	}
-	return true;
-}
-
-bool PluginCore::getIntSettingValue(qint32 settingId, qint32* settingPtr)
-{
-	int i;
-	if (settingId >= SETTING_SLOT1 && settingId <= SETTING_SLOT9) {
-		i = settingId - SETTING_SLOT1;
-		*settingPtr = settingSlots[i];
-	} else if (settingId == SETTING_PERS_PARAM_SAVE_MODE) {
-		*settingPtr = settingPersSaveMode;
-	} else if (settingId == SETTING_SAVE_PERS_PARAM) {
-		*settingPtr = (settingSavePersParam) ? 1 : 0;
-	} else if (settingId == SETTING_SAVE_PERS_BACKPACK) {
-		*settingPtr = (settingSaveBackpack) ? 1 : 0;
-	} else if (settingId == SETTING_SAVE_PERS_STAT) {
-		*settingPtr = (settingSaveStat) ? 1 : 0;
-	} else if (settingId == SETTING_CHANGE_MIRROR_MODE) {
-		*settingPtr = settingChangeMirrorMode;
-	} else if (settingId == SETTING_WINDOW_SIZE_POS) {
-		*settingPtr = settingWindowSizePos;
-	} else if (settingId == SETTING_WINDOW_POS_X) {
-		if (settingWindowPosX == QINT32_MIN) {
-			return false;
-		}
-		*settingPtr = settingWindowPosX;
-	} else if (settingId == SETTING_WINDOW_POS_Y) {
-		if (settingWindowPosY == QINT32_MIN) {
-			return false;
-		}
-		*settingPtr = settingWindowPosY;
-	} else if (settingId == SETTING_WINDOW_WIDTH) {
-		if (settingWindowWidth == QINT32_MIN) {
-			return false;
-		}
-		*settingPtr = settingWindowWidth;
-	} else if (settingId == SETTING_WINDOW_HEIGHT) {
-		if (settingWindowHeight == QINT32_MIN) {
-			return false;
-		}
-		*settingPtr = settingWindowHeight;
-	} else if (settingId == SETTING_FIGHT_TIMER) {
-		if (settingFightTimer == -1) {
-			return false;
-		}
-		*settingPtr = settingFightTimer;
-	} else if (settingId == SETTING_AUTOCLOSE_FIGHT) {
-		*settingPtr = settingFightAutoClose;
-	} else if (settingId == SETTING_FING_DROP_POPUP) {
-		if (settingFingDropPopup) {
-			*settingPtr = 1;
-		} else {
-			*settingPtr = 0;
-		}
-	} else if (settingId == SETTING_REST_HEALTH_ENERGY) {
-		*settingPtr = settingWatchRestHealthEnergy;
-	} else if (settingId == SETTING_FIGHT_SELECT_ACTION) {
-		*settingPtr = settingFightSelectAction;
-	} else if (settingId == SETTING_IN_KILLERS_CUP_POPUP) {
-		if (settingInKillersCupPopup) {
-			*settingPtr = 1;
-		} else {
-			*settingPtr = 0;
-		}
-	} else if (settingId == SETTING_KILLER_ATTACK_POPUP) {
-		if (settingKillerAttackPopup) {
-			*settingPtr = 1;
-		} else {
-			*settingPtr = 0;
-		}
-	} else if (settingId == SETTING_SHOW_QUEUE_LENGTH) {
-		if (settingShowQueryLength) {
-			*settingPtr = 1;
-		} else {
-			*settingPtr = 0;
-		}
-	} else if (settingId == SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS) {
-		if (settingResetQueueForUnknowStatus) {
-			*settingPtr = 1;
-		} else {
-			*settingPtr = 0;
-		}
-	} else if (settingId == SETTING_RESET_QUEUE_POPUP_SHOW) {
-		*settingPtr = (settingResetQueuePopup) ? 1 : 0;
-	} else if (settingId == SETTING_SERVER_TEXT_BLOCKS_COUNT) {
-		*settingPtr = settingServerTextBlocksCount;
-	} else if (settingId == SETTING_MAPS_PARAM_SAVE_MODE) {
-		*settingPtr = settingMapsSaveMode;
-	} else {
-		return false;
-	}
-	return true;
-}
-
-bool PluginCore::getStringSettingValue(qint32 settingId, QString* settingPtr)
-{
-	if (settingId == SETTING_PERS_NAME) {
-		*settingPtr = settingPersName;
-	} else if (settingId == SETTING_PERS_NAME_FONT) {
-		*settingPtr = settingPersNameFont;
-	} else if (settingId == SETTING_SERVER_TEXT_FONT) {
-		*settingPtr = settingServerTextFont;
-	} else {
-		return false;
-	}
-	return true;
-}
-
 bool PluginCore::sendCommandToCore(qint32 commandId)
 {
 	if (commandId == COMMAND_SAVE_SETTINGS) {
 		// Немедленно сохраняет настройки плагина
-		return savePluginSettings();
+		return Settings::instance()->save();
 	} else if (commandId == COMMAND_CLOSE_WINDOW) {
 		// Закрывается окно плагина
 		//messageFiltered = false;
@@ -1497,120 +1245,123 @@ bool PluginCore::savePersStatus()
 	eNewAccount.setAttribute("jid", accJid);
 	QDomElement domElement;
 	Pers *pers = Pers::instance();
-	if (settingSavePersParam) {
-		QDomElement eMain = xmlDoc.createElement("main");
-		eNewAccount.appendChild(eMain);
-		if (!pers->name().isEmpty()) {
-			domElement = xmlDoc.createElement("pers-name");
-			domElement.appendChild(xmlDoc.createTextNode(pers->name()));
-			eMain.appendChild(domElement);
+	Settings *settings = Settings::instance();
+	if (settings->getIntSetting(Settings::SettingPersSaveMode) != 0) {
+		if (settings->getBoolSetting(Settings::SettingSavePersParams)) {
+			QDomElement eMain = xmlDoc.createElement("main");
+			eNewAccount.appendChild(eMain);
+			if (!pers->name().isEmpty()) {
+				domElement = xmlDoc.createElement("pers-name");
+				domElement.appendChild(xmlDoc.createTextNode(pers->name()));
+				eMain.appendChild(domElement);
+			}
+			int num1;
+			if (pers->getIntParamValue(Pers::ParamPersLevel, &num1)) {
+				domElement = xmlDoc.createElement("pers-level");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
+				eMain.appendChild(domElement);
+			}
+			long long experience;
+			if (pers->getLongParamValue(Pers::ParamExperienceCurr, &experience)) {
+				domElement = xmlDoc.createElement("pers-experience-curr");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(experience)));
+				eMain.appendChild(domElement);
+			}
+			if (pers->getLongParamValue(Pers::ParamExperienceMax, &experience)) {
+				domElement = xmlDoc.createElement("pers-experience-max");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(experience)));
+				eMain.appendChild(domElement);
+			}
+			if (pers->getIntParamValue(Pers::ParamHealthCurr, &num1)) {
+				domElement = xmlDoc.createElement("pers-health-curr");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
+				eMain.appendChild(domElement);
+			}
+			if (pers->getIntParamValue(Pers::ParamHealthMax, &num1)) {
+				domElement = xmlDoc.createElement("pers-health-max");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
+				eMain.appendChild(domElement);
+			}
+			if (pers->getIntParamValue(Pers::ParamEnergyCurr, &num1)) {
+				domElement = xmlDoc.createElement("pers-energy-curr");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
+				eMain.appendChild(domElement);
+			}
+			if (pers->getIntParamValue(Pers::ParamEnergyMax, &num1)) {
+				domElement = xmlDoc.createElement("pers-energy-max");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
+				eMain.appendChild(domElement);
+			}
 		}
-		int num1;
-		if (pers->getIntParamValue(VALUE_PERS_LEVEL, &num1)) {
-			domElement = xmlDoc.createElement("pers-level");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
-			eMain.appendChild(domElement);
+		if (settings->getBoolSetting(Settings::SettingSaveStatistic)) {
+			QDomElement eStat = xmlDoc.createElement("statistic");
+			eNewAccount.appendChild(eStat);
+			if (lastGameJid.length() != 0) {
+				domElement = xmlDoc.createElement("last-game-jid");
+				domElement.appendChild(xmlDoc.createTextNode(lastGameJid));
+				eStat.appendChild(domElement);
+			}
+			if (lastChatJid.length() != 0) {
+				domElement = xmlDoc.createElement("last-chat-jid");
+				domElement.appendChild(xmlDoc.createTextNode(lastChatJid));
+				eStat.appendChild(domElement);
+			}
+			if (statMessagesCount != 0) {
+				domElement = xmlDoc.createElement("in-messages-count");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statMessagesCount)));
+				eStat.appendChild(domElement);
+			}
+			if (statFightsCount != 0) {
+				domElement = xmlDoc.createElement("fights-count");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightsCount)));
+				eStat.appendChild(domElement);
+			}
+			if (statFightDamageMax != -1) {
+				domElement = xmlDoc.createElement("pers-fight-damage-max");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightDamageMax)));
+				eStat.appendChild(domElement);
+			}
+			if (statFightDamageMin != -1) {
+				domElement = xmlDoc.createElement("pers-fight-damage-min");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightDamageMin)));
+				eStat.appendChild(domElement);
+			}
+			if (statMoneysDropCount != 0) {
+				domElement = xmlDoc.createElement("moneys-drop-count");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statMoneysDropCount)));
+				eStat.appendChild(domElement);
+			}
+			if (statFingsDropCount != 0) {
+				domElement = xmlDoc.createElement("fings-drop-count");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFingsDropCount)));
+				eStat.appendChild(domElement);
+			}
+			if (statFingDropLast.length() != 0) {
+				domElement = xmlDoc.createElement("fing-drop-last");
+				domElement.appendChild(xmlDoc.createTextNode(statFingDropLast));
+				eStat.appendChild(domElement);
+			}
+			if (statExperienceDropCount != 0) {
+				domElement = xmlDoc.createElement("experience-drop-count");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statExperienceDropCount)));
+				eStat.appendChild(domElement);
+			}
+			if (statKilledEnemies != 0) {
+				domElement = xmlDoc.createElement("killed-enemies");
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statKilledEnemies)));
+				eStat.appendChild(domElement);
+			}
 		}
-		long long experience;
-		if (pers->getLongParamValue(VALUE_EXPERIENCE_CURR, &experience)) {
-			domElement = xmlDoc.createElement("pers-experience-curr");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(experience)));
-			eMain.appendChild(domElement);
-		}
-		if (pers->getLongParamValue(VALUE_EXPERIENCE_MAX, &experience)) {
-			domElement = xmlDoc.createElement("pers-experience-max");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(experience)));
-			eMain.appendChild(domElement);
-		}
-		if (pers->getIntParamValue(VALUE_HEALTH_CURR, &num1)) {
-			domElement = xmlDoc.createElement("pers-health-curr");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
-			eMain.appendChild(domElement);
-		}
-		if (pers->getIntParamValue(VALUE_HEALTH_MAX, &num1)) {
-			domElement = xmlDoc.createElement("pers-health-max");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
-			eMain.appendChild(domElement);
-		}
-		if (pers->getIntParamValue(VALUE_ENERGY_CURR, &num1)) {
-			domElement = xmlDoc.createElement("pers-energy-curr");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
-			eMain.appendChild(domElement);
-		}
-		if (pers->getIntParamValue(VALUE_ENERGY_MAX, &num1)) {
-			domElement = xmlDoc.createElement("pers-energy-max");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(num1)));
-			eMain.appendChild(domElement);
-		}
-	}
-	if (settingSaveStat != 0) {
-		QDomElement eStat = xmlDoc.createElement("statistic");
-		eNewAccount.appendChild(eStat);
-		if (lastGameJid.length() != 0) {
-			domElement = xmlDoc.createElement("last-game-jid");
-			domElement.appendChild(xmlDoc.createTextNode(lastGameJid));
-			eStat.appendChild(domElement);
-		}
-		if (lastChatJid.length() != 0) {
-			domElement = xmlDoc.createElement("last-chat-jid");
-			domElement.appendChild(xmlDoc.createTextNode(lastChatJid));
-			eStat.appendChild(domElement);
-		}
-		if (statMessagesCount != 0) {
-			domElement = xmlDoc.createElement("in-messages-count");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statMessagesCount)));
-			eStat.appendChild(domElement);
-		}
-		if (statFightsCount != 0) {
-			domElement = xmlDoc.createElement("fights-count");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightsCount)));
-			eStat.appendChild(domElement);
-		}
-		if (statFightDamageMax != -1) {
-			domElement = xmlDoc.createElement("pers-fight-damage-max");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightDamageMax)));
-			eStat.appendChild(domElement);
-		}
-		if (statFightDamageMin != -1) {
-			domElement = xmlDoc.createElement("pers-fight-damage-min");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightDamageMin)));
-			eStat.appendChild(domElement);
-		}
-		if (statMoneysDropCount != 0) {
-			domElement = xmlDoc.createElement("moneys-drop-count");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statMoneysDropCount)));
-			eStat.appendChild(domElement);
-		}
-		if (statFingsDropCount != 0) {
-			domElement = xmlDoc.createElement("fings-drop-count");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statFingsDropCount)));
-			eStat.appendChild(domElement);
-		}
-		if (statFingDropLast.length() != 0) {
-			domElement = xmlDoc.createElement("fing-drop-last");
-			domElement.appendChild(xmlDoc.createTextNode(statFingDropLast));
-			eStat.appendChild(domElement);
-		}
-		if (statExperienceDropCount != 0) {
-			domElement = xmlDoc.createElement("experience-drop-count");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statExperienceDropCount)));
-			eStat.appendChild(domElement);
-		}
-		if (statKilledEnemies != 0) {
-			domElement = xmlDoc.createElement("killed-enemies");
-			domElement.appendChild(xmlDoc.createTextNode(QString::number(statKilledEnemies)));
-			eStat.appendChild(domElement);
-		}
-	}
-	if (pers && settingSaveBackpack) {
-		// Сохраняем данные о вещах
-		QDomElement eBackpack = xmlDoc.createElement("backpack");
-		eNewAccount.appendChild(eBackpack);
-		QDomElement eThings = pers->exportThingsToDomElement(xmlDoc);
-		eBackpack.appendChild(eThings);
-		QDomElement ePrice = pers->exportPriceToDomElement(xmlDoc);
-		if (!ePrice.isNull()) {
-			eBackpack.appendChild(ePrice);
+		if (settings->getBoolSetting(Settings::SettingSaveBackpack)) {
+			// Сохраняем данные о вещах
+			QDomElement eBackpack = xmlDoc.createElement("backpack");
+			eNewAccount.appendChild(eBackpack);
+			QDomElement eThings = pers->exportThingsToDomElement(xmlDoc);
+			eBackpack.appendChild(eThings);
+			QDomElement ePrice = pers->exportPriceToDomElement(xmlDoc);
+			if (!ePrice.isNull()) {
+				eBackpack.appendChild(ePrice);
+			}
 		}
 	}
 	if (!bReplace) {
@@ -1633,251 +1384,6 @@ bool PluginCore::savePersStatus()
 		return true;
 	}
 	return false;
-}
-
-bool PluginCore::savePluginSettings()
-{
-	if (accJid.isEmpty()) {
-		return false;
-	}
-	// Читаем старые настройки
-	QDomDocument xmlDoc;
-	QDomElement eRoot;
-	QDomNode eOldAccount;
-	bool bReplace = false;
-	if (loadPluginXml(&xmlDoc, "sofgame_settings.xml")) {
-		// Ищем наш account элемент
-		eRoot = xmlDoc.documentElement();
-		if (eRoot.tagName() == "settings") {
-			eOldAccount = eRoot.firstChild();
-			while (!eOldAccount.isNull()) {
-				if (eOldAccount.toElement().tagName() == "account" && eOldAccount.toElement().attribute("jid") == accJid) {
-					bReplace = true;
-					break;
-				}
-				eOldAccount = eOldAccount.nextSibling();
-			}
-		}
-	}
-	// Создаем элемент нашего аккаунта
-	QDomElement eNewAccount = xmlDoc.createElement("account");
-	eNewAccount.setAttribute("jid", accJid);
-	QDomElement eMain = xmlDoc.createElement("main");
-	eNewAccount.appendChild(eMain);
-	if (settingPersName.isEmpty()) {
-		settingPersName = Pers::instance()->name();
-	}
-	QDomElement ePersName = xmlDoc.createElement("pers-name");
-	if (settingPersName.length() != 0) {
-		ePersName.appendChild(xmlDoc.createTextNode(settingPersName));
-	}
-	eMain.appendChild(ePersName);
-	if (settingPersSaveMode >= 0 && settingPersSaveMode < persSaveModeStrings.size()) {
-		QDomElement eSaveParamMode = xmlDoc.createElement("pers-save-mode");
-		eSaveParamMode.setAttribute("value", persSaveModeStrings.at(settingPersSaveMode));
-		eMain.appendChild(eSaveParamMode);
-	}
-	QDomElement eSaveParam = xmlDoc.createElement("save-pers-params");
-	eSaveParam.setAttribute("value", (settingSavePersParam) ? "true" : "false");
-	eMain.appendChild(eSaveParam);
-	QDomElement eSaveBackpack = xmlDoc.createElement("save-pers-backpack");
-	eSaveBackpack.setAttribute("value", (settingSaveBackpack) ? "true" : "false");
-	eMain.appendChild(eSaveBackpack);
-	QDomElement eSaveStat = xmlDoc.createElement("save-statistic");
-	eSaveStat.setAttribute("value", (settingSaveStat) ? "true" : "false");
-	eMain.appendChild(eSaveStat);
-	if (settingChangeMirrorMode >= 0 && settingChangeMirrorMode <= 1) {
-		QDomElement eMirrorMode = xmlDoc.createElement("mirror-change-mode");
-		eMirrorMode.setAttribute("value", mirrorChangeModeStrings.at(settingChangeMirrorMode));
-		eMain.appendChild(eMirrorMode);
-	}
-	if (settingWindowSizePos == 1) {
-		QDomElement eWindowParams = xmlDoc.createElement("window-save-params");
-		eWindowParams.setAttribute("mode", "position-and-size");
-		eMain.appendChild(eWindowParams);
-	}
-	if (settingWatchRestHealthEnergy >= 0 && settingWatchRestHealthEnergy <= 4) {
-		QDomElement eWatchRest = xmlDoc.createElement("watch-rest-health-energy");
-		eWatchRest.setAttribute("value", watchRestHealthEnergyStrings.at(settingWatchRestHealthEnergy));
-		eMain.appendChild(eWatchRest);
-	}
-	QDomElement eInKillersCupPopup = xmlDoc.createElement("in-killers-cup-popup");
-	if (settingInKillersCupPopup) {
-		eInKillersCupPopup.setAttribute("value", "true");
-	} else {
-		eInKillersCupPopup.setAttribute("value", "false");
-	}
-	eMain.appendChild(eInKillersCupPopup);
-	QDomElement eKillerAttackPopup = xmlDoc.createElement("killer-attack-popup");
-	if (settingKillerAttackPopup) {
-		eKillerAttackPopup.setAttribute("value", "true");
-	} else {
-		eKillerAttackPopup.setAttribute("value", "false");
-	}
-	eMain.appendChild(eKillerAttackPopup);
-	QDomElement eShowQueueLength = xmlDoc.createElement("show-queue-length");
-	if (settingShowQueryLength) {
-		eShowQueueLength.setAttribute("value", "true");
-	} else {
-		eShowQueueLength.setAttribute("value", "false");
-	}
-	eMain.appendChild(eShowQueueLength);
-	QDomElement eResetQueueForUnknow = xmlDoc.createElement("reset-queue-if-unknow-status");
-	if (settingResetQueueForUnknowStatus) {
-		eResetQueueForUnknow.setAttribute("value", "true");
-	} else {
-		eResetQueueForUnknow.setAttribute("value", "false");
-	}
-	eMain.appendChild(eResetQueueForUnknow);
-	QDomElement eResetQueuePopup = xmlDoc.createElement("show-popup-if-reset-queue");
-	eResetQueuePopup.setAttribute("value", (settingResetQueuePopup) ? "true" : "false");
-	eMain.appendChild(eResetQueuePopup);
-	if (settingServerTextBlocksCount > 0) {
-		QDomElement eServerTextBlocksCount = xmlDoc.createElement("server-text-max-blocks-count");
-		eServerTextBlocksCount.setAttribute("value", settingServerTextBlocksCount);
-		eMain.appendChild(eServerTextBlocksCount);
-	}
-	QDomElement eFight = xmlDoc.createElement("fight");
-	eNewAccount.appendChild(eFight);
-	if (settingFightTimer >= 0 && settingFightTimer <= 2) {
-		QDomElement eFightTimer = xmlDoc.createElement("fight-timer-show");
-		eFightTimer.setAttribute("value", fightTimerStrings[settingFightTimer]);
-		eFight.appendChild(eFightTimer);
-	}
-	if (settingFightSelectAction >= 0 && settingFightSelectAction <= 2) {
-		QDomElement eFightSelectAction = xmlDoc.createElement("fight-select-action");
-		eFightSelectAction.setAttribute("value", fightSelectActionStrings.at(settingFightSelectAction));
-		eFight.appendChild(eFightSelectAction);
-	}
-	if (settingFightAutoClose >= 0 && settingFightAutoClose <= 1) {
-		QDomElement eFightAutoClose = xmlDoc.createElement("fight-auto-close");
-		eFightAutoClose.setAttribute("value", fightAutoCloseStrings.at(settingFightAutoClose));
-		eFight.appendChild(eFightAutoClose);
-	}
-	QDomElement eFingDropPopup = xmlDoc.createElement("fing-drop-popup");
-	if (settingFingDropPopup) {
-		eFingDropPopup.setAttribute("value", "true");
-	} else {
-		eFingDropPopup.setAttribute("value", "false");
-	}
-	eFight.appendChild(eFingDropPopup);
-	QDomElement eStat = xmlDoc.createElement("statistic");
-	eNewAccount.appendChild(eStat);
-
-	// Сохраняем настройки слотов
-	QDomElement eSlots = xmlDoc.createElement("slots");
-	eNewAccount.appendChild(eSlots);
-	int j;
-	QDomElement eSlot;
-	for (int i = 0; i < SLOT_ITEMS_COUNT; i++) {
-		j = settingSlots[i];
-		if (j >= 0 && j < STAT_PARAMS_COUNT) {
-			if (valueXmlStrings[j].length() != 0) {
-				eSlot = xmlDoc.createElement("slot");
-				eSlot.setAttribute("num", QString::number(i+1));
-				eSlot.setAttribute("param", valueXmlStrings[j]);
-				eSlots.appendChild(eSlot);
-			}
-		}
-	}
-	// Сохраняем настройки алиасов
-	QDomElement eAliases = Aliases::instance()->saveToDomElement(xmlDoc);
-	if (!eAliases.isNull()) {
-		eNewAccount.appendChild(eAliases);
-	}
-	// Сохраняем настройки внешнего вида (цвета, шрифты)
-	if (mainWindow) {
-		QDomElement eAppearance = mainWindow->getAppearanceSettings(xmlDoc);
-		eNewAccount.appendChild(eAppearance);
-	}
-	// Сохраняем настройки рюкзака
-	QDomElement eBackpack = xmlDoc.createElement("backpack");
-	eNewAccount.appendChild(eBackpack);
-	QDomElement eFilters = Pers::instance()->exportFiltersToDomElement(xmlDoc);
-	eBackpack.appendChild(eFilters);
-	// Сохраняем настройки карт
-	QDomElement eMaps = xmlDoc.createElement("maps");
-	eNewAccount.appendChild(eMaps);
-	if (settingMapsSaveMode >= 0 && settingMapsSaveMode < persSaveModeStrings.size()) {
-		QDomElement eSaveParamMode = xmlDoc.createElement("maps-save-mode");
-		eSaveParamMode.setAttribute("value", persSaveModeStrings.at(settingMapsSaveMode));
-		eMaps.appendChild(eSaveParamMode);
-	}
-	// Сохранение
-	if (!bReplace) {
-		// Если настройки не прочитались или они некорректные, то создаем новый xml документ
-		if (eRoot.isNull()) {
-			eRoot = xmlDoc.createElement("settings");
-			eRoot.setAttribute("version", "0.1");
-			xmlDoc.appendChild(eRoot);
-		}
-		eRoot.appendChild(eNewAccount);
-	} else {
-		// Заменяем старые настройки новыми
-		eRoot.replaceChild(eNewAccount, eOldAccount);
-	}
-	return savePluginXml(&xmlDoc, "sofgame_settings.xml");
-
-}
-
-bool PluginCore::saveWindowSettings()
-{
-	if (accJid.isEmpty()) {
-		return false;
-	}
-	if (settingWindowSizePos == 0) {
-		return false;
-	}
-	QDomDocument xmlDoc;
-	if (!loadPluginXml(&xmlDoc, "sofgame_settings.xml")) {
-		return false;
-	}
-	QDomElement eRoot = xmlDoc.documentElement();
-	if (eRoot.tagName() != "settings") {
-		return false;
-	}
-	QDomNode childSettingsNode = eRoot.firstChild();
-	QDomNode childJidNode;
-	QDomNode childMainNode;
-//	qint32 i, j;
-//	QString str1;
-	while (!childSettingsNode.isNull()) {
-		if (childSettingsNode.toElement().tagName() == "account") {
-			if (childSettingsNode.toElement().attribute("jid") == accJid) {
-				childJidNode = childSettingsNode.firstChild();
-				while (!childJidNode.isNull()) {
-					if (childJidNode.toElement().tagName() == "main") {
-						childMainNode = childJidNode.firstChild();
-						while (!childMainNode.isNull()) {
-							QString sTagName = childMainNode.toElement().tagName();
-							if (sTagName == "window-save-params") {
-								QDomElement eWindowParams = childMainNode.toElement();
-								if (settingWindowPosX != QINT32_MIN) {
-									eWindowParams.setAttribute("pos-x", QString::number(settingWindowPosX));
-								}
-								if (settingWindowPosY != QINT32_MIN) {
-									eWindowParams.setAttribute("pos-y", QString::number(settingWindowPosY));
-								}
-								if (settingWindowWidth != QINT32_MIN) {
-									eWindowParams.setAttribute("width", QString::number(settingWindowWidth));
-								}
-								if (settingWindowHeight != QINT32_MIN) {
-									eWindowParams.setAttribute("height", QString::number(settingWindowHeight));
-								}
-								break;
-							}
-							childMainNode = childMainNode.nextSibling();
-						}
-						break;
-					}
-					childJidNode = childJidNode.nextSibling();
-				}
-				break;
-			}
-		}
-		childSettingsNode = childSettingsNode.nextSibling();
-	}
-	return savePluginXml(&xmlDoc, "sofgame_settings.xml");
 }
 
 bool PluginCore::loadPersStatus()
@@ -1912,38 +1418,39 @@ bool PluginCore::loadPersStatus()
 	QDomNode childStatNode;
 	QString str1, sTagName;
 
+	Settings *settings = Settings::instance();
 	Pers *pers = Pers::instance();
 	pers->beginSetPersParams();
 	while (!childStatusNode.isNull()) {
 		if (childStatusNode.toElement().tagName() == "account" && childStatusNode.toElement().attribute("jid") == accJid) {
 			QDomNode childAccountNode = childStatusNode.firstChild();
 			while (!childAccountNode.isNull()) {
-				if (settingSavePersParam && childAccountNode.toElement().tagName() == "main") {
-					if (settingSavePersParam) {
+				if (childAccountNode.toElement().tagName() == "main") {
+					if (settings->getIntSetting(Settings::SettingPersSaveMode) != 0 && settings->getBoolSetting(Settings::SettingSavePersParams)) {
 						childMainNode = childAccountNode.firstChild();
 						while (!childMainNode.isNull()) {
 							if (childMainNode.toElement().tagName() == "pers-name") {
 								pers->setName(getTextFromNode(&childMainNode));
 							} else if (childMainNode.toElement().tagName() == "pers-level") {
-								pers->setPersParams(VALUE_PERS_LEVEL, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-experience-curr") {
-								pers->setPersParams(VALUE_EXPERIENCE_CURR, TYPE_LONGLONG_FULL, getTextFromNode(&childMainNode).toLongLong());
+								pers->setPersParams(Pers::ParamExperienceCurr, TYPE_LONGLONG_FULL, getTextFromNode(&childMainNode).toLongLong());
 							} else if (childMainNode.toElement().tagName() == "pers-experience-max") {
-								pers->setPersParams(VALUE_EXPERIENCE_MAX, TYPE_LONGLONG_FULL, getTextFromNode(&childMainNode).toLongLong());
+								pers->setPersParams(Pers::ParamExperienceMax, TYPE_LONGLONG_FULL, getTextFromNode(&childMainNode).toLongLong());
 							} else if (childMainNode.toElement().tagName() == "pers-health-curr") {
-								pers->setPersParams(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(Pers::ParamHealthCurr, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-health-max") {
-								pers->setPersParams(VALUE_HEALTH_MAX, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(Pers::ParamHealthMax, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-energy-curr") {
-								pers->setPersParams(VALUE_ENERGY_CURR, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-energy-max") {
-								pers->setPersParams(VALUE_ENERGY_MAX, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
+								pers->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							}
 							childMainNode = childMainNode.nextSibling();
 						}
 					}
-				} else if (settingSaveStat && childAccountNode.toElement().tagName() == "statistic") {
-					if (settingSaveStat) {
+				} else if (childAccountNode.toElement().tagName() == "statistic") {
+					if (settings->getIntSetting(Settings::SettingPersSaveMode) != 0 && settings->getBoolSetting(Settings::SettingSaveStatistic)) {
 						childStatNode = childAccountNode.firstChild();
 						while (!childStatNode.isNull()) {
 							sTagName = childStatNode.toElement().tagName();
@@ -1973,9 +1480,9 @@ bool PluginCore::loadPersStatus()
 							childStatNode = childStatNode.nextSibling();
 						}
 					}
-				} else if (settingSaveBackpack && childAccountNode.toElement().tagName() == "backpack") {
-					// Обрабатываем данные о вещах
-					if (settingSaveBackpack) {
+				} else if (childAccountNode.toElement().tagName() == "backpack") {
+					if (settings->getIntSetting(Settings::SettingPersSaveMode) != 0 && settings->getBoolSetting(Settings::SettingSaveBackpack)) {
+						// Обрабатываем данные о вещах
 						QDomElement el = childAccountNode.toElement();
 						pers->loadThingsFromDomElement(el);
 					}
@@ -1986,239 +1493,6 @@ bool PluginCore::loadPersStatus()
 		childStatusNode = childStatusNode.nextSibling();
 	}
 	pers->endSetPersParams();
-	return true;
-}
-
-bool PluginCore::loadPluginSettings()
-{
-	// Начальная инициализация
-	settingPersName = "";
-	settingSlots.fill(-1, SLOT_ITEMS_COUNT);
-	settingPersSaveMode = 1;
-	settingMapsSaveMode = 1;
-	settingSavePersParam = true;
-	settingSaveStat = true;
-	settingSaveBackpack = true;
-	settingChangeMirrorMode = 0;
-	settingPersX = QINT32_MIN;
-	settingPersY = QINT32_MIN;
-	settingWindowSizePos = 0;
-	settingWindowPosX = QINT32_MIN;
-	settingWindowPosY = QINT32_MIN;
-	settingWindowWidth = QINT32_MIN;
-	settingWindowHeight = QINT32_MIN;
-	settingFightTimer = -1;
-	settingFightAutoClose = 0;
-	settingFingDropPopup = true;
-	settingWatchRestHealthEnergy = 0;
-	settingFightSelectAction = 0;
-	settingInKillersCupPopup = false;
-	settingKillerAttackPopup = false;
-	settingShowQueryLength = false;
-	settingPersNameFont = "";
-	settingServerTextFont = "";
-	settingResetQueueForUnknowStatus = true;
-	settingServerTextBlocksCount = 0;
-	settingResetQueuePopup = false;
-	// Загрузка настроек
-	if (accJid.isEmpty()) {
-		return false;
-	}
-	QDomDocument xmlDoc;
-	if (!loadPluginXml(&xmlDoc, "sofgame_settings.xml")) {
-		return false;
-	}
-	QDomElement eRoot = xmlDoc.documentElement();
-	if (eRoot.tagName() != "settings") {
-		return false;
-	}
-	QDomNode childSettingsNode = eRoot.firstChild();
-	QDomNode childJidNode;
-	QDomNode childMainNode;
-	QDomNode childStatNode;
-	QDomNode childSlotsNode;
-	qint32 i, j;
-	QString str1;
-	while (!childSettingsNode.isNull()) {
-		if (childSettingsNode.toElement().tagName() == "account") {
-			if (childSettingsNode.toElement().attribute("jid") == accJid) {
-				childJidNode = childSettingsNode.firstChild();
-				while (!childJidNode.isNull()) {
-					if (childJidNode.toElement().tagName() == "main") {
-						childMainNode = childJidNode.firstChild();
-						while (!childMainNode.isNull()) {
-							QString sTagName = childMainNode.toElement().tagName();
-							if (sTagName == "pers-name") {
-								settingPersName = getTextFromNode(&childMainNode);
-							} else if (sTagName == "pers-save-mode") {
-								str1 = childMainNode.toElement().attribute("value");
-								i = persSaveModeStrings.indexOf(str1);
-								if (i != -1) {
-									settingPersSaveMode = i;
-								}
-							} else if (sTagName == "save-pers-params") {
-								settingSavePersParam = true;
-								if (childMainNode.toElement().attribute("value").toLower() == "false") {
-									settingSavePersParam = false;
-								}
-							} else if (sTagName == "save-pers-backpack") {
-								settingSaveBackpack = true;
-								if (childMainNode.toElement().attribute("value").toLower() == "false") {
-									settingSaveBackpack = false;
-								}
-							} else if (sTagName == "save-statistic") {
-								settingSaveStat = true;
-								if (childMainNode.toElement().attribute("value").toLower() == "false") {
-									settingSaveStat = false;
-								}
-							} else if (sTagName == "mirror-change-mode") {
-								str1 = childMainNode.toElement().attribute("value");
-								i = mirrorChangeModeStrings.indexOf(str1);
-								if (i != -1) {
-									settingChangeMirrorMode = i;
-									Sender::instance()->changeGameMirrorsMode(i);
-								}
-							} else if (sTagName == "window-save-params") {
-								settingWindowSizePos = 1;
-								str1 = childMainNode.toElement().attribute("pos-x");
-								settingWindowPosX = str1.toInt();
-								str1 = childMainNode.toElement().attribute("pos-y");
-								settingWindowPosY = str1.toInt();
-								str1 = childMainNode.toElement().attribute("width");
-								settingWindowWidth = str1.toInt();
-								str1 = childMainNode.toElement().attribute("height");
-								settingWindowHeight = str1.toInt();
-							} else if (sTagName == "watch-rest-health-energy") {
-								str1 = childMainNode.toElement().attribute("value");
-								i = watchRestHealthEnergyStrings.indexOf(str1);
-								if (i != -1) {
-									settingWatchRestHealthEnergy = i;
-									Pers::instance()->setSetting(SETTING_REST_HEALTH_ENERGY, i);
-								}
-							} else if (sTagName == "in-killers-cup-popup") {
-								str1 = childMainNode.toElement().attribute("value");
-								if (str1 == "true") {
-									settingInKillersCupPopup = true;
-								}
-							} else if (sTagName == "killer-attack-popup") {
-								str1 = childMainNode.toElement().attribute("value");
-								if (str1 == "true") {
-									settingKillerAttackPopup = true;
-								}
-							} else if (sTagName == "show-queue-length") {
-								str1 = childMainNode.toElement().attribute("value");
-								if (str1 == "true") {
-									settingShowQueryLength = true;
-								}
-							} else if (sTagName == "reset-queue-if-unknow-status") {
-								str1 = childMainNode.toElement().attribute("value");
-								settingResetQueueForUnknowStatus = (str1 == "true");
-							} else if (sTagName == "show-popup-if-reset-queue") {
-								str1 = childMainNode.toElement().attribute("value");
-								settingResetQueuePopup = (str1 == "true");
-							} else if (sTagName == "server-text-max-blocks-count") {
-								str1 = childMainNode.toElement().attribute("value");
-								settingServerTextBlocksCount = str1.toInt();
-							}
-							childMainNode = childMainNode.nextSibling();
-						}
-					} else if (childJidNode.toElement().tagName() == "fight") {
-						QDomNode childNode = childJidNode.firstChild();
-						while (!childNode.isNull()) {
-							QString sTagName = childNode.toElement().tagName();
-							if (sTagName == "fight-timer-show") {
-								str1 = childNode.toElement().attribute("value");
-								i = fightTimerStrings.indexOf(str1);
-								if (i != -1) {
-									settingFightTimer = i;
-								}
-							} else if (sTagName == "fight-select-action") {
-								str1 = childNode.toElement().attribute("value");
-								i = fightSelectActionStrings.indexOf(str1);
-								if (i != -1) {
-									settingFightSelectAction = i;
-								}
-							} else if (sTagName == "fight-auto-close") {
-								str1 = childNode.toElement().attribute("value");
-								i = fightAutoCloseStrings.indexOf(str1);
-								if (i != -1) {
-									if (settingFightAutoClose != i) {
-										settingFightAutoClose = i;
-										if (i != 0) {
-											connect(fight, SIGNAL(fightStart(int)), this, SLOT(fightStarted(int)));
-										} else {
-											disconnect(fight, SIGNAL(fightStart(int)), this, SLOT(fightStarted(int)));
-										}
-									}
-								}
-							} else if (sTagName == "fing-drop-popup") {
-								str1 = childNode.toElement().attribute("value");
-								if (str1 == "true") {
-									settingFingDropPopup = true;
-								}
-							}
-							childNode = childNode.nextSibling();
-						}
-					} else if (childJidNode.toElement().tagName() == "statistic") {
-						childStatNode = childJidNode.firstChild();
-						while (!childStatNode.isNull()) {
-							if (childStatNode.toElement().tagName() == "save-statistic") {
-								str1 = childStatNode.toElement().attribute("value");
-								settingSaveStat = true;
-								if (str1.toLower() == "false")
-									settingSaveStat = false;
-							}
-							childStatNode = childStatNode.nextSibling();
-						}
-					} else if (childJidNode.toElement().tagName() == "slots") {
-						childSlotsNode = childJidNode.firstChild();
-						while (!childSlotsNode.isNull()) {
-							if (childSlotsNode.toElement().tagName() == "slot") {
-								str1 = childSlotsNode.toElement().attribute("param");
-								if (!str1.isEmpty()) {
-									for (i = 0; i < STAT_PARAMS_COUNT; i++) {
-										if (str1 == valueXmlStrings[i]) {
-											j = 0;
-											j = childSlotsNode.toElement().attribute("num").toInt();
-											if (j >= 1 && j <= SLOT_ITEMS_COUNT) {
-												settingSlots[j-1] = i;
-												break;
-											}
-										}
-									}
-								}
-							}
-							childSlotsNode = childSlotsNode.nextSibling();
-						}
-					} else if (childJidNode.toElement().tagName() == "aliases") {
-						Aliases::instance()->loadFromDomElement(childJidNode.toElement());
-					} else if (childJidNode.toElement().tagName() == "backpack") {
-						// Обрабатываем настройки рюкзака
-						QDomElement el = childJidNode.toElement();
-						Pers::instance()->loadBackpackSettingsFromDomNode(el);
-					} else if (childJidNode.toElement().tagName() == "appearance") {
-						appearaceSettings = childJidNode.toElement();
-					} else if (childJidNode.toElement().tagName() == "maps") {
-						QDomNode childMapsNode = childJidNode.firstChild();
-						while (!childMapsNode.isNull()) {
-							QString sTagName = childMapsNode.toElement().tagName();
-							if (sTagName == "maps-save-mode") {
-								str1 = childMapsNode.toElement().attribute("value");
-								i = persSaveModeStrings.indexOf(str1);
-								if (i != -1) {
-									settingMapsSaveMode = i;
-								}
-							}
-							childMapsNode = childMapsNode.nextSibling();
-						}
-					}
-					childJidNode = childJidNode.nextSibling();
-				}
-				break;
-			}
-		}
-		childSettingsNode = childSettingsNode.nextSibling();
-	}
 	return true;
 }
 
@@ -3550,7 +2824,7 @@ void PluginCore::settingsCommands(const QStringList &args)
 		str1.append(QString::fromUtf8("/settings save — Сохранение настроек плагина\n"));
 	} else if (args.at(1) == "save") {
 		str1.append(QString::fromUtf8("--- Сохранение настроек ---\n"));
-		savePluginSettings();
+		Settings::instance()->save();
 		str1.append(QString::fromUtf8("Сохранено\n"));
 	} else {
 		str1.append(QString::fromUtf8("неверный аргумент\n"));
@@ -3591,7 +2865,7 @@ void PluginCore::initPopup(QString title, QString string, int secs)
 void PluginCore::persParamChanged()
 {
 	persStatusChangedFlag = true;
-	if (settingPersSaveMode == 2) { // Автосохранение через 5 минут
+	if (Settings::instance()->getIntSetting(Settings::SettingPersSaveMode) == 2) { // Автосохранение через 5 минут
 		if (!saveStatusTimer.isActive()) {
 			saveStatusTimer.start(5000*60);
 		}
@@ -3601,7 +2875,7 @@ void PluginCore::persParamChanged()
 void PluginCore::persBackpackChanged()
 {
 	persBackpackChangedFlag = true;
-	if (settingPersSaveMode == 2) { // Автосохранение через 5 минут
+	if (Settings::instance()->getIntSetting(Settings::SettingPersSaveMode) == 2) { // Автосохранение через 5 минут
 		if (!saveStatusTimer.isActive()) {
 			saveStatusTimer.start(5000*60);
 		}
@@ -3611,7 +2885,7 @@ void PluginCore::persBackpackChanged()
 void PluginCore::statisticsChanged()
 {
 	statisticChangedFlag = true;
-	if (settingPersSaveMode == 2) { // Автосохранение через 5 минут
+	if (Settings::instance()->getIntSetting(Settings::SettingPersSaveMode) == 2) { // Автосохранение через 5 минут
 		if (!saveStatusTimer.isActive()) {
 			saveStatusTimer.start(5000*60);
 		}

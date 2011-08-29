@@ -31,6 +31,7 @@
 #include "common.h"
 #include "game_map.h"
 #include "utils.h"
+#include "settings.h"
 
 GameMap::GameMap(QObject *parent) : QGraphicsScene(parent),
 	currAccJid(QString()),
@@ -110,6 +111,8 @@ void GameMap::init(QString acc_jid)
 	mapCurrIndex = -1;
 	mapCurrArrayPtr = NULL;
 	otherPers.clear();
+	// Загружаем настройки модуля карт
+	loadMapsSettings(Settings::instance()->getMapsData());
 	// Загружаем список карт
 	loadMapsList();
 }
@@ -2452,7 +2455,15 @@ void GameMap::doAutoSave()
 	}
 }
 
-void GameMap::setMapsParams(ParamId param_id, int param)
+int GameMap::getMapsSettingParam(ParamId id) const
+{
+	if (id == AutoSaveMode) {
+		return saveMode;
+	}
+	return -1;
+}
+
+void GameMap::setMapsParam(ParamId param_id, int param)
 {
 	saveMode = param;
 	if (param_id == AutoSaveMode) {
@@ -2463,6 +2474,31 @@ void GameMap::setMapsParams(ParamId param_id, int param)
 		}
 		initSaveTimer();
 	}
+}
+
+void GameMap::loadMapsSettings(const QDomElement &xml)
+{
+	QDomElement eChild = xml.firstChildElement("maps-save-mode");
+	int saveMode_ = 1;
+	if (!eChild.isNull()) {
+		QString sMode = eChild.attribute("value").toLower();
+		int i = Settings::persSaveModeStrings.indexOf(sMode);
+		if (i != -1) {
+			saveMode_ = i;
+		}
+	}
+	setMapsParam(AutoSaveMode, saveMode_);
+}
+
+QDomElement GameMap::exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const
+{
+	QDomElement eMaps = xmlDoc.createElement("maps");
+	if (saveMode >= 0 && saveMode < Settings::persSaveModeStrings.size()) {
+		QDomElement eMapSaveMode = xmlDoc.createElement("maps-save-mode");
+		eMapSaveMode.setAttribute("value", Settings::persSaveModeStrings.at(saveMode));
+		eMaps.appendChild(eMapSaveMode);
+	}
+	return eMaps;
 }
 
 /**

@@ -24,6 +24,7 @@
  */
 
 #include "aliases.h"
+#include "settings.h"
 
 Aliases::Aliases(QObject *parent):
 	QObject(parent)
@@ -49,6 +50,12 @@ void Aliases::reset()
 		delete Aliases::instance_;
 		Aliases::instance_ = NULL;
 	}
+}
+
+void Aliases::init()
+{
+	clear();
+	loadFromDomElement(Settings::instance()->getAliasesData());
 }
 
 void Aliases::clear()
@@ -127,7 +134,6 @@ bool Aliases::removeAlias(int i)
 void Aliases::loadFromDomElement(const QDomElement &el)
 {
 	if (!el.isNull() && el.tagName() == "aliases") {
-		aliasesList.clear();
 		QDomElement child = el.firstChildElement("alias");
 		while (!child.isNull()) {
 			bool prefix = (child.attribute("prefix") == "yes");

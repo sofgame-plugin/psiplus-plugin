@@ -45,7 +45,7 @@ class GameMap: public QGraphicsScene
 	public:
 		enum ParamId {
 			AutoSaveMode,
-			AutoUnloadPerion
+			AutoUnloadPeriod
 		};
 		enum MapElementType {
 			TypeNormal,
@@ -108,7 +108,9 @@ class GameMap: public QGraphicsScene
 		void setMapElementMark(int, const QString &, const QColor &);
 		void removeMapElementMark(int);
 		void setOtherPersPos(QVector<GameMap::maps_other_pers>*);
-		void setMapsParams(ParamId, int);
+		int  getMapsSettingParam(ParamId) const;
+		void setMapsParam(ParamId, int);
+		QDomElement exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 	private:
 		enum MapStatus {
@@ -199,6 +201,7 @@ class GameMap: public QGraphicsScene
 		void drawOtherPersPos(int);
 		void initSaveTimer();
 		void initUnloadTimer(bool);
+		void loadMapsSettings(const QDomElement &xml);
 
 	private slots:
 		void doAutoSave();

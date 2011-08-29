@@ -147,16 +147,19 @@ void Pers::init()
 	watchHealthStartValue = QINT32_MIN;
 	persLevelValue = -1;
 	pers_name = "";
+	Settings *settings = Settings::instance();
+	loadBackpackSettingsFromDomNode(settings->getBackpackData());
+	setSetting(Settings::SettingWatchRestHealthEnergy, Settings::instance()->getIntSetting(Settings::SettingWatchRestHealthEnergy));
 }
 
 void Pers::setName(const QString &new_name)
 {
 	if (pers_name != new_name) {
 		pers_name = new_name;
-		if (persHealthCurr != QINT32_MIN) {
-			emit persParamChanged(VALUE_PERS_NAME, TYPE_STRING, 0);
+		if (persHealthCurr != QINT32_MIN) { // TODO Что за проверка?
+			emit persParamChanged(ParamPersName, TYPE_STRING, 0);
 		} else {
-			emit persParamChanged(VALUE_PERS_NAME, TYPE_NA, 0);
+			emit persParamChanged(ParamPersName, TYPE_NA, 0);
 		}
 	}
 }
@@ -402,9 +405,11 @@ QDomElement Pers::exportPriceToDomElement(QDomDocument &xmlDoc) const
 /**
  * Выгружает настройки рюкзака в DOM элемент
  */
-QDomElement Pers::exportFiltersToDomElement(QDomDocument &xmlDoc) const
+QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 {
+	QDomElement eBackpack = xmlDoc.createElement("backpack");
 	QDomElement eFilters = xmlDoc.createElement("filters");
+	eBackpack.appendChild(eFilters);
 	int filtersCnt = fingFiltersEx.size();
 	for (int i = 0; i < filtersCnt; i++) {
 		FingFilter* oFilter = fingFiltersEx.at(i);
@@ -480,7 +485,7 @@ QDomElement Pers::exportFiltersToDomElement(QDomDocument &xmlDoc) const
 			}
 		}
 	}
-	return eFilters;
+	return eBackpack;
 }
 
 /**
@@ -547,7 +552,7 @@ void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 /**
  * Получает настройки рюкзака персонажа из DOM ноды
  */
-void Pers::loadBackpackSettingsFromDomNode(QDomElement &eBackpack)
+void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 {
 	// Очищаем старые настройки
 	while (!fingFiltersEx.isEmpty()) {
@@ -677,37 +682,37 @@ void Pers::setPersParams(int valueId, int valueType, int value) // TODO Пере
 {
 	if (!beginSetPersParamsFlag) return;
 	if (valueType == TYPE_INTEGER_FULL) {
-		if (valueId == VALUE_PERS_STATUS) {
+		if (valueId == ParamPersStatus) {
 			if (persStatus != value) {
 				// Изменился статус персонажа
 				setPersStatusFlag = true;
 				persStatus_ = (PersStatus)value;
 			}
-		} else if (valueId == VALUE_HEALTH_MAX) {
+		} else if (valueId == ParamHealthMax) {
 			if (persHealthMax != value) {
 				// Изменилось максимальное значение здоровья
 				setPersHealthMaxFlag = true;
 				persHealthMax_ = value;
 			}
-		} else if (valueId == VALUE_HEALTH_CURR) {
+		} else if (valueId == ParamHealthCurr) {
 			if (persHealthCurr != value) {
 				// Изменилось текущее значение здоровья
 				setPersHealthCurrFlag = true;
 				persHealthCurr_ = value;
 			}
-		} else if (valueId == VALUE_ENERGY_MAX) {
+		} else if (valueId == ParamEnergyMax) {
 			if (persEnergyMax != value) {
 				// Изменилось максимальное значение энергии
 				setPersEnergyMaxFlag = true;
 				persEnergyMax_ = value;
 			}
-		} else if (valueId == VALUE_ENERGY_CURR) {
+		} else if (valueId == ParamEnergyCurr) {
 			if (persEnergyCurr != value) {
 				// Изменилось текущее значение энергии
 				setPersEnergyCurrFlag = true;
 				persEnergyCurr_ = value;
 			}
-		} else if (valueId == VALUE_PERS_LEVEL) {
+		} else if (valueId == ParamPersLevel) {
 			if (persLevelValue != value) {
 				// Изменилось значение уровня персонажа
 				setPersLevelValueFlag = true;
@@ -724,13 +729,13 @@ void Pers::setPersParams(int valueId, int valueType, long long value) // TODO П
 {
 	if (!beginSetPersParamsFlag) return;
 	if (valueType == TYPE_LONGLONG_FULL) {
-		if (valueId == VALUE_EXPERIENCE_MAX) {
+		if (valueId == ParamExperienceMax) {
 			if (persExperienceMax != value) {
 				// Изменился максимальный опыт персонажа
 				setPersExperienceMaxFlag = true;
 				persExperienceMax_ = value;
 			}
-		} else if (valueId == VALUE_EXPERIENCE_CURR) {
+		} else if (valueId == ParamExperienceCurr) {
 			if (persExperienceCurr != value) {
 				// Изменился текущий опыт персонажа
 				setPersExperienceCurrFlag = true;
@@ -782,56 +787,56 @@ void Pers::endSetPersParams()
 	// Фиксируем изменения на сигналах
 	// и реагируем на изменения согласно настроек
 	if (setPersStatusFlag) {
-		emit persParamChanged(VALUE_PERS_STATUS, TYPE_INTEGER_FULL, persStatus);
+		emit persParamChanged(ParamPersStatus, TYPE_INTEGER_FULL, persStatus);
 	}
 	if (setPersHealthMaxFlag) {
 		if (persHealthMax != QINT32_MIN) {
-			emit persParamChanged(VALUE_HEALTH_MAX, TYPE_INTEGER_FULL, persHealthMax);
+			emit persParamChanged(ParamHealthMax, TYPE_INTEGER_FULL, persHealthMax);
 		} else {
-			emit persParamChanged(VALUE_HEALTH_MAX, TYPE_NA, 0);
+			emit persParamChanged(ParamHealthMax, TYPE_NA, 0);
 		}
 	}
 	if (setPersHealthCurrFlag) {
 		if (persHealthCurr != QINT32_MIN) {
-			emit persParamChanged(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, persHealthCurr);
+			emit persParamChanged(ParamHealthCurr, TYPE_INTEGER_FULL, persHealthCurr);
 		} else {
-			emit persParamChanged(VALUE_HEALTH_CURR, TYPE_NA, 0);
+			emit persParamChanged(ParamHealthCurr, TYPE_NA, 0);
 		}
 	}
 	if (setPersEnergyMaxFlag) {
 		if (persEnergyMax != QINT32_MIN) {
-			emit persParamChanged(VALUE_ENERGY_MAX, TYPE_INTEGER_FULL, persEnergyMax);
+			emit persParamChanged(ParamEnergyMax, TYPE_INTEGER_FULL, persEnergyMax);
 		} else {
-			emit persParamChanged(VALUE_ENERGY_MAX, TYPE_NA, 0);
+			emit persParamChanged(ParamEnergyMax, TYPE_NA, 0);
 		}
 		////////////////////////if (settingWatchRestHealthEnergy == 1) watchStatus = 0; // Сбрасываем замеры
 	}
 	if (setPersEnergyCurrFlag) {
 		if (persEnergyCurr != QINT32_MIN) {
-			emit persParamChanged(VALUE_ENERGY_CURR, TYPE_INTEGER_FULL, persEnergyCurr);
+			emit persParamChanged(ParamEnergyCurr, TYPE_INTEGER_FULL, persEnergyCurr);
 		} else {
-			emit persParamChanged(VALUE_ENERGY_CURR, TYPE_NA, 0);
+			emit persParamChanged(ParamEnergyCurr, TYPE_NA, 0);
 		}
 	}
 	if (setPersLevelValueFlag) {
 		if (persLevelValue != -1) {
-			emit persParamChanged(VALUE_PERS_LEVEL, TYPE_INTEGER_FULL, persLevelValue);
+			emit persParamChanged(ParamPersLevel, TYPE_INTEGER_FULL, persLevelValue);
 		} else {
-			emit persParamChanged(VALUE_PERS_LEVEL, TYPE_NA, 0);
+			emit persParamChanged(ParamPersLevel, TYPE_NA, 0);
 		}
 	}
 	if (setPersExperienceMaxFlag) {
 		if (persExperienceMax != -1) {
-			emit persParamChanged(VALUE_EXPERIENCE_MAX, TYPE_LONGLONG_FULL, 0);
+			emit persParamChanged(ParamExperienceMax, TYPE_LONGLONG_FULL, 0);
 		} else {
-			emit persParamChanged(VALUE_EXPERIENCE_MAX, TYPE_NA, 0);
+			emit persParamChanged(ParamExperienceMax, TYPE_NA, 0);
 		}
 	}
 	if (setPersExperienceCurrFlag) {
 		if (persExperienceCurr != -1) {
-			emit persParamChanged(VALUE_EXPERIENCE_CURR, TYPE_LONGLONG_FULL, 0);
+			emit persParamChanged(ParamExperienceCurr, TYPE_LONGLONG_FULL, 0);
 		} else {
-			emit persParamChanged(VALUE_EXPERIENCE_CURR, TYPE_NA, 0);
+			emit persParamChanged(ParamExperienceCurr, TYPE_NA, 0);
 		}
 	}
 	//--
@@ -938,22 +943,27 @@ void Pers::endSetPersParams()
 
 bool Pers::getIntParamValue(int paramId, int *paramValue) const
 {
-	if (paramId == VALUE_PERS_STATUS) {
+	if (paramId == ParamPersStatus) {
 		*paramValue = persStatus;
-	} else if (paramId == VALUE_HEALTH_CURR) {
-		if (persHealthCurr == QINT32_MIN) return false;
+	} else if (paramId == ParamHealthCurr) {
+		if (persHealthCurr == QINT32_MIN)
+			return false;
 		*paramValue = persHealthCurr;
-	} else if (paramId == VALUE_HEALTH_MAX) {
-		if (persHealthMax == QINT32_MIN) return false;
+	} else if (paramId == ParamHealthMax) {
+		if (persHealthMax == QINT32_MIN)
+			return false;
 		*paramValue = persHealthMax;
-	} else if (paramId == VALUE_ENERGY_CURR) {
-		if (persEnergyCurr == QINT32_MIN) return false;
+	} else if (paramId == ParamEnergyCurr) {
+		if (persEnergyCurr == QINT32_MIN)
+			return false;
 		*paramValue = persEnergyCurr;
-	} else if (paramId == VALUE_ENERGY_MAX) {
-		if (persEnergyMax == QINT32_MIN) return false;
+	} else if (paramId == ParamEnergyMax) {
+		if (persEnergyMax == QINT32_MIN)
+			return false;
 		*paramValue = persEnergyMax;
-	} else if (paramId == VALUE_PERS_LEVEL) {
-		if (persLevelValue == -1) return false;
+	} else if (paramId == ParamPersLevel) {
+		if (persLevelValue == -1)
+			return false;
 		*paramValue = persLevelValue;
 	} else {
 		return false;
@@ -963,11 +973,11 @@ bool Pers::getIntParamValue(int paramId, int *paramValue) const
 
 bool Pers::getLongParamValue(int paramId, long long *paramValue) const
 {
-	if (paramId == VALUE_EXPERIENCE_MAX) {
+	if (paramId == ParamExperienceMax) {
 		if (persExperienceMax == -1)
 			return false;
 		*paramValue = persExperienceMax;
-	} else if (paramId == VALUE_EXPERIENCE_CURR) {
+	} else if (paramId == ParamExperienceCurr) {
 		if (persExperienceCurr == -1)
 			return false;
 		*paramValue = persExperienceCurr;
@@ -977,9 +987,9 @@ bool Pers::getLongParamValue(int paramId, long long *paramValue) const
 	return true;
 }
 
-bool Pers::getStringParamValue(int paramId, QString *paramValue) const
+bool Pers::getStringParamValue(PersParams paramId, QString *paramValue) const
 {
-	if (paramId == VALUE_PERS_NAME) {
+	if (paramId == ParamPersName) {
 		if (pers_name.isEmpty()) return false;
 		*paramValue = pers_name;
 	} else {
@@ -988,56 +998,56 @@ bool Pers::getStringParamValue(int paramId, QString *paramValue) const
 	return true;
 }
 
-void Pers::setSetting(int setId, int setValue)
+void Pers::setSetting(Settings::SettingKey setId, int setValue)
 {
 	switch (setId) {
-		case SETTING_REST_HEALTH_ENERGY:
-			if (setValue == settingWatchRestHealthEnergy) return;
-			if (setValue == 0) {
-				settingWatchRestHealthEnergy = 0;
-				if (watchRestTimer) {
-					if (watchRestTimer->isActive()) watchRestTimer->stop();
-					disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
-					delete watchRestTimer;
-					watchRestTimer = 0;
-				}
-				if (watchHealthRestTimer) {
-					if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
-					disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
-					delete watchHealthRestTimer;
-					watchHealthRestTimer = 0;
-				}
-			} else if (setValue == 1) {
-				if (watchRestTimer) {
-					if (watchRestTimer->isActive()) watchRestTimer->stop();
-					disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
-					delete watchRestTimer;
-					watchRestTimer = 0;
-				}
-				settingWatchRestHealthEnergy = 1;
-				watchHealthStartValue = QINT32_MIN;
-				watchHealthSpeed = 0.0;
-				watchHealthSpeedDelta = 0;
-				if (!watchHealthRestTimer) {
-					watchHealthRestTimer = new QTimer();
-					connect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
-				}
-			} else if (setValue >= 2 && setValue <= 4) {
-				if (watchHealthRestTimer) {
-					if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
-					disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
-					delete watchHealthRestTimer;
-					watchHealthRestTimer = 0;
-				}
-				settingWatchRestHealthEnergy = setValue;
-				if (!watchRestTimer) {
-					watchRestTimer = new QTimer();
-					connect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
-				}
+	case Settings::SettingWatchRestHealthEnergy:
+		if (setValue == settingWatchRestHealthEnergy) return;
+		if (setValue == 0) {
+			settingWatchRestHealthEnergy = 0;
+			if (watchRestTimer) {
+				if (watchRestTimer->isActive()) watchRestTimer->stop();
+				disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
+				delete watchRestTimer;
+				watchRestTimer = 0;
 			}
-			break;
-		default:
-			;
+			if (watchHealthRestTimer) {
+				if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
+				disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
+				delete watchHealthRestTimer;
+				watchHealthRestTimer = 0;
+			}
+		} else if (setValue == 1) {
+			if (watchRestTimer) {
+				if (watchRestTimer->isActive()) watchRestTimer->stop();
+				disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
+				delete watchRestTimer;
+				watchRestTimer = 0;
+			}
+			settingWatchRestHealthEnergy = 1;
+			watchHealthStartValue = QINT32_MIN;
+			watchHealthSpeed = 0.0;
+			watchHealthSpeedDelta = 0;
+			if (!watchHealthRestTimer) {
+				watchHealthRestTimer = new QTimer();
+				connect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
+			}
+		} else if (setValue >= 2 && setValue <= 4) {
+			if (watchHealthRestTimer) {
+				if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
+				disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
+				delete watchHealthRestTimer;
+				watchHealthRestTimer = 0;
+			}
+			settingWatchRestHealthEnergy = setValue;
+			if (!watchRestTimer) {
+				watchRestTimer = new QTimer();
+				connect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
+			}
+		}
+		break;
+	default:
+		;
 	}
 }
 
@@ -1160,7 +1170,7 @@ void Pers::doWatchHealthRestTime()
 				persHealthCurr = (float)watchHealthStartValue2 + (float)timeDelta * watchHealthSpeed;
 				if (persHealthCurr > persHealthMax) persHealthCurr = persHealthMax;
 				if (persHealthCurr == persHealthMax) watchHealthRestTimer->stop();
-				emit persParamChanged(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, persHealthCurr);
+				emit persParamChanged(ParamHealthCurr, TYPE_INTEGER_FULL, persHealthCurr);
 			}
 		}
 	}

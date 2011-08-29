@@ -37,9 +37,9 @@
 #define TYPE_NA                         6
 
 //--------------------
-#define STAT_PARAMS_COUNT               11
-
 #define SLOT_ITEMS_COUNT                9
+
+#define STAT_PARAMS_COUNT               11
 // Значения отправляемые окну
 #define VALUE_LAST_GAME_JID             0
 #define VALUE_LAST_CHAT_JID             1
@@ -53,57 +53,12 @@
 #define VALUE_EXPERIENCE_DROP_COUNT     9
 #define VALUE_KILLED_ENEMIES            10
 
-#define VALUE_PERS_NAME                 1010
-#define VALUE_PERS_LEVEL                1011
-#define VALUE_EXPERIENCE_CURR           1012
-#define VALUE_EXPERIENCE_MAX            1013
-#define VALUE_HEALTH_CURR               1014
-#define VALUE_HEALTH_MAX                1015
-#define VALUE_ENERGY_CURR               1016
-#define VALUE_ENERGY_MAX                1017
-#define VALUE_PERS_STATUS               1018
 #define VALUE_TIMEOUT                   1019
 #define VALUE_CHANGE_PERS_POS           1020
 
 // Типы команд отправляемых ядру плагина
 #define COMMAND_SAVE_SETTINGS           1
 #define COMMAND_CLOSE_WINDOW            2
-
-// Типы настроек
-#define SETTING_PERS_NAME                     0
-#define SETTING_SLOT1                         1
-#define SETTING_SLOT2                         2
-#define SETTING_SLOT3                         3
-#define SETTING_SLOT4                         4
-#define SETTING_SLOT5                         5
-#define SETTING_SLOT6                         6
-#define SETTING_SLOT7                         7
-#define SETTING_SLOT8                         8
-#define SETTING_SLOT9                         9
-#define SETTING_PERS_PARAM_SAVE_MODE          100
-#define SETTING_SAVE_PERS_PARAM               101
-#define SETTING_SAVE_PERS_BACKPACK            102
-#define SETTING_SAVE_PERS_STAT                103
-#define SETTING_CHANGE_MIRROR_MODE            104
-#define SETTING_WINDOW_SIZE_POS               105
-#define SETTING_WINDOW_POS_X                  106
-#define SETTING_WINDOW_POS_Y                  107
-#define SETTING_WINDOW_WIDTH                  108
-#define SETTING_WINDOW_HEIGHT                 109
-#define SETTING_FIGHT_TIMER                   110
-#define SETTING_AUTOCLOSE_FIGHT               111
-#define SETTING_FING_DROP_POPUP               112
-#define SETTING_REST_HEALTH_ENERGY            113
-#define SETTING_FIGHT_SELECT_ACTION           114
-#define SETTING_KILLER_ATTACK_POPUP           115
-#define SETTING_SHOW_QUEUE_LENGTH             116
-#define SETTING_PERS_NAME_FONT                117
-#define SETTING_SERVER_TEXT_FONT              118
-#define SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS 119
-#define SETTING_IN_KILLERS_CUP_POPUP          120
-#define SETTING_SERVER_TEXT_BLOCKS_COUNT      121
-#define SETTING_MAPS_PARAM_SAVE_MODE          122
-#define SETTING_RESET_QUEUE_POPUP_SHOW        123
 
 // Коды ошибок
 #define ERROR_INCORRECT_ACCOUNT         1

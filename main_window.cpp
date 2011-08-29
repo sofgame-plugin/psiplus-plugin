@@ -35,6 +35,21 @@
 #include "utils.h"
 #include "pers_info.h"
 #include "sender.h"
+#include "settings.h"
+
+QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
+				<< (QPair<int, QString>) {VALUE_LAST_GAME_JID, "last-game-jid"}
+				<< (QPair<int, QString>) {VALUE_LAST_CHAT_JID, "last-chat-jid"}
+				<< (QPair<int, QString>) {VALUE_MESSAGES_COUNT, "messages-count"}
+				<< (QPair<int, QString>) {VALUE_DAMAGE_MAX_FROM_PERS, "damage-max-from-pers"}
+				<< (QPair<int, QString>) {VALUE_DAMAGE_MIN_FROM_PERS, "damage-min-from-pers"}
+				<< (QPair<int, QString>) {VALUE_FIGHTS_COUNT, "fights-count"}
+				<< (QPair<int, QString>) {VALUE_DROP_MONEYS, "drop-moneys"}
+				<< (QPair<int, QString>) {VALUE_FINGS_DROP_COUNT, "fings-drop-count"}
+				<< (QPair<int, QString>) {VALUE_FING_DROP_LAST, "fing-drop-last"}
+				<< (QPair<int, QString>) {VALUE_EXPERIENCE_DROP_COUNT, "experience-drop-count"}
+				<< (QPair<int, QString>) {VALUE_KILLED_ENEMIES, "killed-enemies"};
+
 
 SofMainWindow::SofMainWindow() : QWidget(0)
 {
@@ -175,15 +190,15 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(settingSaveBtn, SIGNAL(released()), SLOT(saveSettings()));
 	connect(settingApplyBtn, SIGNAL(released()), SLOT(applySettings()));
 	// Нижние слоты статистики
-	footerStatWidgets[SETTING_SLOT1] = (StatWidgets) {slot1Caption_label, slot1Value_label};
-	footerStatWidgets[SETTING_SLOT2] = (StatWidgets) {slot2Caption_label, slot2Value_label};
-	footerStatWidgets[SETTING_SLOT3] = (StatWidgets) {slot3Caption_label, slot3Value_label};
-	footerStatWidgets[SETTING_SLOT4] = (StatWidgets) {slot4Caption_label, slot4Value_label};
-	footerStatWidgets[SETTING_SLOT5] = (StatWidgets) {slot5Caption_label, slot5Value_label};
-	footerStatWidgets[SETTING_SLOT6] = (StatWidgets) {slot6Caption_label, slot6Value_label};
-	footerStatWidgets[SETTING_SLOT7] = (StatWidgets) {slot7Caption_label, slot7Value_label};
-	footerStatWidgets[SETTING_SLOT8] = (StatWidgets) {slot8Caption_label, slot8Value_label};
-	footerStatWidgets[SETTING_SLOT9] = (StatWidgets) {slot9Caption_label, slot9Value_label};
+	footerStatWidgets[1] = (StatWidgets) {slot1Caption_label, slot1Value_label};
+	footerStatWidgets[2] = (StatWidgets) {slot2Caption_label, slot2Value_label};
+	footerStatWidgets[3] = (StatWidgets) {slot3Caption_label, slot3Value_label};
+	footerStatWidgets[4] = (StatWidgets) {slot4Caption_label, slot4Value_label};
+	footerStatWidgets[5] = (StatWidgets) {slot5Caption_label, slot5Value_label};
+	footerStatWidgets[6] = (StatWidgets) {slot6Caption_label, slot6Value_label};
+	footerStatWidgets[7] = (StatWidgets) {slot7Caption_label, slot7Value_label};
+	footerStatWidgets[8] = (StatWidgets) {slot8Caption_label, slot8Value_label};
+	footerStatWidgets[9] = (StatWidgets) {slot9Caption_label, slot9Value_label};
 	// Окно статистики
 	setStatisticCaptionText();
 	// Виджеты параметров персонажа
@@ -260,6 +275,7 @@ void SofMainWindow::init()
 	queueShowFlag = false;
 	experienceMax = -1;
 	experienceCurr = -1;
+	settingWindowSizePos = 1;
 	// Настройки шрифтов
 	QFont f = persNameLabel->font();
 	persNameFont_label->setFont(f.toString());
@@ -268,67 +284,21 @@ void SofMainWindow::init()
 	console_textedit->setFont(f.toString());
 	// Получаем основные настройки окна
 	getAllDataFromCore();
-	// Считываем параметры окна
-	if (windowSizePosCombo->currentIndex() != 0) {
-		int wnd_x = 0;
-		int wnd_y = 0;
-		PluginCore *core = PluginCore::instance();
-		if (core->getIntSettingValue(SETTING_WINDOW_POS_X, &wnd_x)) {
-			if (core->getIntSettingValue(SETTING_WINDOW_POS_Y, &wnd_y)) {
-				int wnd_width = 0; int wnd_height = 0;
-				if (core->getIntSettingValue(SETTING_WINDOW_WIDTH, &wnd_width)) {
-					if (core->getIntSettingValue(SETTING_WINDOW_HEIGHT, &wnd_height)) {
-						// Определяем геометрию рабочих столов (доступное пространство)
-						QRect screenRect = QApplication::desktop()->availableGeometry(-1); //-- default system screen
-						// Корректируем наши параметры, если превышают допустимые
-						if (screenRect.x() > wnd_x) {
-							wnd_x = screenRect.x();
-						}
-						if (screenRect.y() > wnd_y) {
-							wnd_y = screenRect.y();
-						}
-						if (wnd_x - screenRect.x() + wnd_width > screenRect.width()) {
-							// * Не вписываемся по горизонтали
-							// Исправляем за счет смещения окна
-							wnd_x -= (wnd_x + wnd_width) - (screenRect.x() + screenRect.width());
-							if (wnd_x < screenRect.x()) {
-								wnd_x = screenRect.x();
-								// Исправляем за счет ширины окна
-								wnd_width = screenRect.width() - wnd_x + screenRect.x();
-							}
-						}
-						if (wnd_y - screenRect.y() + wnd_height > screenRect.height()) {
-							// * Не вписываемся по вертикали
-							// Исправляем за счет смещения окна
-							wnd_y -= (wnd_y + wnd_height) - (screenRect.y() + screenRect.height());
-							if (wnd_y < screenRect.y()) {
-								wnd_y = screenRect.y();
-								// Исправляем за счет высоты окна
-								wnd_height = screenRect.height() - wnd_y + screenRect.y();
-							}
-						}
-						// Перемещаем окно
-						move(wnd_x, wnd_y);
-						// Изменяем размер окна
-						resize(wnd_width, wnd_height);
-					}
-				}
-			}
-		}
-	}
 	// Размеры сплиттера
 	QList<int> sizes;
 	sizes.push_back(100);
 	sizes.push_back(100);
 	mapSplitter->setSizes(sizes);
-	// Инициируем Label-ы
-	fullUpdateFooterStatistic();
+	// Загружаем настройки слотов
+	Settings *settings = Settings::instance();
+	loadSlotsSettings(settings->getSlotsData());
 	// Таблица вещей
 	thingsIface = Pers::instance()->getThingsInterface();
-	//myPers->setThingsInterfaceFilter(thingsIface, 2);
 	if (thingsIface)
 		fingsTable->setModel(Pers::instance()->getThingsModel(thingsIface));
 	fingsTable->init();
+	// Загружаем настройки внешнего вида
+	loadAppearanceSettings(settings->getAppearanceData());
 	// Убираем табы фильтров вещей
 	updateFingFiltersTab();
 	// Сбрасываем цвет текста кнопки вещей
@@ -373,25 +343,12 @@ void SofMainWindow::setAutoEnterMode(bool mode)
 	}
 }
 
+/**
+ * Реакция на закрытие окна
+ */
 void SofMainWindow::closeEvent(QCloseEvent *evnt)
 {
-	/**
-	* Реакция на закрытие окна
-	**/
-	// Отправка координат окна
-	QPoint wndPos = pos();
-	qint32 i = wndPos.x();
-	PluginCore *core = PluginCore::instance();
-	core->setIntSettingValue(SETTING_WINDOW_POS_X, i);
-	i = wndPos.y();
-	core->setIntSettingValue(SETTING_WINDOW_POS_Y, i);
-	// Отправка размеров окна
-	i = width();
-	core->setIntSettingValue(SETTING_WINDOW_WIDTH, i);
-	i = height();
-	core->setIntSettingValue(SETTING_WINDOW_HEIGHT, i);
-	// Отправка команды сохранения настроек ядру плагина
-	core->sendCommandToCore(COMMAND_CLOSE_WINDOW);
+	PluginCore::instance()->sendCommandToCore(COMMAND_CLOSE_WINDOW);
 	evnt->accept();
 }
 
@@ -465,23 +422,23 @@ void SofMainWindow::fullUpdateFooterStatistic()
 		footerStatWidgets.value(slot).value->setText(valText);
 	}
 	// Скрываем неиспользуемые виджеты слотов
-	if (statisticFooterPos.key(SETTING_SLOT1, -1) == -1 &&
-	    statisticFooterPos.key(SETTING_SLOT2, -1) == -1 &&
-	    statisticFooterPos.key(SETTING_SLOT3, -1) == -1) {
+	if (statisticFooterPos.key(1, -1) == -1 &&
+	    statisticFooterPos.key(2, -1) == -1 &&
+	    statisticFooterPos.key(3, -1) == -1) {
 		slotsWidget1->setHidden(true);
 	} else {
 		slotsWidget1->setHidden(false);
 	}
-	if (statisticFooterPos.key(SETTING_SLOT4, -1) == -1 &&
-	    statisticFooterPos.key(SETTING_SLOT5, -1) == -1 &&
-	    statisticFooterPos.key(SETTING_SLOT6, -1) == -1) {
+	if (statisticFooterPos.key(4, -1) == -1 &&
+	    statisticFooterPos.key(5, -1) == -1 &&
+	    statisticFooterPos.key(6, -1) == -1) {
 		slotsWidget2->setHidden(true);
 	} else {
 		slotsWidget2->setHidden(false);
 	}
-	if (statisticFooterPos.key(SETTING_SLOT7, -1) == -1 &&
-	    statisticFooterPos.key(SETTING_SLOT8, -1) == -1 &&
-	    statisticFooterPos.key(SETTING_SLOT9, -1) == -1) {
+	if (statisticFooterPos.key(7, -1) == -1 &&
+	    statisticFooterPos.key(8, -1) == -1 &&
+	    statisticFooterPos.key(9, -1) == -1) {
 		slotsWidget3->setHidden(true);
 	} else {
 		slotsWidget3->setHidden(false);
@@ -517,76 +474,32 @@ void SofMainWindow::getAllDataFromCore() {
 	QString newStrValue;
 	// *** Настройки плагина ***
 	PluginCore *core = PluginCore::instance();
+	Settings *settings = Settings::instance();
 	// Имя персонажа
-	if (!core->getStringSettingValue(SETTING_PERS_NAME, &newStrValue)) {
-		newStrValue = NA_TEXT;
-	}
+	newStrValue = settings->getStringSetting(Settings::SettingPersName);
+	if (newStrValue.isEmpty())
+		newStrValue = "n/a";
 	setPersName->setText(newStrValue);
 	// Режим переключения зеркал
-	if (!core->getIntSettingValue(SETTING_CHANGE_MIRROR_MODE, &newIntValue)) {
-		newIntValue = 0;
-	}
-	mirrorChangeModeCombo->setCurrentIndex(newIntValue);
-	// Сохранение параметров окна
-	if (!core->getIntSettingValue(SETTING_WINDOW_SIZE_POS, &newIntValue)) {
-		newIntValue = 0;
-	}
-	windowSizePosCombo->setCurrentIndex(newIntValue);
+	mirrorChangeModeCombo->setCurrentIndex(Sender::instance()->getGameMirrorsMode());
 	// Отслеживание восстановления здоровья и энергии
-	if (!core->getIntSettingValue(SETTING_REST_HEALTH_ENERGY, &newIntValue)) {
-		newIntValue = 0;
-	}
-	restHealthEnergyCombo->setCurrentIndex(newIntValue);
+	restHealthEnergyCombo->setCurrentIndex(settings->getIntSetting(Settings::SettingWatchRestHealthEnergy));
 	// Таймер в бою
-	if (!core->getIntSettingValue(SETTING_FIGHT_TIMER, &newIntValue)) {
-		newIntValue = 0;
-	}
-	settingTimeOutDisplay = newIntValue;
+	settingTimeOutDisplay = settings->getIntSetting(Settings::SettingFightTimerMode);
 	fightTimerCombo->setCurrentIndex(newIntValue);
 	// Выбор боя
-	if (!core->getIntSettingValue(SETTING_FIGHT_SELECT_ACTION, &newIntValue)) {
-		newIntValue = 0;
-	}
-	fightSelectAction->setCurrentIndex(newIntValue);
+	fightSelectAction->setCurrentIndex(settings->getIntSetting(Settings::SettingFightSelectAction));
 	// Автозакрытие боя
-	if (!core->getIntSettingValue(SETTING_AUTOCLOSE_FIGHT, &newIntValue)) {
-		newIntValue = 0;
-	}
-	setAutoCloseFight->setCurrentIndex(newIntValue);
+	setAutoCloseFight->setCurrentIndex(settings->getIntSetting(Settings::SettingFightAutoClose));
 	// Попап при дропе вещей
-	if (!core->getIntSettingValue(SETTING_FING_DROP_POPUP, &newIntValue)) {
-		newIntValue = 0;
-	}
-	Qt::CheckState state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	checkbox_FingDropPopup->setCheckState(state);
+	checkbox_FingDropPopup->setChecked(settings->getBoolSetting(Settings::SettingThingDropPopup));
 	// Попап при заказе в клубе убийц
-	if (!core->getIntSettingValue(SETTING_IN_KILLERS_CUP_POPUP, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	checkbox_InKillersCupPopup->setCheckState(state);
+	checkbox_InKillersCupPopup->setChecked(settings->getBoolSetting(Settings::SettingInKillersCupPopup));
 	// Попап при нападении убийцы
-	if (!core->getIntSettingValue(SETTING_KILLER_ATTACK_POPUP, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	checkbox_KillerClubAttack->setCheckState(state);
+	checkbox_KillerClubAttack->setChecked(settings->getBoolSetting(Settings::SettingKillerAttackPopup));
 	// Отображение длины очереди
-	if (!core->getIntSettingValue(SETTING_SHOW_QUEUE_LENGTH, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
+	bool flag = settings->getBoolSetting(Settings::SettingShowQueryLength);
+	if (flag) {
 		if (!queueShowFlag) {
 			connect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			queueShowFlag = true;
@@ -598,141 +511,54 @@ void SofMainWindow::getAllDataFromCore() {
 			showQueueLen(0);
 		}
 	}
-	checkbox_ShowQueueLength->setCheckState(state);
+	checkbox_ShowQueueLength->setChecked(flag);
 	// Сброс очереди при неизвестном статусе
-	if (!core->getIntSettingValue(SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	checkbox_ResetQueueForUnknowStatus->setCheckState(state);
+	checkbox_ResetQueueForUnknowStatus->setChecked(settings->getBoolSetting(Settings::SettingResetQueueForUnknowStatus));
 	// Попап при сбросе очереди
-	if (!core->getIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, &newIntValue) || newIntValue != 1) {
-		checkbox_ResetQueuePopup->setChecked(false);
-	} else {
-		checkbox_ResetQueuePopup->setChecked(true);
-	}
-	// Позиции в слотах
-	statisticFooterPos.clear();
-	if (!core->getIntSettingValue(SETTING_SLOT1, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT1;
-	slot1Combo->setCurrentIndex(slot1Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT2, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT2;
-	slot2Combo->setCurrentIndex(slot2Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT3, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT3;
-	slot3Combo->setCurrentIndex(slot3Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT4, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT4;
-	slot4Combo->setCurrentIndex(slot4Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT5, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT5;
-	slot5Combo->setCurrentIndex(slot5Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT6, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT6;
-	slot6Combo->setCurrentIndex(slot6Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT7, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT7;
-	slot7Combo->setCurrentIndex(slot7Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT8, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT8;
-	slot8Combo->setCurrentIndex(slot8Combo->findData(newIntValue));
-	if (!core->getIntSettingValue(SETTING_SLOT9, &newIntValue)) {
-		newIntValue = -1;
-	}
-	statisticFooterPos[newIntValue] = SETTING_SLOT9;
-	slot9Combo->setCurrentIndex(slot9Combo->findData(newIntValue));
-	// Сохранение статистики
-	//if (!core->getIntSettingValue(SETTING_SAVE_STAT, &newIntValue)) {
-	//	newIntValue = 0;
-	//}
-	//setSaveStatAtExit->setCurrentIndex(newIntValue);
+	checkbox_ResetQueuePopup->setChecked(settings->getBoolSetting(Settings::SettingResetQueuePopup));
 	// Сохранение основных параметров персонажа
-	if (!core->getIntSettingValue(SETTING_PERS_PARAM_SAVE_MODE, &newIntValue)) {
-		newIntValue = 0;
-	}
-	persParamSaveMode_combo->setCurrentIndex(newIntValue);
+	persParamSaveMode_combo->setCurrentIndex(settings->getIntSetting(Settings::SettingPersSaveMode));
 	// Сохранение основных параметров персонажа
-	if (!core->getIntSettingValue(SETTING_SAVE_PERS_PARAM, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	saveMainPersParam_checkbox->setCheckState(state);
+	saveMainPersParam_checkbox->setChecked(settings->getBoolSetting(Settings::SettingSavePersParams));
 	// Сохранение рюкзака персонажа
-	if (!core->getIntSettingValue(SETTING_SAVE_PERS_BACKPACK, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	savePersBackpack_checkbox->setCheckState(state);
+	savePersBackpack_checkbox->setChecked(settings->getBoolSetting(Settings::SettingSaveBackpack));
 	// Сохранение статистики
-	if (!core->getIntSettingValue(SETTING_SAVE_PERS_STAT, &newIntValue)) {
-		newIntValue = 0;
-	}
-	state = Qt::Unchecked;
-	if (newIntValue == 1) {
-		state = Qt::Checked;
-	}
-	saveStatistic_checkbox->setCheckState(state);
+	saveStatistic_checkbox->setChecked(settings->getBoolSetting(Settings::SettingSaveStatistic));
 	// *** Основные данные ***
 	Pers *pers = Pers::instance();
 	changePersStatus();
-	if (!pers->getStringParamValue(VALUE_PERS_NAME, &newStrValue)) {
-		newStrValue = NA_TEXT;
-	}
+	newStrValue = pers->name();
+	if (newStrValue.isEmpty())
+		newStrValue = "n/a";
 	persNameLabel->setText(newStrValue);
-	if (!pers->getIntParamValue(VALUE_PERS_LEVEL, &newIntValue)) {
+	if (!pers->getIntParamValue(Pers::ParamPersLevel, &newIntValue)) {
 		newStrValue = NA_TEXT;
 	} else {
 		newStrValue = QString::number(newIntValue);
 	}
 	levelLabel->setText(newStrValue);
 	long long newLongValue;
-	if (!pers->getLongParamValue(VALUE_EXPERIENCE_CURR, &newLongValue)) {
+	if (!pers->getLongParamValue(Pers::ParamExperienceCurr, &newLongValue)) {
 		newLongValue = 0;
 	}
 	setCurrentExperience(newLongValue);
-	if (!pers->getLongParamValue(VALUE_EXPERIENCE_MAX, &newLongValue)) {
+	if (!pers->getLongParamValue(Pers::ParamExperienceMax, &newLongValue)) {
 		newLongValue = 0;
 	}
 	setMaximumExperience(newLongValue);
-	if (!pers->getIntParamValue(VALUE_HEALTH_CURR, &newIntValue)) {
+	if (!pers->getIntParamValue(Pers::ParamHealthCurr, &newIntValue)) {
 		newIntValue = 0;
 	}
 	setCurrentHealth(newIntValue);
-	if (!pers->getIntParamValue(VALUE_HEALTH_MAX, &newIntValue)) {
+	if (!pers->getIntParamValue(Pers::ParamHealthMax, &newIntValue)) {
 		newIntValue = 0;
 	}
 	healthBar->setRange(0, newIntValue);
-	if (!pers->getIntParamValue(VALUE_ENERGY_CURR, &newIntValue)) {
+	if (!pers->getIntParamValue(Pers::ParamEnergyCurr, &newIntValue)) {
 		newIntValue = 0;
 	}
 	setCurrentEnergy(newIntValue);
-	if (!pers->getIntParamValue(VALUE_ENERGY_MAX, &newIntValue)) {
+	if (!pers->getIntParamValue(Pers::ParamEnergyMax, &newIntValue)) {
 		newIntValue = 0;
 	}
 	energyBar->setRange(0, newIntValue);
@@ -803,38 +629,18 @@ void SofMainWindow::getAllDataFromCore() {
 		newStrValue = statisticCapInitVal.value(VALUE_KILLED_ENEMIES).initVal;
 	}
 	updateValue(VALUE_KILLED_ENEMIES, newStrValue);
-	// Шрифты
-	if (core->getStringSettingValue(SETTING_PERS_NAME_FONT, &newStrValue)) {
-		persNameFont_label->setFont(newStrValue);
-		QFont f;
-		if (f.fromString(persNameFont_label->fontName())) {
-			persNameLabel->setFont(f);
-		}
-	}
-	if (core->getStringSettingValue(SETTING_SERVER_TEXT_FONT, &newStrValue)) {
-		gameTextFont_label->setFont(newStrValue);
-		QFont f;
-		if (f.fromString(gameTextFont_label->fontName())) {
-			serverTextLabel->setFont(f);
-			console_textedit->setFont(f);
-		}
-	}
-	newIntValue = 0;
-	if (core->getIntSettingValue(SETTING_SERVER_TEXT_BLOCKS_COUNT, &newIntValue)) {
-		if (newIntValue < 0) {
-			newIntValue = 0;
-		} else if (newIntValue > 0 && newIntValue < 100) {
-			newIntValue = 100;
-		}
+	//--
+	newIntValue = settings->getIntSetting(Settings::SettingServerTextBlocksCount);
+	if (newIntValue < 0) {
+		newIntValue = 0;
+	} else if (newIntValue > 0 && newIntValue < 100) {
+		newIntValue = 100;
 	}
 	maxTextBlocksCount->setValue(newIntValue);
 	serverTextLabel->setMaximumBlockCount(newIntValue);
 	console_textedit->setMaximumBlockCount(newIntValue);
 	// Режим сохранения карт
-	if (!core->getIntSettingValue(SETTING_MAPS_PARAM_SAVE_MODE, &newIntValue)) {
-		newIntValue = 0;
-	}
-	mapsParamSaveMode->setCurrentIndex(newIntValue);
+	mapsParamSaveMode->setCurrentIndex(GameMap::instance()->getMapsSettingParam(GameMap::AutoSaveMode));
 }
 
 /**
@@ -934,18 +740,18 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		} else if (eventId == VALUE_FING_DROP_LAST) {
 			// Последняя найденная вещь
 			updateValue(VALUE_FING_DROP_LAST, str1);
-		} else if (eventId == VALUE_HEALTH_CURR) {
+		} else if (eventId == Pers::ParamHealthCurr) {
 			// Текущее здоровье
 			healthLabel->setText(str1);
 			healthBar->setValue(0);
-		} else if (eventId == VALUE_HEALTH_MAX) {
+		} else if (eventId == Pers::ParamHealthMax) {
 			// Максимальное здоровье
 			healthBar->setRange(0, 0);
-		} else if (eventId == VALUE_ENERGY_CURR) {
+		} else if (eventId == Pers::ParamEnergyCurr) {
 			// Текущая энергия
 			energyLabel->setText(str1);
 			energyBar->setValue(0);
-		} else if (eventId == VALUE_ENERGY_MAX) {
+		} else if (eventId == Pers::ParamEnergyMax) {
 			// Максимальная энергия
 			energyBar->setRange(0, 0);
 		}
@@ -1016,28 +822,57 @@ void SofMainWindow::setConsoleText(QString text, int type, bool switch_)
 /**
  * Возвращает DOM элемент, содержащий настройки внешнего вида
  */
-QDomElement SofMainWindow::getAppearanceSettings(QDomDocument &xmlDoc) const
+QDomElement SofMainWindow::exportAppearanceSettings(QDomDocument &xmlDoc) const
 {
 	QDomElement eAppearance = xmlDoc.createElement("appearance");
 	QDomElement ePersNameAppe = xmlDoc.createElement("pers-name");
 	eAppearance.appendChild(ePersNameAppe);
 	QDomElement ePersNameFontAppe = xmlDoc.createElement("font");
 	ePersNameAppe.appendChild(ePersNameFontAppe);
-	ePersNameFontAppe.setAttribute("value", persNameFont_label->fontName());
+	ePersNameFontAppe.setAttribute("value", persNameLabel->font().toString());
 	QDomElement eServerTextAppe = xmlDoc.createElement("server-text");
 	eAppearance.appendChild(eServerTextAppe);
 	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
 	eServerTextAppe.appendChild(eServerTextFontAppe);
-	eServerTextFontAppe.setAttribute("value", gameTextFont_label->fontName());
+	eServerTextFontAppe.setAttribute("value", serverTextLabel->font().toString());
 	QDomElement eThingsTable = fingsTable->saveSettingsToXml(xmlDoc);
 	eAppearance.appendChild(eThingsTable);
+	if (settingWindowSizePos == 1) {
+		QDomElement eWindowParams = xmlDoc.createElement("window-save-params");
+		eWindowParams.setAttribute("mode", "position-and-size");
+		eWindowParams.setAttribute("pos-x", x());
+		eWindowParams.setAttribute("pos-y", y());
+		eWindowParams.setAttribute("width", width());
+		eWindowParams.setAttribute("height", height());
+		eAppearance.appendChild(eWindowParams);
+	}
+
 	return eAppearance;
+}
+
+/**
+ * Возвращает DOM элемент, содержащий настройки слотов
+ */
+QDomElement SofMainWindow::exportSlotsSettings(QDomDocument &xmlDoc) const
+{
+	QDomElement eSlots = xmlDoc.createElement("slots");
+	for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
+		const int nStat = SofMainWindow::statisticXmlStrings.at(i).first;
+		if (statisticFooterPos.contains(nStat)) {
+			const int nSlot = statisticFooterPos.value(nStat);
+			QDomElement eSlot = xmlDoc.createElement("slot");
+			eSlot.setAttribute("num", nSlot);
+			eSlot.setAttribute("param", SofMainWindow::statisticXmlStrings.at(i).second);
+			eSlots.appendChild(eSlot);
+		}
+	}
+	return eSlots;
 }
 
 /**
  * Применяет настройки внешнего вида
  */
-void SofMainWindow::setAppearanceSetting(QDomElement &xml)
+void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 {
 	QDomElement ePersName = xml.firstChildElement("pers-name");
 	if (!ePersName.isNull()) {
@@ -1070,13 +905,91 @@ void SofMainWindow::setAppearanceSetting(QDomElement &xml)
 	}
 	QDomElement eThingsSettings = xml.firstChildElement("things-table");
 	fingsTable->loadSettingsFromXml(eThingsSettings);
+	QDomElement eGeometry = xml.firstChildElement("window-save-params");
+	settingWindowSizePos = 0;
+	if (!eGeometry.isNull()) {
+		if (eGeometry.attribute("mode") == "position-and-size") {
+			settingWindowSizePos = 1;
+		}
+		int posX = eGeometry.attribute("pos-x").toInt();
+		int posY = eGeometry.attribute("pos-y").toInt();
+		int width_ = eGeometry.attribute("width").toInt();
+		int height_ = eGeometry.attribute("height").toInt();
+		// Определяем геометрию рабочих столов (доступное пространство)
+		QRect scRect = QApplication::desktop()->availableGeometry(-1); //-- default system screen
+		// Корректируем наши параметры, если превышают допустимые
+		if (scRect.x() > posX)
+			posX = scRect.x();
+		if (scRect.y() > posY)
+			posY = scRect.y();
+		if (posX - scRect.x() + width_ > scRect.width()) {
+			// * Не вписываемся по горизонтали
+			// Исправляем за счет смещения окна
+			posX -= (posX + width_) - (scRect.x() + scRect.width());
+			if (posX < scRect.x()) {
+				posX = scRect.x();
+				// Исправляем за счет ширины окна
+				width_ = scRect.width() - posX + scRect.x();
+			}
+		}
+		if (posY - scRect.y() + height_ > scRect.height()) {
+			// * Не вписываемся по вертикали
+			// Исправляем за счет смещения окна
+			posY -= (posY + height_) - (scRect.y() + scRect.height());
+			if (posY < scRect.y()) {
+				posY = scRect.y();
+				// Исправляем за счет высоты окна
+				height_ = scRect.height() - posY + scRect.y();
+			}
+		}
+		// Перемещаем окно
+		move(posX, posY);
+		// Изменяем размер окна
+		resize(width_, height_);
+	}
+	windowSizePosCombo->setCurrentIndex(settingWindowSizePos);
 }
 
+/**
+ * Загружает и применяет настройки слотов статистики
+ */
+void SofMainWindow::loadSlotsSettings(const QDomElement &xml)
+{
+	statisticFooterPos.clear();
+	QDomElement eSlot = xml.firstChildElement("slot");
+	while (!eSlot.isNull()) {
+		QString param = eSlot.attribute("param").toLower();
+		if (!param.isEmpty()) {
+			int slotNum = eSlot.attribute("num").toInt();
+			if (slotNum >= 1 && slotNum <= SLOT_ITEMS_COUNT) {
+				for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
+					if (SofMainWindow::statisticXmlStrings.at(i).second == param) {
+						statisticFooterPos[SofMainWindow::statisticXmlStrings.at(i).first] = slotNum;
+						break;
+					}
+				}
+			}
+		}
+		eSlot = eSlot.nextSiblingElement("slot");
+	}
+	fullUpdateFooterStatistic();
+	// Меняем элементы настроек слотов
+	slot1Combo->setCurrentIndex(slot1Combo->findData(statisticFooterPos.key(1, -1)));
+	slot2Combo->setCurrentIndex(slot2Combo->findData(statisticFooterPos.key(2, -1)));
+	slot3Combo->setCurrentIndex(slot3Combo->findData(statisticFooterPos.key(3, -1)));
+	slot4Combo->setCurrentIndex(slot4Combo->findData(statisticFooterPos.key(4, -1)));
+	slot5Combo->setCurrentIndex(slot5Combo->findData(statisticFooterPos.key(5, -1)));
+	slot6Combo->setCurrentIndex(slot6Combo->findData(statisticFooterPos.key(6, -1)));
+	slot7Combo->setCurrentIndex(slot7Combo->findData(statisticFooterPos.key(7, -1)));
+	slot8Combo->setCurrentIndex(slot8Combo->findData(statisticFooterPos.key(8, -1)));
+	slot9Combo->setCurrentIndex(slot9Combo->findData(statisticFooterPos.key(9, -1)));
+}
+
+/**
+ * Инициирует слоты событий
+ */
 void SofMainWindow::initEventSlots()
 {
-	/**
-	* Инициирует слоты событий
-	**/
 	maxEventSlotId = 0;
 	usedEventSlots = 0;
 	eventSlots.clear();
@@ -1247,7 +1160,7 @@ void SofMainWindow::setCurrentHealth(int health)
 	* Прописывает текущее здоровье в виджеты
 	**/
 	int maxValue;
-	if (!Pers::instance()->getIntParamValue(VALUE_HEALTH_MAX, &maxValue)) {
+	if (!Pers::instance()->getIntParamValue(Pers::ParamHealthMax, &maxValue)) {
 		maxValue = 0;
 	}
 	QPalette palette;
@@ -1279,7 +1192,7 @@ void SofMainWindow::setCurrentEnergy(int energy)
 	* Прописывает текущую энергию в виджеты
 	**/
 	int maxValue;
-	if (!Pers::instance()->getIntParamValue(VALUE_ENERGY_MAX, &maxValue)) {
+	if (!Pers::instance()->getIntParamValue(Pers::ParamEnergyMax, &maxValue)) {
 		maxValue = 0;
 	}
 	QPalette palette;
@@ -1442,172 +1355,107 @@ void SofMainWindow::resetFightStatistic()
 void SofMainWindow::applySettings()
 {
 	// *** Отправляем новые настройки ядру плагина ***
-	int i;
-	PluginCore *core = PluginCore::instance();
+	Settings *settings = Settings::instance();
 	// Имя персонажа
 	QString str1 = setPersName->text();
-	core->setStringSettingValue(SETTING_PERS_NAME, &str1);
+	settings->setStringSetting(Settings::SettingPersName, str1);
 	// Режим переключения зеркал
-	i = mirrorChangeModeCombo->currentIndex();
-	core->setIntSettingValue(SETTING_CHANGE_MIRROR_MODE, i);
+	Sender::instance()->setGameMirrorsMode(mirrorChangeModeCombo->currentIndex());
 	// Сохранение параметров окна
-	i = windowSizePosCombo->currentIndex();
-	core->setIntSettingValue(SETTING_WINDOW_SIZE_POS, i);
+	settingWindowSizePos = windowSizePosCombo->currentIndex();
 	// Отслеживание восстановления здоровья и энергии
-	i = restHealthEnergyCombo->currentIndex();
-	core->setIntSettingValue(SETTING_REST_HEALTH_ENERGY, i);
+	settings->setIntSetting(Settings::SettingWatchRestHealthEnergy, restHealthEnergyCombo->currentIndex());
 	// Таймер в бою
-	i = fightTimerCombo->currentIndex();
-	settingTimeOutDisplay = i;
-	core->setIntSettingValue(SETTING_FIGHT_TIMER, i);
+	settingTimeOutDisplay = fightTimerCombo->currentIndex();
+	settings->setIntSetting(Settings::SettingFightTimerMode, settingTimeOutDisplay);
 	// Выбор боя
-	i = fightSelectAction->currentIndex();
-	core->setIntSettingValue(SETTING_FIGHT_SELECT_ACTION, i);
+	settings->setIntSetting(Settings::SettingFightSelectAction, fightSelectAction->currentIndex());
 	// Автозакрытие боя
-	i = setAutoCloseFight->currentIndex();
-	core->setIntSettingValue(SETTING_AUTOCLOSE_FIGHT, i);
+	settings->setIntSetting(Settings::SettingFightAutoClose, setAutoCloseFight->currentIndex());
 	// Попап при дропе вещей
-	i = checkbox_FingDropPopup->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_FING_DROP_POPUP, i);
+	settings->setBoolSetting(Settings::SettingThingDropPopup, checkbox_FingDropPopup->isChecked());
 	// Попап при заказе в клубе убийц
-	i = checkbox_InKillersCupPopup->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_IN_KILLERS_CUP_POPUP, i);
+	settings->setBoolSetting(Settings::SettingInKillersCupPopup, checkbox_InKillersCupPopup->isChecked());
 	// Попап при нападении убийцы
-	i = checkbox_KillerClubAttack->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_KILLER_ATTACK_POPUP, i);
+	settings->setBoolSetting(Settings::SettingKillerAttackPopup, checkbox_KillerClubAttack->isChecked());
 	// Отображение очереди команд
-	i = checkbox_ShowQueueLength->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
+	bool flag = checkbox_ShowQueueLength->isChecked();
+	if (flag) {
 		if (!queueShowFlag) {
 			connect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			queueShowFlag = true;
 		}
 	} else {
-		i = 0;
 		if (queueShowFlag) {
 			disconnect(Sender::instance(), SIGNAL(queueSizeChanged(int)), this, SLOT(showQueueLen(int)));
 			showQueueLen(0);
 			queueShowFlag = false;
 		}
 	}
-	core->setIntSettingValue(SETTING_SHOW_QUEUE_LENGTH, i);
+	settings->setBoolSetting(Settings::SettingShowQueryLength, flag);
 	// Сброс очереди при неизвестном статусе
-	i = checkbox_ResetQueueForUnknowStatus->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_RESET_QUEUE_FOR_UNKNOW_STATUS, i);
+	settings->setBoolSetting(Settings::SettingResetQueueForUnknowStatus, checkbox_ResetQueueForUnknowStatus->isChecked());
 	// Попап при сбросе очереди
-	i = (checkbox_ResetQueuePopup->isChecked()) ? 1 : 0;
-	core->setIntSettingValue(SETTING_RESET_QUEUE_POPUP_SHOW, i);
+	settings->setBoolSetting(Settings::SettingResetQueuePopup, checkbox_ResetQueuePopup->isChecked());
 	// Настройка слотов
 	statisticFooterPos.clear();
 	int statParam = slot1Combo->itemData(slot1Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT1;
+		statisticFooterPos[statParam] = 1;
 	}
-	core->setIntSettingValue(SETTING_SLOT1, statParam);
 	statParam = slot2Combo->itemData(slot2Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT2;
+		statisticFooterPos[statParam] = 2;
 	}
-	core->setIntSettingValue(SETTING_SLOT2, statParam);
 	statParam = slot3Combo->itemData(slot3Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT3;
+		statisticFooterPos[statParam] = 3;
 	}
-	core->setIntSettingValue(SETTING_SLOT3, statParam);
 	statParam = slot4Combo->itemData(slot4Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT4;
+		statisticFooterPos[statParam] = 4;
 	}
-	core->setIntSettingValue(SETTING_SLOT4, statParam);
 	statParam = slot5Combo->itemData(slot5Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT5;
+		statisticFooterPos[statParam] = 5;
 	}
-	core->setIntSettingValue(SETTING_SLOT5, statParam);
 	statParam = slot6Combo->itemData(slot6Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT6;
+		statisticFooterPos[statParam] = 6;
 	}
-	core->setIntSettingValue(SETTING_SLOT6, statParam);
 	statParam = slot7Combo->itemData(slot7Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT7;
+		statisticFooterPos[statParam] = 7;
 	}
-	core->setIntSettingValue(SETTING_SLOT7, statParam);
 	statParam = slot8Combo->itemData(slot8Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT8;
+		statisticFooterPos[statParam] = 8;
 	}
-	core->setIntSettingValue(SETTING_SLOT8, statParam);
 	statParam = slot9Combo->itemData(slot9Combo->currentIndex()).toInt();
 	if (statParam != -1) {
-		statisticFooterPos[statParam] = SETTING_SLOT9;
+		statisticFooterPos[statParam] = 9;
 	}
-	core->setIntSettingValue(SETTING_SLOT9, statParam);
 	fullUpdateFooterStatistic();
 	// Режим сохранения параметров персонажа
-	i = persParamSaveMode_combo->currentIndex();
-	core->setIntSettingValue(SETTING_PERS_PARAM_SAVE_MODE, i);
+	settings->setIntSetting(Settings::SettingPersSaveMode, persParamSaveMode_combo->currentIndex());
 	// Сохранение параметров персонажа
-	i = saveMainPersParam_checkbox->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_SAVE_PERS_PARAM, i);
+	settings->setBoolSetting(Settings::SettingSavePersParams, saveMainPersParam_checkbox->isChecked());
 	// Сохранение рюкзака персонажа
-	i = savePersBackpack_checkbox->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_SAVE_PERS_BACKPACK, i);
+	settings->setBoolSetting(Settings::SettingSaveBackpack, savePersBackpack_checkbox->isChecked());
 	// Сохранение статистики
-	i = saveStatistic_checkbox->checkState();
-	if (i == Qt::Checked) {
-		i = 1;
-	} else {
-		i = 0;
-	}
-	core->setIntSettingValue(SETTING_SAVE_PERS_STAT, i);
+	settings->setBoolSetting(Settings::SettingSaveStatistic, saveStatistic_checkbox->isChecked());
 	// Применение фильтров вещей
 	Pers::instance()->setFingsFiltersEx(fingFiltersTable->getFilters());
 	// Применение шрифтов
 	QFont f;
 	if (f.fromString(persNameFont_label->fontName())) {
 		persNameLabel->setFont(f);
-		str1 = f.toString();
-		core->setStringSettingValue(SETTING_PERS_NAME_FONT, &str1);
 	}
 	if (f.fromString(gameTextFont_label->fontName())) {
 		serverTextLabel->setFont(f);
 		console_textedit->setFont(f);
-		str1 = f.toString();
-		core->setStringSettingValue(SETTING_SERVER_TEXT_FONT, &str1);
 	}
+	// Максимальное количество блоков текста
 	int textBlocksCount = maxTextBlocksCount->value();
 	if (textBlocksCount < 0) {
 		textBlocksCount = 0;
@@ -1615,19 +1463,20 @@ void SofMainWindow::applySettings()
 		textBlocksCount = 100;
 	}
 	serverTextLabel->setMaximumBlockCount(textBlocksCount);
-	core->setIntSettingValue(SETTING_SERVER_TEXT_BLOCKS_COUNT, textBlocksCount);
+	console_textedit->setMaximumBlockCount(textBlocksCount);
+	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
 	// Режим сохранения карт
-	i = mapsParamSaveMode->currentIndex();
-	core->setIntSettingValue(SETTING_MAPS_PARAM_SAVE_MODE, i);
-
+	GameMap::instance()->setMapsParam(GameMap::AutoSaveMode, mapsParamSaveMode->currentIndex());
 }
 
 void SofMainWindow::saveSettings()
 {
-	// Отправляем настройки ядру
 	applySettings();
-	// Отправка команды сохранения настроек ядру плагина
-	PluginCore::instance()->sendCommandToCore(COMMAND_SAVE_SETTINGS);
+	Settings *settings = Settings::instance();
+	QDomDocument xmlDoc;
+	settings->setSlotsData(exportSlotsSettings(xmlDoc));
+	settings->setAppearanceData(exportAppearanceSettings(xmlDoc));
+	settings->save();
 }
 
 void SofMainWindow::resetGameJid()
@@ -1985,65 +1834,64 @@ void SofMainWindow::persFingsChanged()
 void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 {
 	if (paramType == TYPE_INTEGER_FULL) {
-		if (paramId == VALUE_PERS_STATUS) {
+		if (paramId == Pers::ParamPersStatus) {
 			// Статус персонажа
 			changePersStatus();
-		} else if (paramId == VALUE_HEALTH_CURR) {
+		} else if (paramId == Pers::ParamHealthCurr) {
 			// Текущее здоровье
 			setCurrentHealth(paramValue);
-		} else if (paramId == VALUE_ENERGY_CURR) {
+		} else if (paramId == Pers::ParamEnergyCurr) {
 			// Текущая энергия
 			setCurrentEnergy(paramValue);
-		} else if (paramId == VALUE_ENERGY_MAX) {
+		} else if (paramId == Pers::ParamEnergyMax) {
 			// Максимальная энергия
 			int i = energyBar->value();
 			energyBar->setValue(0);
 			energyBar->setRange(0, paramValue);
 			energyBar->setValue(i);
-		} else if (paramId == VALUE_HEALTH_MAX) {
+		} else if (paramId == Pers::ParamHealthMax) {
 			// Максимальное здоровье
 			int i = healthBar->value();
 			healthBar->setValue(0);
 			healthBar->setRange(0, paramValue);
 			healthBar->setValue(i);
-		} else if (paramId == VALUE_PERS_LEVEL) {
+		} else if (paramId == Pers::ParamPersLevel) {
 			// Смена уровня персонажа
 			levelLabel->setText(QString::number(paramValue));
 		}
 	} else if (paramType == TYPE_LONGLONG_FULL) {
-		if (paramId == VALUE_EXPERIENCE_CURR) {
+		if (paramId == Pers::ParamExperienceCurr) {
 			// Изменился опыт
 			long long exp;
-			if (!Pers::instance()->getLongParamValue(VALUE_EXPERIENCE_CURR, &exp)) {
+			if (!Pers::instance()->getLongParamValue(Pers::ParamExperienceCurr, &exp)) {
 				exp = 0;
 			}
 			setCurrentExperience(exp);
-		} else if (paramId == VALUE_EXPERIENCE_MAX) {
+		} else if (paramId == Pers::ParamExperienceMax) {
 			// Изменился максимальный опыт для уровня
 			long long exp;
-			if (!Pers::instance()->getLongParamValue(VALUE_EXPERIENCE_MAX, &exp)) {
+			if (!Pers::instance()->getLongParamValue(Pers::ParamExperienceMax, &exp)) {
 				exp = 0;
 			}
 			setMaximumExperience(exp);
 		}
 	} else if (paramType == TYPE_STRING) {
-		if (paramId == VALUE_PERS_NAME) {
+		if (paramId == Pers::ParamPersName) {
 			// Имя персонажа
-			QString str1;
-			if (!Pers::instance()->getStringParamValue(VALUE_PERS_NAME, &str1)) {
-				str1 = NA_TEXT;
-			}
+			QString str1 = Pers::instance()->name();
+			if (str1.isEmpty())
+				str1 = "n/a";
 			persNameLabel->setText(str1);
 		}
 	} else if (paramType == TYPE_NA) {
-		if (paramId == VALUE_PERS_LEVEL) {
-			levelLabel->setText(NA_TEXT);
-		} else if (paramId == VALUE_PERS_NAME) {
-			persNameLabel->setText(NA_TEXT);
-		} else if (paramId == VALUE_EXPERIENCE_CURR) {
+		if (paramId == Pers::ParamPersLevel) {
+			levelLabel->setText("n/a");
+		} else if (paramId == Pers::ParamPersName) {
+			persNameLabel->setText("n/a");
+		} else if (paramId == Pers::ParamExperienceCurr) {
 			// Максимальный опыт для уровня
 			setCurrentExperience(0);
-		} else if (paramId == VALUE_EXPERIENCE_MAX) {
+		} else if (paramId == Pers::ParamExperienceMax) {
 			// Максимальный опыт для уровня
 			setMaximumExperience(0);
 		}

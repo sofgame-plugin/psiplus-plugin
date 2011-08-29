@@ -55,10 +55,6 @@ class PluginCore: public QObject
 		bool getLongValue(int valueId, long long *valuePtr) const;
 		bool getTextValue(int valueId, QString* valuePtr);
 		void resetStatistic(int valueId);
-		bool setIntSettingValue(qint32 settingId, int settingValue);
-		bool setStringSettingValue(qint32 settingId, QString* settingPtr);
-		bool getIntSettingValue(qint32 settingId, qint32* settingPtr);
-		bool getStringSettingValue(qint32 settingId, QString* settingPtr);
 		bool sendCommandToCore(qint32 commandId);
 		bool sendString(const QString &str);
 		PersInfo* getPersInfo(QString);
@@ -79,34 +75,10 @@ class PluginCore: public QObject
 		QString statFingDropLast;
 		long long statExperienceDropCount;
 		int statKilledEnemies;
-		QString settingPersName;
-		QVector<quint32> settingSlots;
-		int settingPersSaveMode;
-		int settingMapsSaveMode;
-		bool settingSavePersParam;
-		bool settingSaveBackpack;
-		int settingSaveStat;
-		bool settingChangeMirrorMode;
+
 		qint32 settingPersX;
 		qint32 settingPersY;
-		int settingWindowSizePos;
-		int settingWindowPosX;
-		int settingWindowPosY;
-		int settingWindowWidth;
-		int settingWindowHeight;
-		int settingFightTimer;
-		int settingFightAutoClose;
-		bool settingFingDropPopup;
-		int settingWatchRestHealthEnergy;
-		int settingFightSelectAction;
-		bool settingInKillersCupPopup;
-		bool settingKillerAttackPopup;
-		bool settingShowQueryLength;
-		bool settingResetQueueForUnknowStatus;
-		int  settingServerTextBlocksCount;
-		bool settingResetQueuePopup;
-		QString settingPersNameFont;
-		QString settingServerTextFont;
+
 		QRegExp mapCoordinatesExp;
 		QRegExp parPersRegExp;
 		QRegExp fightDropMoneyReg2;
@@ -150,7 +122,6 @@ class PluginCore: public QObject
 		QRegExp fightDamageFromPersReg3;
 		QRegExp fightDropMoneyReg1;
 		QRegExp fightDropThingReg1;
-		QDomElement appearaceSettings;
 
 	private:
 		PluginCore();
@@ -159,10 +130,7 @@ class PluginCore: public QObject
 		void setGameText(QString);
 		void setConsoleText(QString, bool);
 		bool savePersStatus();
-		bool savePluginSettings();
-		bool saveWindowSettings();
 		bool loadPersStatus();
-		bool loadPluginSettings();
 		void getStatistics(QString* commandPtr);
 		void mapsCommands(QStringList*);
 		void persCommands(QStringList*);

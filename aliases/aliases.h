@@ -36,6 +36,7 @@ Q_OBJECT
 public:
 	static Aliases *instance();
 	static void reset();
+	void init();
 	QString command(const QString &) const;
 	int count() const {return aliasesList.size();};
 	QString aliasName(int) const;
@@ -43,7 +44,6 @@ public:
 	QString aliasCommand(int) const;
 	bool appendAlias(const QString &name, bool prefix, const QString &command);
 	bool removeAlias(int i);
-	void loadFromDomElement(const QDomElement &);
 	QDomElement saveToDomElement(QDomDocument &xmlDoc);
 
 private:
@@ -59,6 +59,7 @@ private:
 	Aliases(QObject *parent = 0);
 	~Aliases();
 	void clear();
+	void loadFromDomElement(const QDomElement &);
 
 signals:
 	void newAlias(int);

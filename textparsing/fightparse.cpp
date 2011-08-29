@@ -26,10 +26,10 @@
 #include <QtCore>
 
 #include "fightparse.h"
-#include "../common.h"
-#include "../plugin_core.h"
-//#include "../pers.h"
-#include "../fight.h"
+#include "common.h"
+#include "plugin_core.h"
+#include "fight.h"
+#include "settings.h"
 
 /**
  * Парсит строки с описанием команды союзников, противников и их ауры
@@ -87,10 +87,10 @@ int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
 							b_my_pers = true;
 							Pers::instance()->beginSetPersParams();
 							// Данные об уровне
-							Pers::instance()->setPersParams(VALUE_PERS_LEVEL, TYPE_INTEGER_FULL, n_level);
+							Pers::instance()->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, n_level);
 							// Наше здоровье
-							Pers::instance()->setPersParams(VALUE_HEALTH_CURR, TYPE_INTEGER_FULL, n_health_curr);
-							Pers::instance()->setPersParams(VALUE_HEALTH_MAX, TYPE_INTEGER_FULL, n_health_max);
+							Pers::instance()->setPersParams(Pers::ParamHealthCurr, TYPE_INTEGER_FULL, n_health_curr);
+							Pers::instance()->setPersParams(Pers::ParamHealthMax, TYPE_INTEGER_FULL, n_health_max);
 							Pers::instance()->endSetPersParams();
 						} else {
 							// Добавляем описание союзника, управляемого человеком
@@ -155,8 +155,8 @@ int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
 			// Получаем значение энергии (Это режим выбора умения)
 			fight->setMyPersInFight(true); // Наш персонаж в бою
 			Pers::instance()->beginSetPersParams();
-			Pers::instance()->setPersParams(VALUE_ENERGY_CURR, TYPE_INTEGER_FULL, parPersPower1Reg.cap(1).toInt());
-			Pers::instance()->setPersParams(VALUE_ENERGY_MAX, TYPE_INTEGER_FULL, parPersPower1Reg.cap(2).toInt());
+			Pers::instance()->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, parPersPower1Reg.cap(1).toInt());
+			Pers::instance()->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, parPersPower1Reg.cap(2).toInt());
 			Pers::instance()->endSetPersParams();
 			// Следующая строчка - выбор умения. Пока тупо пропускаем.
 			++n_pos;
@@ -262,7 +262,7 @@ xxxxx*2 атаковали матерый волк/повр:4524
 					} else if (fightDropThingReg1.indexIn(str, 0) != -1) { // Ещем упавшие вещи
 						++nDropThings;
 						sDropThingLast = fightDropThingReg1.cap(1);
-						if (settingFingDropPopup) {
+						if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
 							initPopup(QString::fromUtf8("Sof game"), "+" + sDropThingLast, 3);
 						}
 					}

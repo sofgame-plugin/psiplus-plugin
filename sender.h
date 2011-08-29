@@ -60,7 +60,8 @@ public:
 	QStringList getGameJids() const;
 	const struct jid_status* getGameJidInfo(int) const;
 	bool setGameJidStatus(int, qint32);
-	bool changeGameMirrorsMode(int mirrorsMode);
+	int  getGameMirrorsMode() const {return gameMirrorsMode;}
+	bool setGameMirrorsMode(int mirrorsMode);
 	bool setSendDelta(int);
 	int  getSendDelta() const;
 	bool setServerTimeoutDuration(int);

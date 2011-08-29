@@ -64,8 +64,9 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void init();
 		void setGameText(QString, int);
 		void setConsoleText(QString, int, bool);
-		QDomElement getAppearanceSettings(QDomDocument &xmlDoc) const;
-		void setAppearanceSetting(QDomElement &xml);
+		QDomElement exportAppearanceSettings(QDomDocument &xmlDoc) const;
+		QDomElement exportSlotsSettings(QDomDocument &xmlDoc) const;
+
 	protected:
 		struct StatWidgets {
 			QLabel *caption;
@@ -105,8 +106,11 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void setCurrentExperience(long long);
 		void setMaximumExperience(long long);
 		void showThingsSummary();
+		void loadSlotsSettings(const QDomElement &xml);
+		void loadAppearanceSettings(const QDomElement &xml);
 
 	private:
+		static QList< QPair<int, QString> > statisticXmlStrings;
 		int statMessagesCount;
 		long statDropMoneys; // ???? Это откуда лонг???
 		int statDamageMinFromPers;
@@ -141,6 +145,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		QString lastMapForMoveElement; // Запоминается имя карты последнего переноса элемента
 		long long experienceMax; // Нужно для расчета делителя в QProgressBar
 		long long experienceCurr;
+		int settingWindowSizePos;
 
 	public slots:
 		void valueChanged(int eventId, int valueType, int value); // Приходят сообщения и событиях, часто об обновлении статистики.

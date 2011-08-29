@@ -33,6 +33,7 @@
 #include "thingftab/thingfilter.h"
 #include "thingstab/thingsmodel.h"
 #include "thingstab/thingsproxymodel.h"
+#include "settings.h"
 
 #define FING_APPEND                 1
 
@@ -50,6 +51,14 @@ public:
 		StatusDealerSale, StatusBuyOk, StatusHelpMenu, StatusTopList,
 		StatusServerStatistic1, StatusServerStatistic2, StatusRealEstate, StatusWarehouse,
 		StatusWarehouseShelf, StatusInKillersCup, StatusThingIsTaken, StatusAtHome
+	};
+	enum PersParams {
+		ParamPersName,
+		ParamPersLevel,
+		ParamPersStatus,
+		ParamExperienceCurr, ParamExperienceMax,
+		ParamHealthCurr, ParamHealthMax,
+		ParamEnergyCurr, ParamEnergyMax
 	};
 	struct price_item {
 		int      type;
@@ -73,9 +82,8 @@ public:
 	const QVector<price_item>* getFingsPrice() const;
 	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
 	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
-	QDomElement exportFiltersToDomElement(QDomDocument &xmlDoc) const;
+	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
 	void loadThingsFromDomElement(QDomElement &);
-	void loadBackpackSettingsFromDomNode(QDomElement &);
 	void setFingPrice(int, int, int);
 	void beginSetPersParams();
 	void setPersParams(int, int, int);
@@ -83,8 +91,8 @@ public:
 	void endSetPersParams();
 	bool getIntParamValue(int, int*) const;
 	bool getLongParamValue(int, long long*) const;
-	bool getStringParamValue(int, QString*) const;
-	void setSetting(int, int);
+	bool getStringParamValue(PersParams, QString*) const;
+	void setSetting(Settings::SettingKey, int);
 	int  getThingsInterface();
 	void setThingsInterfaceFilter(int, int);
 	void removeThingsInterface(int);
@@ -127,6 +135,7 @@ private:
 private:
 	Pers(QObject *parent = 0);
 	~Pers();
+	void loadBackpackSettingsFromDomNode(const QDomElement &);
 
 private slots:
 	void doWatchRestTime();

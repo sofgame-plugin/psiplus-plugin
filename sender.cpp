@@ -214,11 +214,11 @@ bool Sender::setGameJidStatus(int jid_index, qint32 status)
 	return res;
 }
 
-bool Sender::changeGameMirrorsMode(int mirrorsMode)
+/**
+ * Устанавливает режим использования зеркал игры
+ */
+bool Sender::setGameMirrorsMode(int mirrorsMode)
 {
-	/**
-	* Устанавливает режим использования зеркал игры
-	**/
 	if (gameMirrorsMode != mirrorsMode) {
 		gameMirrorsMode = mirrorsMode;
 		if (mirrorsMode == 1) {
