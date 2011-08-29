@@ -111,6 +111,7 @@ void GameMap::init(QString acc_jid)
 	mapCurrIndex = -1;
 	mapCurrArrayPtr = NULL;
 	otherPers.clear();
+	persPosColor = QColor(Qt::yellow);
 	// Загружаем настройки модуля карт
 	loadMapsSettings(Settings::instance()->getMapsData());
 	// Загружаем список карт
@@ -1685,6 +1686,20 @@ void GameMap::drawMapName()
 
 }
 
+void GameMap::setPersPosColor(const QColor &c)
+{
+	if (c != persPosColor) {
+		persPosColor = c;
+		if (persGraphicItem) {
+			// Пересоздаем элемент положения персонажа
+			removeItem(persGraphicItem);
+			delete persGraphicItem;
+			persGraphicItem = NULL;
+			setPersPos(persPosX, persPosY);
+		}
+	}
+}
+
 void GameMap::setPersPos(int pers_x, int pers_y)
 {
 	if (mapCurrIndex == -1) {
@@ -1713,7 +1728,7 @@ void GameMap::setPersPos(int pers_x, int pers_y)
 		qreal y_ = (qreal)y * (qreal)MAP_ELEMENT_SIZE;
 		x_ += MAP_ELEMENT_SIZE * 3 / 8;
 		y_ += MAP_ELEMENT_SIZE * 3 / 8;
-		persGraphicItem = addEllipse(x_, y_, ellipseSize, ellipseSize, QPen(Qt::black, 1, Qt::SolidLine), QBrush(Qt::yellow, Qt::SolidPattern));
+		persGraphicItem = addEllipse(x_, y_, ellipseSize, ellipseSize, QPen(Qt::black, 1, Qt::SolidLine), QBrush(persPosColor, Qt::SolidPattern));
 		persGraphicItem->setZValue(9.0);
 	} else {
 		// Перемещаем существующий элемент на новую позицию
@@ -2488,6 +2503,16 @@ void GameMap::loadMapsSettings(const QDomElement &xml)
 		}
 	}
 	setMapsParam(AutoSaveMode, saveMode_);
+	QDomElement ePersPos = xml.firstChildElement("pers-position");
+	if (!ePersPos.isNull()) {
+		QDomElement ePersPosColor = ePersPos.firstChildElement("color");
+		if (!ePersPosColor.isNull()) {
+			QColor c = QColor(ePersPosColor.attribute("value"));
+			if (c.isValid()) {
+				setPersPosColor(c);
+			}
+		}
+	}
 }
 
 QDomElement GameMap::exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const
@@ -2498,6 +2523,11 @@ QDomElement GameMap::exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const
 		eMapSaveMode.setAttribute("value", Settings::persSaveModeStrings.at(saveMode));
 		eMaps.appendChild(eMapSaveMode);
 	}
+	QDomElement ePersPos = xmlDoc.createElement("pers-position");
+	eMaps.appendChild(ePersPos);
+	QDomElement ePersPosColor = xmlDoc.createElement("color");
+	ePersPosColor.setAttribute("value", persPosColor.name());
+	ePersPos.appendChild(ePersPosColor);
 	return eMaps;
 }
 

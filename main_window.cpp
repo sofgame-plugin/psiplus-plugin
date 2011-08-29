@@ -524,6 +524,8 @@ void SofMainWindow::getAllDataFromCore() {
 	savePersBackpack_checkbox->setChecked(settings->getBoolSetting(Settings::SettingSaveBackpack));
 	// Сохранение статистики
 	saveStatistic_checkbox->setChecked(settings->getBoolSetting(Settings::SettingSaveStatistic));
+	// Цвет позиции персонажа на карте
+	btnPersPosColor->setColor(GameMap::instance()->getPersPosColor());
 	// *** Основные данные ***
 	Pers *pers = Pers::instance();
 	changePersStatus();
@@ -565,7 +567,6 @@ void SofMainWindow::getAllDataFromCore() {
 
 	if (core->getIntValue(VALUE_CHANGE_PERS_POS, &newIntValue)) {
 		// Новая позиция персонажа
-		//scrollMapNewPosition(newIntValue % 100000, newIntValue / 100000);
 		scrollMapToPersPosition();
 	}
 	// *** Статистические данные ***
@@ -1354,7 +1355,7 @@ void SofMainWindow::resetFightStatistic()
 
 void SofMainWindow::applySettings()
 {
-	// *** Отправляем новые настройки ядру плагина ***
+	// *** Применяем новые настройки ***
 	Settings *settings = Settings::instance();
 	// Имя персонажа
 	QString str1 = setPersName->text();
@@ -1466,7 +1467,10 @@ void SofMainWindow::applySettings()
 	console_textedit->setMaximumBlockCount(textBlocksCount);
 	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
 	// Режим сохранения карт
-	GameMap::instance()->setMapsParam(GameMap::AutoSaveMode, mapsParamSaveMode->currentIndex());
+	GameMap *maps = GameMap::instance();
+	maps->setMapsParam(GameMap::AutoSaveMode, mapsParamSaveMode->currentIndex());
+	// Цвет позиции персонажа
+	maps->setPersPosColor(btnPersPosColor->getColor());
 }
 
 void SofMainWindow::saveSettings()

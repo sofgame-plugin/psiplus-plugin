@@ -110,6 +110,8 @@ class GameMap: public QGraphicsScene
 		void setOtherPersPos(QVector<GameMap::maps_other_pers>*);
 		int  getMapsSettingParam(ParamId) const;
 		void setMapsParam(ParamId, int);
+		const QColor &getPersPosColor() const {return persPosColor;};
+		void setPersPosColor(const QColor &);
 		QDomElement exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 	private:
@@ -178,6 +180,7 @@ class GameMap: public QGraphicsScene
 		int autoSaveInterval;   // В минутах
 		QTimer *unloadTimer;
 		int autoUnloadInterval; // В минутах
+		QColor persPosColor;
 
 	private:
 		GameMap(QObject *parent = 0);
