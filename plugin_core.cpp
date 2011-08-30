@@ -264,17 +264,19 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	QStringList oTempStrList;
 	QString sMessage;
 	int startStr = 0;
+	bool fNewFight = false;
 	// Проверяем наличие координат // 210:290
 	int persX = QINT32_MIN;
 	int persY = QINT32_MIN;
-	//bool fPersPosChanged = false;
-	bool fNewFight = false;
 	Pers *pers = Pers::instance();
 	if (mapCoordinatesExp.indexIn(aMessage[0], 0) != -1) {
 		// Найдены координаты местоположения на карте
 		startStr = 1;
-		pers->setCoordinates(QPoint(mapCoordinatesExp.cap(1).toInt(), mapCoordinatesExp.cap(2).toInt()));
+		persX = mapCoordinatesExp.cap(1).toInt();
+		persY = mapCoordinatesExp.cap(2).toInt();
+		pers->setCoordinates(QPoint(persX, persY));
 	}
+	//--
 	int i = 0;
 	while (i < nCount) {
 		sMessage = aMessage.at(i).trimmed(); // Убираем пробельные символы в начале и в конце строки
@@ -881,8 +883,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				int enCnt = fight->gameMobEnemyCount();
 				if (enCnt > 0) {
 					if (fight->getStep() == 1) {
-						GameMap::instance()->setMapElementEnemies(settingPersX, settingPersY, enCnt, enCnt);
-						GameMap::instance()->setMapElementEnemiesList(settingPersX, settingPersY, fight->mobEnemiesList());
+						GameMap *maps = GameMap::instance();
+						maps->setMapElementEnemies(persX, persY, enCnt, enCnt);
+						maps->setMapElementEnemiesList(persX, persY, fight->mobEnemiesList());
 					}
 				}
 			}

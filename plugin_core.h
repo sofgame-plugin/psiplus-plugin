@@ -76,9 +76,6 @@ class PluginCore: public QObject
 		long long statExperienceDropCount;
 		int statKilledEnemies;
 
-		qint32 settingPersX;
-		qint32 settingPersY;
-
 		QRegExp mapCoordinatesExp;
 		QRegExp parPersRegExp;
 		QRegExp fightDropMoneyReg2;
