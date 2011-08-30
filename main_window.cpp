@@ -487,7 +487,7 @@ void SofMainWindow::getAllDataFromCore() {
 	restHealthEnergyCombo->setCurrentIndex(settings->getIntSetting(Settings::SettingWatchRestHealthEnergy));
 	// Таймер в бою
 	settingTimeOutDisplay = settings->getIntSetting(Settings::SettingFightTimerMode);
-	fightTimerCombo->setCurrentIndex(newIntValue);
+	fightTimerCombo->setCurrentIndex(settingTimeOutDisplay);
 	// Выбор боя
 	fightSelectAction->setCurrentIndex(settings->getIntSetting(Settings::SettingFightSelectAction));
 	// Автозакрытие боя
