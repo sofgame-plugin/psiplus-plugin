@@ -112,6 +112,7 @@ void GameMap::init(QString acc_jid)
 	mapCurrArrayPtr = NULL;
 	otherPers.clear();
 	persPosColor = QColor(Qt::yellow);
+	autoUnloadInterval = 0;
 	// Загружаем настройки модуля карт
 	loadMapsSettings(Settings::instance()->getMapsData());
 	// Загружаем список карт
@@ -311,6 +312,8 @@ bool GameMap::loadMap(int map_index)
 	// Другие флаги
 	mapsList[map_index].modified = false;
 	mapsList[map_index].last_access = QDateTime::currentDateTime();
+	// Запускаем таймер автовыгрузки, если необходимо
+	initUnloadTimer(false);
 	return true;
 }
 
@@ -445,14 +448,14 @@ bool GameMap::saveMap()
 	}
 	xmlDoc.appendChild(eRoot);
 	// Сохраняем в файл
-	if (savePluginXml(&xmlDoc, "sofgame_maps.xml")) {
-		return true;
+	if (!savePluginXml(&xmlDoc, "sofgame_maps.xml")) {
+		return false;
 	}
 	//--
 	modifiedMapsCount = 0;
 	initSaveTimer();
 	initUnloadTimer(false);
-	return false;
+	return true;
 }
 
 /**
@@ -1700,6 +1703,25 @@ void GameMap::setPersPosColor(const QColor &c)
 	}
 }
 
+void GameMap::setUnloadInterval(int minutes)
+{
+	if (autoUnloadInterval != minutes) {
+		autoUnloadInterval = minutes;
+		if (autoUnloadInterval < 0)
+			autoUnloadInterval = 0;
+		if (autoUnloadInterval != 0) {
+			initUnloadTimer(true);
+			return;
+		}
+		if (unloadTimer != NULL) {
+			if (unloadTimer->isActive())
+				unloadTimer->stop();
+			delete unloadTimer;
+			unloadTimer = NULL;
+		}
+	}
+}
+
 void GameMap::setPersPos(int pers_x, int pers_y)
 {
 	if (mapCurrIndex == -1) {
@@ -2235,8 +2257,13 @@ bool GameMap::switchMap(int mapIndex)
 	/**
 	* Переключает текущую карту
 	**/
-	if (mapCurrIndex != -1)
+	bool forUnload = false;
+	if (mapCurrIndex != -1) {
 		clearOtherPersPos();
+		if (!mapsList.at(mapCurrIndex).modified)
+			forUnload = true;
+		mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
+	}
 	if (mapIndex < 0 || mapIndex >= mapsList.size() || mapsList[mapIndex].status == None)
 		return false;
 	if (mapIndex == mapCurrIndex)
@@ -2256,6 +2283,11 @@ bool GameMap::switchMap(int mapIndex)
 	redrawMap();
 	// Подгоняем размер сцены
 	setSceneRect(getMapRect());
+	// Обновляем метку последнего доступа
+	mapsList[mapIndex].last_access = QDateTime::currentDateTime();
+	// Инициируем таймер автовыгрузки, если необходимо
+	if (forUnload)
+		initUnloadTimer(false);
 	return true;
 }
 
@@ -2503,6 +2535,12 @@ void GameMap::loadMapsSettings(const QDomElement &xml)
 		}
 	}
 	setMapsParam(AutoSaveMode, saveMode_);
+	eChild = xml.firstChildElement("maps-unload-interval");
+	int interval = 0;
+	if (!eChild.isNull()) {
+		interval = eChild.attribute("value").toInt();
+	}
+	setUnloadInterval(interval);
 	QDomElement ePersPos = xml.firstChildElement("pers-position");
 	if (!ePersPos.isNull()) {
 		QDomElement ePersPosColor = ePersPos.firstChildElement("color");
@@ -2523,6 +2561,9 @@ QDomElement GameMap::exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const
 		eMapSaveMode.setAttribute("value", Settings::persSaveModeStrings.at(saveMode));
 		eMaps.appendChild(eMapSaveMode);
 	}
+	QDomElement eUnloadInterval = xmlDoc.createElement("maps-unload-interval");
+	eUnloadInterval.setAttribute("value", autoUnloadInterval);
+	eMaps.appendChild(eUnloadInterval);
 	QDomElement ePersPos = xmlDoc.createElement("pers-position");
 	eMaps.appendChild(ePersPos);
 	QDomElement ePersPosColor = xmlDoc.createElement("color");
@@ -2537,45 +2578,47 @@ QDomElement GameMap::exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const
  */
 void GameMap::initUnloadTimer(bool update_interval)
 {
-	if (autoUnloadInterval) {
+	if (autoUnloadInterval != 0) {
 		// Анализ заголовка карт, для выяснения необходимости запуска таймера и выгрузки карт
 		int saved_count = 0;
 		QDateTime oldest_access;
 		QDateTime curr_time = QDateTime::currentDateTime().addSecs(1); // Поправка на "ветер"
 		int maps_cnt = mapsList.size();
 		for (int i = 0; i < maps_cnt; i++) {
-			if (mapsList[i].status == InMemory && !mapsList[i].modified && i != mapCurrIndex) {
-				QDateTime map_access = mapsList[i].last_access;
+			// Карта должна быть загруженной, сохраненной и не текущей
+			if (mapsList.at(i).status == InMemory && !mapsList.at(i).modified && i != mapCurrIndex) {
+				QDateTime map_access = mapsList.at(i).last_access;
 				if (map_access.secsTo(curr_time) >= autoUnloadInterval * 60) {
 					unloadMap(i);
 					continue;
 				}
-				if (oldest_access.isNull() || oldest_access > mapsList[i].last_access)
-					oldest_access = mapsList[i].last_access;
+				if (oldest_access.isNull() || oldest_access > map_access)
+					oldest_access = map_access;
 				saved_count++;
 			}
 		}
-		if (saved_count > 0 && !oldest_access.isNull()) {
-			// Таймер нужен
-			if (unloadTimer != NULL) {
-				if (!update_interval)
-					return; // Используем ленивый режим
-				if (unloadTimer->isActive())
-					unloadTimer->stop();
-			} else {
-				unloadTimer = new QTimer(this);
-				unloadTimer->setSingleShot(true);
-				connect(unloadTimer, SIGNAL(timeout()), this, SLOT(doAutoUnload()));
-			}
-			unloadTimer->start(autoUnloadInterval * 60000);
+		if (saved_count == 0 || oldest_access.isNull()) {
+			unloadTimer->deleteLater(); // Удалиться позже
+			unloadTimer = NULL; // А указатель очистим сейчас
 			return;
 		}
+		// Таймер нужен
+		if (unloadTimer != NULL) {
+			if (unloadTimer->isActive()) {
+				if (!update_interval)
+					return; // Используем ленивый режим
+				unloadTimer->stop();
+			}
+		} else {
+			unloadTimer = new QTimer(this);
+			unloadTimer->setSingleShot(true);
+			connect(unloadTimer, SIGNAL(timeout()), this, SLOT(doAutoUnload()));
+		}
+		unloadTimer->start((autoUnloadInterval * 60 - (oldest_access.secsTo(curr_time) - 1)) * 1000);
 	}
-	unloadTimer->deleteLater(); // Удалиться позже
-	unloadTimer = NULL; // А указатель очистим сейчас
 }
 
 void GameMap::doAutoUnload()
 {
-	//
+	initUnloadTimer(true);
 }

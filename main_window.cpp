@@ -475,6 +475,7 @@ void SofMainWindow::getAllDataFromCore() {
 	// *** Настройки плагина ***
 	PluginCore *core = PluginCore::instance();
 	Settings *settings = Settings::instance();
+	GameMap *maps = GameMap::instance();
 	// Имя персонажа
 	newStrValue = settings->getStringSetting(Settings::SettingPersName);
 	if (newStrValue.isEmpty())
@@ -525,7 +526,9 @@ void SofMainWindow::getAllDataFromCore() {
 	// Сохранение статистики
 	saveStatistic_checkbox->setChecked(settings->getBoolSetting(Settings::SettingSaveStatistic));
 	// Цвет позиции персонажа на карте
-	btnPersPosColor->setColor(GameMap::instance()->getPersPosColor());
+	btnPersPosColor->setColor(maps->getPersPosColor());
+	// Автовыгрузка карт
+	mapsUnloadInterval->setValue(maps->getUnloadInterval());
 	// *** Основные данные ***
 	Pers *pers = Pers::instance();
 	changePersStatus();
@@ -1471,6 +1474,8 @@ void SofMainWindow::applySettings()
 	maps->setMapsParam(GameMap::AutoSaveMode, mapsParamSaveMode->currentIndex());
 	// Цвет позиции персонажа
 	maps->setPersPosColor(btnPersPosColor->getColor());
+	// Период автовыгрузки карт
+	maps->setUnloadInterval(mapsUnloadInterval->value());
 }
 
 void SofMainWindow::saveSettings()

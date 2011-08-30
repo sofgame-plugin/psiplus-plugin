@@ -112,6 +112,8 @@ class GameMap: public QGraphicsScene
 		void setMapsParam(ParamId, int);
 		const QColor &getPersPosColor() const {return persPosColor;};
 		void setPersPosColor(const QColor &);
+		int  getUnloadInterval() const {return autoUnloadInterval;};
+		void setUnloadInterval(int minutes);
 		QDomElement exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 	private:
@@ -203,7 +205,7 @@ class GameMap: public QGraphicsScene
 		void clearOtherPersPos();
 		void drawOtherPersPos(int);
 		void initSaveTimer();
-		void initUnloadTimer(bool);
+		void initUnloadTimer(bool update_interval);
 		void loadMapsSettings(const QDomElement &xml);
 
 	private slots:

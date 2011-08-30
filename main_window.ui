@@ -2565,10 +2565,7 @@
                       </spacer>
                      </item>
                      <item>
-                      <widget class="QSpinBox" name="mapsParamAutosavePeriod">
-                       <property name="enabled">
-                        <bool>false</bool>
-                       </property>
+                      <widget class="QSpinBox" name="mapsUnloadInterval">
                        <property name="toolTip">
                         <string>Если значение равно нулю, то карты не будут автоматически выгружаться из памяти</string>
                        </property>
@@ -3601,7 +3598,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>settingApplyBtn</tabstop>
   <tabstop>checkbox_ResetQueuePopup</tabstop>
   <tabstop>mapsParamSaveMode</tabstop>
-  <tabstop>mapsParamAutosavePeriod</tabstop>
+  <tabstop>mapsUnloadInterval</tabstop>
   <tabstop>fingsTable</tabstop>
  </tabstops>
  <resources>
