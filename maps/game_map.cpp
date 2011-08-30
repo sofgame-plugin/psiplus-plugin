@@ -1509,9 +1509,11 @@ void GameMap::drawMapElement(int el_index, bool modif)
 		QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 		int cnt = gItems.size();
 		for (int i = 0; i < cnt; i++) {
-			int dataVal = gItems[i]->data(0).toInt();
+			QGraphicsItem *gitem = gItems.at(i);
+			int dataVal = gitem->data(0).toInt();
 			if (dataVal == 1 || dataVal == 9) {
-				removeItem(gItems[i]);
+				removeItem(gitem);
+				delete gitem;
 			}
 		}
 	}
@@ -1623,8 +1625,10 @@ void GameMap::drawMapName()
 	QList<QGraphicsItem*> gItems = items();
 	int cnt = gItems.size();
 	for (int i = 0; i < cnt; i++) {
-		if (gItems[i]->data(0).toString() == "map_name") {
-			removeItem(gItems[i]);
+		QGraphicsItem *gitem = gItems.at(i);
+		if (gitem->data(0).toString() == "map_name") {
+			removeItem(gitem);
+			delete gitem;
 			break;
 		}
 	}
@@ -1999,8 +2003,10 @@ void GameMap::drawMapElementPathNorth(int element_index, bool modif)
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
 	for (int i = 0; i < cnt; i++) {
-		if (gItems[i]->data(0).toInt() == 8) {
-			removeItem(gItems[i]);
+		QGraphicsItem *gitem = gItems.at(i);
+		if (gitem->data(0).toInt() == 8) {
+			removeItem(gitem);
+			delete gitem;
 			break;
 		}
 	}
@@ -2028,8 +2034,10 @@ void GameMap::drawMapElementPathSouth(int element_index, bool modif)
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
 	for (int i = 0; i < cnt; i++) {
-		if (gItems[i]->data(0).toInt() == 2) {
-			removeItem(gItems[i]);
+		QGraphicsItem *gitem = gItems.at(i);
+		if (gitem->data(0).toInt() == 2) {
+			removeItem(gitem);
+			delete gitem;
 			break;
 		}
 	}
@@ -2057,8 +2065,10 @@ void GameMap::drawMapElementPathWest(int element_index, bool modif)
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
 	for (int i = 0; i < cnt; i++) {
-		if (gItems[i]->data(0).toInt() == 4) {
-			removeItem(gItems[i]);
+		QGraphicsItem *gitem = gItems.at(i);
+		if (gitem->data(0).toInt() == 4) {
+			removeItem(gitem);
+			delete gitem;
 			break;
 		}
 	}
@@ -2086,8 +2096,10 @@ void GameMap::drawMapElementPathEast(int element_index, bool modif)
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
 	for (int i = 0; i < cnt; i++) {
-		if (gItems[i]->data(0).toInt() == 6) {
-			removeItem(gItems[i]);
+		QGraphicsItem *gitem = gItems.at(i);
+		if (gitem->data(0).toInt() == 6) {
+			removeItem(gitem);
+			delete gitem;
 			break;
 		}
 	}
@@ -2423,6 +2435,7 @@ void GameMap::clearOtherPersPos()
 		QGraphicsItem* item = gItems.takeFirst();
 		if (item->data(0).toInt() == 7) {
 			removeItem(item);
+			delete item;
 		}
 	}
 	// Очистка списка положения игроков
