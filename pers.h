@@ -58,7 +58,8 @@ public:
 		ParamPersStatus,
 		ParamExperienceCurr, ParamExperienceMax,
 		ParamHealthCurr, ParamHealthMax,
-		ParamEnergyCurr, ParamEnergyMax
+		ParamEnergyCurr, ParamEnergyMax,
+		ParamCoordinates
 	};
 	struct price_item {
 		int      type;
@@ -98,6 +99,8 @@ public:
 	void removeThingsInterface(int);
 	QSortFilterProxyModel* getThingsModel(int) const;
 	QString getPersStatusString();
+	const QPoint &getCoordinates() const {return coordinates;};
+	void setCoordinates(const QPoint &p);
 
 private:
 	QString pers_name;
@@ -131,6 +134,7 @@ private:
 	QVector<price_item> fingPrice;
 	static Pers *instance_;
 	static QHash<PersStatus, QString> statusStrings;
+	QPoint coordinates;
 
 private:
 	Pers(QObject *parent = 0);

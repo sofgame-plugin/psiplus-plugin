@@ -567,11 +567,8 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	energyBar->setRange(0, newIntValue);
-
-	if (core->getIntValue(VALUE_CHANGE_PERS_POS, &newIntValue)) {
-		// Новая позиция персонажа
-		scrollMapToPersPosition();
-	}
+	// Прокрутка карты к позиции персонажа
+	scrollMapToPersPosition();
 	// *** Статистические данные ***
 	if (core->getIntValue(VALUE_DROP_MONEYS, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
@@ -675,10 +672,6 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		} else if (eventId == VALUE_KILLED_ENEMIES) {
 			// Повержено противников
 			updateValue(VALUE_KILLED_ENEMIES, str1);
-		} else if (eventId == VALUE_CHANGE_PERS_POS) {
-			// Перемещение персонажа
-			//scrollMapNewPosition(value % 100000, value / 100000);
-			scrollMapToPersPosition();
 		} else if (eventId == VALUE_TIMEOUT) {
 			// Пришло событие таймаута
 			if (settingTimeOutDisplay != 0) {
@@ -1867,6 +1860,8 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 		} else if (paramId == Pers::ParamPersLevel) {
 			// Смена уровня персонажа
 			levelLabel->setText(QString::number(paramValue));
+		} else if (paramId == Pers::ParamCoordinates) {
+			scrollMapToPersPosition();
 		}
 	} else if (paramType == TYPE_LONGLONG_FULL) {
 		if (paramId == Pers::ParamExperienceCurr) {

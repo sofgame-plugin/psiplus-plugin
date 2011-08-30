@@ -1175,3 +1175,11 @@ void Pers::doWatchHealthRestTime()
 		}
 	}
 }
+
+void Pers::setCoordinates(const QPoint &p)
+{
+	if (p != coordinates) {
+		coordinates = p;
+		emit persParamChanged(ParamCoordinates, TYPE_INTEGER_FULL, 0);
+	}
+}

@@ -267,23 +267,13 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	// Проверяем наличие координат // 210:290
 	int persX = QINT32_MIN;
 	int persY = QINT32_MIN;
-	bool fPersPosChanged = false;
+	//bool fPersPosChanged = false;
 	bool fNewFight = false;
+	Pers *pers = Pers::instance();
 	if (mapCoordinatesExp.indexIn(aMessage[0], 0) != -1) {
 		// Найдены координаты местоположения на карте
 		startStr = 1;
-		persX = mapCoordinatesExp.cap(1).toInt();
-		persY = mapCoordinatesExp.cap(2).toInt();
-		if (persX != settingPersX || persY != settingPersY) {
-			// Изменились координаты персонажа
-			fPersPosChanged = true;
-			settingPersX = persX;
-			settingPersY = persY;
-			// Добавляем элемент в карту
-			GameMap::instance()->addMapElement(persX, persY);
-			// Устанавливаем новую позицию персонажа
-			GameMap::instance()->setPersPos(persX, persY);
-		}
+		pers->setCoordinates(QPoint(mapCoordinatesExp.cap(1).toInt(), mapCoordinatesExp.cap(2).toInt()));
 	}
 	int i = 0;
 	while (i < nCount) {
@@ -903,7 +893,6 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		}
 	}
 	// Начало установки параметров персонажа
-	Pers *pers = Pers::instance();
 	pers->beginSetPersParams();
 	// Отправляем здоровье
 	if (fHealth) {
@@ -974,10 +963,6 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	// Отправляем значение таймаута
 	if (nTimeout >= 0) {
 		valueChanged(VALUE_TIMEOUT, TYPE_INTEGER_FULL, nTimeout);
-	}
-	// Отсылаем новую позицию персонажа
-	if (fPersPosChanged) {
-		valueChanged(VALUE_CHANGE_PERS_POS, TYPE_INTEGER_FULL, persY * 100000 + persX);
 	}
 	//if (myMessage) {
 		// Выводим сообщение игры на экран

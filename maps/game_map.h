@@ -88,9 +88,7 @@ class GameMap: public QGraphicsScene
 		int  getIndexByCoordinate(qreal, qreal);
 		void moveMapElement(int, int, int);
 		void removeMapElement(int, int);
-		void addMapElement(qint32 x, qint32 y);
 		QGraphicsScene* getGraphicsScene();
-		void setPersPos(qint32 pers_x, qint32 pers_y);
 		QRectF getSceneCoordinates(qint32 pers_x, qint32 pers_y);
 		QGraphicsItem* getPersItem();
 		void setMapElementPaths(qint32 pers_x, qint32 pers_y, int paths);
@@ -188,6 +186,8 @@ class GameMap: public QGraphicsScene
 		GameMap(QObject *parent = 0);
 		~GameMap();
 		bool loadMap(int map_index);
+		void addMapElement(qint32 x, qint32 y);
+		void setPersPos(qint32 pers_x, qint32 pers_y);
 		QDomNode makeMapXmlElement(QDomDocument xmlDoc, struct maps_list* map_head);
 		bool makeMapFromDomNode(struct maps_list*, QDomNode);
 		void selectMap(qint32 x, qint32 y);
@@ -211,6 +211,7 @@ class GameMap: public QGraphicsScene
 	private slots:
 		void doAutoSave();
 		void doAutoUnload();
+		void persParamChanged(int, int, int);
 
 };
 

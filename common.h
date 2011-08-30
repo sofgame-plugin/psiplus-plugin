@@ -54,7 +54,6 @@
 #define VALUE_KILLED_ENEMIES            10
 
 #define VALUE_TIMEOUT                   1019
-#define VALUE_CHANGE_PERS_POS           1020
 
 // Типы команд отправляемых ядру плагина
 #define COMMAND_SAVE_SETTINGS           1

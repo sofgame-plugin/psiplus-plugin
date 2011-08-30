@@ -32,6 +32,7 @@
 #include "game_map.h"
 #include "utils.h"
 #include "settings.h"
+#include "pers.h"
 
 GameMap::GameMap(QObject *parent) : QGraphicsScene(parent),
 	currAccJid(QString()),
@@ -55,6 +56,7 @@ GameMap::GameMap(QObject *parent) : QGraphicsScene(parent),
 	unloadTimer(NULL),
 	autoUnloadInterval(0)
 {
+	connect(Pers::instance(), SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 }
 
 GameMap::~GameMap()
@@ -2634,4 +2636,17 @@ void GameMap::initUnloadTimer(bool update_interval)
 void GameMap::doAutoUnload()
 {
 	initUnloadTimer(true);
+}
+
+void GameMap::persParamChanged(int paramId, int, int)
+{
+	if (paramId == Pers::ParamCoordinates) {
+		// Добавляем элемент в карту
+		QPoint p = Pers::instance()->getCoordinates();
+		int x = p.x();
+		int y = p.y();
+		addMapElement(x, y);
+		// Устанавливаем новую позицию персонажа
+		setPersPos(x, y);
+	}
 }
