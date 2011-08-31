@@ -123,11 +123,18 @@ private:
 	int  watchHealthStartValue2;
 	float watchHealthSpeed;
 	int  watchHealthSpeedDelta;
+	int  watchEnergyStartValue;
+	int  watchEnergyStartValue2;
+	float watchEnergySpeed;
+	int  watchEnergySpeedDelta;
 	QTimer *watchRestTimer;
 	QTimer *watchHealthRestTimer;
+	QTimer *watchEnergyRestTimer;
 
 	QTime watchHealthStartTime;
 	QTime watchHealthStartTime2;
+	QTime watchEnergyStartTime;
+	QTime watchEnergyStartTime2;
 	ThingsModel* things;
 	QList<FingFilter*> fingFiltersEx;
 	QHash<int, ThingsProxyModel*> thingModels;
@@ -144,6 +151,7 @@ private:
 private slots:
 	void doWatchRestTime();
 	void doWatchHealthRestTime();
+	void doWatchEnergyRestTime();
 
 signals:
 	void fingsChanged();

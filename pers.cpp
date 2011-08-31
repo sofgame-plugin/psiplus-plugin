@@ -31,6 +31,7 @@
 #include "plugin_core.h"
 #include "fight.h"
 #include "utils.h"
+#include "sender.h"
 
 Pers::Pers(QObject *parent):
 	QObject(parent),
@@ -51,7 +52,9 @@ Pers::Pers(QObject *parent):
 	settingWatchRestHealthEnergy(-1),
 	watchHealthStartValue(QINT32_MIN), watchHealthStartValue2(QINT32_MIN),
 	watchHealthSpeed(0.0f), watchHealthSpeedDelta(0),
-	watchRestTimer(NULL), watchHealthRestTimer(NULL)
+	watchEnergyStartValue(QINT32_MIN), watchEnergyStartValue2(QINT32_MIN),
+	watchEnergySpeed(0.0f), watchEnergySpeedDelta(0),
+	watchRestTimer(NULL), watchHealthRestTimer(NULL), watchEnergyRestTimer(NULL)
 {
 	/**
 	* Конструктор
@@ -66,17 +69,20 @@ Pers::~Pers()
 	/**
 	* Деструктор
 	*/
-	if (watchRestTimer) {
-		if (watchRestTimer->isActive()) watchRestTimer->stop();
-		disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
+	if (watchRestTimer != NULL) {
+		if (watchRestTimer->isActive())
+			watchRestTimer->stop();
 		delete watchRestTimer;
-		watchRestTimer = 0;
 	}
-	if (watchHealthRestTimer) {
-		if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
-		disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
+	if (watchHealthRestTimer != NULL) {
+		if (watchHealthRestTimer->isActive())
+			watchHealthRestTimer->stop();
 		delete watchHealthRestTimer;
-		watchHealthRestTimer = 0;
+	}
+	if (watchEnergyRestTimer != NULL) {
+		if (watchEnergyRestTimer->isActive())
+			watchEnergyRestTimer->stop();
+		delete watchEnergyRestTimer;
 	}
 	// Удаляем оставшиеся прокси модели
 	QList<int> keys_list = thingModels.keys();
@@ -135,21 +141,28 @@ void Pers::init()
 		delete watchRestTimer;
 		watchRestTimer = 0;
 	}
-	if (watchHealthRestTimer) {
+	if (watchHealthRestTimer != NULL) {
 		watchHealthRestTimer->stop();
 		delete watchHealthRestTimer;
-		watchHealthRestTimer = 0;
+		watchHealthRestTimer = NULL;
+	}
+	if (watchEnergyRestTimer != NULL) {
+		watchEnergyRestTimer->stop();
+		delete watchEnergyRestTimer;
+		watchEnergyRestTimer = NULL;
 	}
 	settingWatchRestHealthEnergy = -1;
-	watchHealthRestTimer = 0;
 	watchHealthSpeedDelta = 0;
 	watchHealthSpeed = 0.0;
 	watchHealthStartValue = QINT32_MIN;
+	watchEnergySpeedDelta = 0;
+	watchEnergySpeed = 0.0;
+	watchEnergyStartValue = QINT32_MIN;
 	persLevelValue = -1;
 	pers_name = "";
 	Settings *settings = Settings::instance();
 	loadBackpackSettingsFromDomNode(settings->getBackpackData());
-	setSetting(Settings::SettingWatchRestHealthEnergy, Settings::instance()->getIntSetting(Settings::SettingWatchRestHealthEnergy));
+	setSetting(Settings::SettingWatchRestHealthEnergy, settings->getIntSetting(Settings::SettingWatchRestHealthEnergy));
 }
 
 void Pers::setName(const QString &new_name)
@@ -764,23 +777,43 @@ void Pers::endSetPersParams()
 	}
 	if (setPersHealthCurrFlag) {
 		if (settingWatchRestHealthEnergy == 1 && watchHealthSpeedDelta != 0 && watchHealthStartValue != QINT32_MIN) {
-			if (persHealthCurr != persHealthCurr_) {
-				// Возможно необходим сброс скорости восстановления
-				int i = persHealthCurr - persHealthCurr_;
-				if (i < -1 || i > 1) {
-					float j = (float)persHealthCurr_ / (float)persHealthCurr;
-					if (j < 0.95 || j > 1.05) {
-						watchHealthSpeedDelta = 0;
-						watchHealthSpeed = 0.0;
-						watchHealthStartValue = QINT32_MIN;
-					}
+			// Возможно необходим сброс скорости восстановления
+			int i = persHealthCurr - persHealthCurr_;
+			if (i < -1 || i > 1) {
+				float j = (float)persHealthCurr_ / (float)persHealthCurr;
+				if (j < 0.95 || j > 1.05) {
+					watchHealthSpeedDelta = 0;
+					watchHealthSpeed = 0.0;
+					watchHealthStartValue = QINT32_MIN;
 				}
 			}
 		}
 		persHealthCurr = persHealthCurr_;
 	}
-	if (setPersEnergyMaxFlag) persEnergyMax = persEnergyMax_;
-	if (setPersEnergyCurrFlag) persEnergyCurr = persEnergyCurr_;
+	if (setPersEnergyMaxFlag) {
+		persEnergyMax = persEnergyMax_;
+		if (settingWatchRestHealthEnergy == 1) {
+			// Сбрасываем замеры скорости восстановления энергии и начальный отсчет
+			watchEnergySpeedDelta = 0;
+			watchEnergySpeed = 0.0;
+			watchEnergyStartValue = QINT32_MIN;
+		}
+	}
+	if (setPersEnergyCurrFlag) {
+		if (settingWatchRestHealthEnergy == 1 && watchEnergySpeedDelta != 0 && watchEnergyStartValue != QINT32_MIN) {
+			// Возможно необходим сброс скорости восстановления энергии
+			int i = persEnergyCurr - persEnergyCurr_;
+			if (i < -1 || i > 1) {
+				float j = (float)persEnergyCurr_ / (float)persEnergyCurr;
+				if (j < 0.95 || j > 1.05) {
+					watchEnergySpeedDelta = 0;
+					watchEnergySpeed = 0.0;
+					watchEnergyStartValue = QINT32_MIN;
+				}
+			}
+		}
+		persEnergyCurr = persEnergyCurr_;
+	}
 	if (setPersLevelValueFlag) persLevelValue = persLevelValue_;
 	if (setPersExperienceMaxFlag) persExperienceMax = persExperienceMax_;
 	if (setPersExperienceCurrFlag) persExperienceCurr = persExperienceCurr_;
@@ -809,7 +842,6 @@ void Pers::endSetPersParams()
 		} else {
 			emit persParamChanged(ParamEnergyMax, TYPE_NA, 0);
 		}
-		////////////////////////if (settingWatchRestHealthEnergy == 1) watchStatus = 0; // Сбрасываем замеры
 	}
 	if (setPersEnergyCurrFlag) {
 		if (persEnergyCurr != QINT32_MIN) {
@@ -866,13 +898,18 @@ void Pers::endSetPersParams()
 			}
 		}
 	} else if (settingWatchRestHealthEnergy == 1) {
-		if (setPersHealthCurrFlag || setPersHealthMaxFlag) {
+		if (setPersHealthCurrFlag || setPersEnergyCurrFlag || setPersHealthMaxFlag || setPersEnergyMaxFlag) {
 			if (fight->isActive() && fight->isPersInFight()) { // Персонаж в бою.
-				// Останавливаем таймер
-				if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
+				// Останавливаем таймеры
+				if (watchHealthRestTimer->isActive())
+					watchHealthRestTimer->stop();
+				if (watchEnergyRestTimer->isActive())
+					watchEnergyRestTimer->stop();
 				// Сбрасывыем начальные параметры расчета
 				watchHealthStartValue = QINT32_MIN;
+				watchEnergyStartValue = QINT32_MIN;
 			} else { // Персонаж не в бою
+				// Health
 				if (persHealthCurr != QINT32_MIN && persHealthMax != QINT32_MIN) {
 					if (setPersHealthCurrFlag) {
 						watchHealthStartValue2 = persHealthCurr; // Новое стартовое значение для отображения (не для расчета!!!)
@@ -882,11 +919,11 @@ void Pers::endSetPersParams()
 						// У нас нет стартового значения здоровья и нет и замеров скорости,
 						// надо запускать принудительный замер
 						if (persStatus == StatusStand) {
-							if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
+							if (watchHealthRestTimer->isActive())
+								watchHealthRestTimer->stop();
 							if (persHealthCurr < persHealthMax) {
 								watchHealthStartValue = persHealthCurr;
 								watchHealthStartTime.start();
-								//watchHealthSpeedDelta = 0; // И так 0 по условию
 								watchHealthRestTimer->setSingleShot(true);
 								watchHealthRestTimer->start(15000); // время для анализа скорости восстановления
 							}
@@ -929,12 +966,88 @@ void Pers::endSetPersParams()
 							}
 						}
 					}
-				} else { // Данные по персу неизвестны
+				} else {
+					// Данные по здоровью перса неизвестны
 					// Останавливаем таймер
-					if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
+					if (watchHealthRestTimer->isActive())
+						watchHealthRestTimer->stop();
 					// Сбрасывыем начальные параметры расчета
 					watchHealthStartValue = QINT32_MIN;
 					watchHealthSpeed = 0.0;
+				}
+				// Energy
+				if (persEnergyCurr != QINT32_MIN && persEnergyMax != QINT32_MIN) {
+					if (setPersEnergyCurrFlag) {
+						watchEnergyStartValue2 = persEnergyCurr; // Новое стартовое значение для отображения (не для расчета!!!)
+						watchEnergyStartTime2.start();
+					}
+					if (watchEnergySpeedDelta == 0 && watchEnergyStartValue == QINT32_MIN) {
+						// У нас нет стартового значения энергии и нет и замеров скорости регена,
+						// надо запускать принудительный замер
+						if (persStatus == StatusStand) {
+							if (watchEnergyRestTimer->isActive())
+								watchEnergyRestTimer->stop();
+							if (persEnergyCurr < persEnergyMax) {
+								watchEnergyStartValue = persEnergyCurr;
+								watchEnergyStartTime.start();
+								watchEnergyRestTimer->setSingleShot(true);
+								watchEnergyRestTimer->start(15000); // время для анализа скорости восстановления
+							}
+						}
+					} else {
+						if (watchEnergyStartValue != QINT32_MIN) {
+							// Есть стартовое значение для замера энергии
+							if (persEnergyCurr < persEnergyMax) {
+								int watchTimeDelta = watchEnergyStartTime.elapsed();
+								if (watchTimeDelta >= 10000) {
+									if (watchEnergySpeedDelta < watchTimeDelta) {
+										// Старые замеры менее точные
+										if (watchEnergyRestTimer->isActive())
+											watchEnergyRestTimer->stop();
+										watchEnergySpeed = 0.0;
+										if (watchEnergyStartValue < persEnergyCurr) {
+											// Скорость обновления энергии
+											watchEnergySpeed = ((float)persEnergyCurr - (float)watchEnergyStartValue) / watchTimeDelta;
+											watchEnergySpeedDelta = watchTimeDelta;
+										}
+									}
+								}
+							} else {
+								// Замер не закончился, а перс уже отрегенился
+								if (watchEnergyRestTimer->isActive())
+									watchEnergyRestTimer->stop();
+							}
+						} else {
+							// Скорость есть, но нет стартового замера энергии,
+							// возможно из за сброса его во время боя
+							watchEnergyStartValue = persEnergyCurr;
+							watchEnergyStartTime.start();
+						}
+						if (watchEnergySpeedDelta > 0) {
+							// У нас есть замеры энергии
+							if (watchEnergySpeed != 0.0 && persEnergyCurr < persEnergyMax) {
+								int watchTimeDelta = watchEnergyStartTime.elapsed();
+								if (watchTimeDelta <= 0) {
+									// Новые стартовые значения
+									watchEnergyStartValue = persEnergyCurr;
+									watchEnergyStartTime.start();
+								}
+								// Запускаем таймер
+								if (!watchEnergyRestTimer->isActive()) {
+									watchEnergyRestTimer->setSingleShot(false);
+									watchEnergyRestTimer->start(500); // Обновляем значения два раза в секунду TODO Сделать более оптимально
+								}
+							}
+						}
+					}
+				} else {
+					// Данные по энергии перса неизвестны
+					// Останавливаем таймер
+					if (watchEnergyRestTimer->isActive())
+						watchEnergyRestTimer->stop();
+					// Сбрасывыем начальные параметры расчета
+					watchEnergyStartValue = QINT32_MIN;
+					watchEnergySpeed = 0.0;
 				}
 			}
 		}
@@ -1002,48 +1115,68 @@ void Pers::setSetting(Settings::SettingKey setId, int setValue)
 {
 	switch (setId) {
 	case Settings::SettingWatchRestHealthEnergy:
-		if (setValue == settingWatchRestHealthEnergy) return;
+		if (setValue == settingWatchRestHealthEnergy)
+			return;
 		if (setValue == 0) {
 			settingWatchRestHealthEnergy = 0;
-			if (watchRestTimer) {
-				if (watchRestTimer->isActive()) watchRestTimer->stop();
-				disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
+			if (watchRestTimer != NULL) {
+				if (watchRestTimer->isActive())
+					watchRestTimer->stop();
 				delete watchRestTimer;
-				watchRestTimer = 0;
+				watchRestTimer = NULL;
 			}
-			if (watchHealthRestTimer) {
-				if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
-				disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
+			if (watchHealthRestTimer != NULL) {
+				if (watchHealthRestTimer->isActive())
+					watchHealthRestTimer->stop();
 				delete watchHealthRestTimer;
-				watchHealthRestTimer = 0;
+				watchHealthRestTimer = NULL;
+			}
+			if (watchEnergyRestTimer != NULL) {
+				if (watchEnergyRestTimer->isActive())
+					watchEnergyRestTimer->stop();
+				delete watchEnergyRestTimer;
+				watchEnergyRestTimer = NULL;
 			}
 		} else if (setValue == 1) {
-			if (watchRestTimer) {
-				if (watchRestTimer->isActive()) watchRestTimer->stop();
-				disconnect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
+			if (watchRestTimer != NULL) {
+				if (watchRestTimer->isActive())
+					watchRestTimer->stop();
 				delete watchRestTimer;
-				watchRestTimer = 0;
+				watchRestTimer = NULL;
 			}
 			settingWatchRestHealthEnergy = 1;
 			watchHealthStartValue = QINT32_MIN;
 			watchHealthSpeed = 0.0;
 			watchHealthSpeedDelta = 0;
-			if (!watchHealthRestTimer) {
+			if (watchHealthRestTimer == NULL) {
 				watchHealthRestTimer = new QTimer();
 				connect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
 			}
-		} else if (setValue >= 2 && setValue <= 4) {
-			if (watchHealthRestTimer) {
-				if (watchHealthRestTimer->isActive()) watchHealthRestTimer->stop();
-				disconnect(watchHealthRestTimer, SIGNAL(timeout()), this, SLOT(doWatchHealthRestTime()));
-				delete watchHealthRestTimer;
-				watchHealthRestTimer = 0;
+			watchEnergyStartValue = QINT32_MIN;
+			watchEnergySpeed = 0.0;
+			watchEnergySpeedDelta = 0;
+			if (watchEnergyRestTimer == NULL) {
+				watchEnergyRestTimer = new QTimer();
+				connect(watchEnergyRestTimer, SIGNAL(timeout()), this, SLOT(doWatchEnergyRestTime()));
 			}
-			settingWatchRestHealthEnergy = setValue;
-			if (!watchRestTimer) {
+		} else if (setValue >= 2 && setValue <= 4) {
+			if (watchHealthRestTimer != NULL) {
+				if (watchHealthRestTimer->isActive())
+					watchHealthRestTimer->stop();
+				delete watchHealthRestTimer;
+				watchHealthRestTimer = NULL;
+			}
+			if (watchEnergyRestTimer != NULL) {
+				if (watchEnergyRestTimer->isActive())
+					watchEnergyRestTimer->stop();
+				delete watchEnergyRestTimer;
+				watchEnergyRestTimer = NULL;
+			}
+			if (watchRestTimer == NULL) {
 				watchRestTimer = new QTimer();
 				connect(watchRestTimer, SIGNAL(timeout()), this, SLOT(doWatchRestTime()));
 			}
+			settingWatchRestHealthEnergy = setValue;
 		}
 		break;
 	default:
@@ -1157,9 +1290,8 @@ void Pers::doWatchRestTime()
 void Pers::doWatchHealthRestTime()
 {
 	if (settingWatchRestHealthEnergy == 1 && watchHealthSpeedDelta == 0) {
-		if (persStatus == StatusStand) {
-			QString str1 = "0";
-			PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
+		if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
+			PluginCore::instance()->sendString("0");
 		}
 	} else if (settingWatchRestHealthEnergy == 1) {
 		if (watchHealthSpeedDelta > 0) { // Имеются результаты замеров
@@ -1176,10 +1308,38 @@ void Pers::doWatchHealthRestTime()
 	}
 }
 
+void Pers::doWatchEnergyRestTime()
+{
+	if (settingWatchRestHealthEnergy != 1)
+		return;
+	if (watchEnergySpeedDelta == 0) {
+		if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
+			PluginCore::instance()->sendString("0");
+		}
+	} else {
+		int timeDelta = watchEnergyStartTime2.elapsed();
+		if (persEnergyCurr == QINT32_MIN || persEnergyMax == QINT32_MIN || persEnergyCurr >= persEnergyMax) {
+			watchEnergyRestTimer->stop();
+		} else {
+			persEnergyCurr = (float)watchEnergyStartValue2 + (float)timeDelta * watchEnergySpeed;
+			if (persEnergyCurr > persEnergyMax)
+				persEnergyCurr = persEnergyMax;
+			if (persEnergyCurr == persEnergyMax)
+				watchEnergyRestTimer->stop();
+			emit persParamChanged(ParamEnergyCurr, TYPE_INTEGER_FULL, persEnergyCurr);
+		}
+	}
+}
+
 void Pers::setCoordinates(const QPoint &p)
 {
 	if (p != coordinates) {
 		coordinates = p;
 		emit persParamChanged(ParamCoordinates, TYPE_INTEGER_FULL, 0);
+		// Если производится расчет восстановления энергии, делаем поправку на ход (затраты энергии)
+		if (settingWatchRestHealthEnergy == 1 && watchEnergyStartValue != QINT32_MIN) {
+			--watchEnergyStartValue;
+			--watchEnergyStartValue2;
+		}
 	}
 }
