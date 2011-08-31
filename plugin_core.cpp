@@ -106,7 +106,6 @@ PluginCore::PluginCore()
 	// --
 	fightOneTimeoutReg.setPattern((QString::fromUtf8("^до завершения хода№([0-9]+): ([0-9]+)мин\\.([0-9]+)сек\\.$"))); // Номер хода и таймаут
 	fightElement0Reg.setPattern(QString::fromUtf8("([^/]+)(/(.+)/)?\\[(у:([0-9]+)\\,з:)?([0-9]+)/([0-9]+)\\]")); // Боевые единицы (союзники)
-	//demon/В/[у:27,з:9971/12464]
 	fightElement1Reg.setPattern(QString::fromUtf8("([0-9]+)- ([^/]+)(/(.+)/)?\\[(у:([0-9]+)\\,з:)?([0-9]+)/([0-9]+)\\]")); // Боевые единицы (противники)
 	fightElement2Reg.setPattern(QString::fromUtf8("(.+)\\[(.+):(-?[0-9]+)\\]")); // Ауры в бою
 	fightElement0Reg.setMinimal(true);

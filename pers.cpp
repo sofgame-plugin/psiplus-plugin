@@ -821,6 +821,17 @@ void Pers::endSetPersParams()
 	// и реагируем на изменения согласно настроек
 	if (setPersStatusFlag) {
 		emit persParamChanged(ParamPersStatus, TYPE_INTEGER_FULL, persStatus);
+		if (settingWatchRestHealthEnergy == 1 && fight->isPersInFight()) {
+			// Персонаж сейчас в бою и включен "умный" реген
+			// Останавливаем таймеры
+			if (watchHealthRestTimer->isActive())
+				watchHealthRestTimer->stop();
+			if (watchEnergyRestTimer->isActive())
+				watchEnergyRestTimer->stop();
+			// Сбрасывыем начальные параметры расчета
+			watchHealthStartValue = QINT32_MIN;
+			watchEnergyStartValue = QINT32_MIN;
+		}
 	}
 	if (setPersHealthMaxFlag) {
 		if (persHealthMax != QINT32_MIN) {
@@ -899,16 +910,7 @@ void Pers::endSetPersParams()
 		}
 	} else if (settingWatchRestHealthEnergy == 1) {
 		if (setPersHealthCurrFlag || setPersEnergyCurrFlag || setPersHealthMaxFlag || setPersEnergyMaxFlag) {
-			if (fight->isActive() && fight->isPersInFight()) { // Персонаж в бою.
-				// Останавливаем таймеры
-				if (watchHealthRestTimer->isActive())
-					watchHealthRestTimer->stop();
-				if (watchEnergyRestTimer->isActive())
-					watchEnergyRestTimer->stop();
-				// Сбрасывыем начальные параметры расчета
-				watchHealthStartValue = QINT32_MIN;
-				watchEnergyStartValue = QINT32_MIN;
-			} else { // Персонаж не в бою
+			if (!fight->isPersInFight()) { // Персонаж не в бою.
 				// Health
 				if (persHealthCurr != QINT32_MIN && persHealthMax != QINT32_MIN) {
 					if (setPersHealthCurrFlag) {
@@ -1336,10 +1338,12 @@ void Pers::setCoordinates(const QPoint &p)
 	if (p != coordinates) {
 		coordinates = p;
 		emit persParamChanged(ParamCoordinates, TYPE_INTEGER_FULL, 0);
-		// Если производится расчет восстановления энергии, делаем поправку на ход (затраты энергии)
-		if (settingWatchRestHealthEnergy == 1 && watchEnergyStartValue != QINT32_MIN) {
-			--watchEnergyStartValue;
-			--watchEnergyStartValue2;
+		if (settingWatchRestHealthEnergy == 1) {
+			// Если производится расчет восстановления энергии, делаем поправку на ход (затраты энергии)
+			if (watchEnergyStartValue != QINT32_MIN) {
+				--watchEnergyStartValue;
+				--watchEnergyStartValue2;
+			}
 		}
 	}
 }

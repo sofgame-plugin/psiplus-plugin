@@ -41,7 +41,7 @@ int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
 Открытый бой. (*- закр.)
 до завершения хода №2: 2мин.0сек.
 ваша команда:
- demon/В/[у:27|з:12464/12464]
+ demon/В/[у:27,з:12464/12464]
 противник:
  3- матерый волк[95/95]. 8- матерый волк[95/95].
  */
@@ -72,6 +72,7 @@ int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
 				int pos = 0;
 				bool b_my_pers = false;
 				QString str1 = tmp_list.at(0).trimmed();
+				pers->beginSetPersParams();
 				while ((pos = fightElement0Reg.indexIn(str1, pos)) != -1) {
 					QString s_name = fightElement0Reg.cap(1).trimmed();  // Имя члена нашей команды
 					int n_health_curr = fightElement0Reg.cap(6).toInt();
@@ -86,13 +87,11 @@ int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
 						if (s_name == pers->name()) {
 							// Наш персонаж
 							b_my_pers = true;
-							pers->beginSetPersParams();
 							// Данные об уровне
 							pers->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, n_level);
 							// Наше здоровье
 							pers->setPersParams(Pers::ParamHealthCurr, TYPE_INTEGER_FULL, n_health_curr);
 							pers->setPersParams(Pers::ParamHealthMax, TYPE_INTEGER_FULL, n_health_max);
-							pers->endSetPersParams();
 						} else {
 							// Добавляем описание союзника, управляемого человеком
 							fight->setGameHumanAlly(s_name, s_country, n_level, n_health_curr, n_health_max);
@@ -101,6 +100,7 @@ int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
 					pos += fightElement0Reg.matchedLength();
 				}
 				fight->setMyPersInFight(b_my_pers);
+				pers->endSetPersParams(); // К этому времени статусы боя уже должны быть установлены
 				if (tmp_list.size() > 1) {
 					// Есть данные об аурах
 					pos = 0;

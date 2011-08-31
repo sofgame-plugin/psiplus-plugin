@@ -150,20 +150,20 @@ void Fight::stopAddAllyes()
 	}
 }
 
+/**
+ * Устанавливает присутствие персонажа в бою
+ */
 void Fight::setMyPersInFight(bool present)
 {
-	/**
-	* Устанавливает присутствие персонажа в бою
-	**/
-	presentPers = (active && present);
+	presentPers = present;
 }
 
+/**
+ * Возвращает присутствие персонажа в бою
+ */
 bool Fight::isPersInFight()
 {
-	/**
-	* Возвращает присутствие персонажа в бою
-	**/
-	return presentPers;
+	return (presentPers && active);
 }
 
 void Fight::setGameMobEnemy(int enemNum, QString &enemName, int enemHealth, int enemHealthMax)
