@@ -155,9 +155,7 @@ void Fight::setMyPersInFight(bool present)
 	/**
 	* Устанавливает присутствие персонажа в бою
 	**/
-	if (active) {
-		presentPers = present;
-	}
+	presentPers = (active && present);
 }
 
 bool Fight::isPersInFight()

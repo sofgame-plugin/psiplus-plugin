@@ -177,7 +177,7 @@ void Pers::setName(const QString &new_name)
 	}
 }
 
-QString Pers::name() const
+const QString & Pers::name() const
 {
 	return pers_name;
 }

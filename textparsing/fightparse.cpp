@@ -35,7 +35,7 @@
  * Парсит строки с описанием команды союзников, противников и их ауры
  * Возврат - количество принятых парсингом строк
  */
-int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
+int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
 {
 /*
 Открытый бой. (*- закр.)
@@ -60,6 +60,7 @@ int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
 	fight->setTimeout(n_timeout);
 	n_pos++;
 	if (n_pos < cnt) {
+		Pers *pers = Pers::instance();
 		QString str1 = strs.at(n_pos).trimmed();
 		if (str1 == QString::fromUtf8("ваша команда:")) {
 			// Анализируем нашу команду
@@ -82,16 +83,16 @@ int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
 						// Союзник является человеком
 						QString s_country = fightElement0Reg.cap(3).trimmed();
 						int n_level = fightElement0Reg.cap(5).toInt();
-						if (s_name == Pers::instance()->name()) {
+						if (s_name == pers->name()) {
 							// Наш персонаж
 							b_my_pers = true;
-							Pers::instance()->beginSetPersParams();
+							pers->beginSetPersParams();
 							// Данные об уровне
-							Pers::instance()->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, n_level);
+							pers->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, n_level);
 							// Наше здоровье
-							Pers::instance()->setPersParams(Pers::ParamHealthCurr, TYPE_INTEGER_FULL, n_health_curr);
-							Pers::instance()->setPersParams(Pers::ParamHealthMax, TYPE_INTEGER_FULL, n_health_max);
-							Pers::instance()->endSetPersParams();
+							pers->setPersParams(Pers::ParamHealthCurr, TYPE_INTEGER_FULL, n_health_curr);
+							pers->setPersParams(Pers::ParamHealthMax, TYPE_INTEGER_FULL, n_health_max);
+							pers->endSetPersParams();
 						} else {
 							// Добавляем описание союзника, управляемого человеком
 							fight->setGameHumanAlly(s_name, s_country, n_level, n_health_curr, n_health_max);
@@ -154,10 +155,10 @@ int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
 		} else if (parPersPower1Reg.indexIn(str1, 0) != -1) {
 			// Получаем значение энергии (Это режим выбора умения)
 			fight->setMyPersInFight(true); // Наш персонаж в бою
-			Pers::instance()->beginSetPersParams();
-			Pers::instance()->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, parPersPower1Reg.cap(1).toInt());
-			Pers::instance()->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, parPersPower1Reg.cap(2).toInt());
-			Pers::instance()->endSetPersParams();
+			pers->beginSetPersParams();
+			pers->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, parPersPower1Reg.cap(1).toInt());
+			pers->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, parPersPower1Reg.cap(2).toInt());
+			pers->endSetPersParams();
 			// Следующая строчка - выбор умения. Пока тупо пропускаем.
 			++n_pos;
 		}
@@ -166,7 +167,7 @@ int PluginCore::parseFinghtGroups(QStringList strs, int start_pos)
 	return n_pos;
 }
 
-int PluginCore::parseFinghtStepResult(QStringList strs, int start_pos)
+int PluginCore::parseFinghtStepResult(const QStringList &strs, int start_pos)
 {
 	int n_pos = start_pos;
 	int cnt = strs.size();

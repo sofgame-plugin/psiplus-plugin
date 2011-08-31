@@ -70,7 +70,7 @@ public:
 	static void reset();
 	void init();
 	void setName(const QString &);
-	QString name() const;
+	const QString & name() const;
 	void setFingsStart(bool clear);
 	void setFingsEnd();
 	void setFingElement(int, Thing*);

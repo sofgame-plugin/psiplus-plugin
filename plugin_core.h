@@ -136,8 +136,8 @@ class PluginCore: public QObject
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
 		void initPopup(QString, QString, int);
-		int parseFinghtGroups(QStringList, int);
-		int parseFinghtStepResult(QStringList, int);
+		int parseFinghtGroups(const QStringList &, int);
+		int parseFinghtStepResult(const QStringList &, int);
 
 	protected:
 
