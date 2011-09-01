@@ -1353,9 +1353,11 @@ void SofMainWindow::applySettings()
 {
 	// *** Применяем новые настройки ***
 	Settings *settings = Settings::instance();
+	Pers *pers = Pers::instance();
 	// Имя персонажа
-	QString str1 = setPersName->text();
-	settings->setStringSetting(Settings::SettingPersName, str1);
+	if (!pers->name().isEmpty()) {
+		settings->setStringSetting(Settings::SettingPersName, pers->name());
+	}
 	// Режим переключения зеркал
 	Sender::instance()->setGameMirrorsMode(mirrorChangeModeCombo->currentIndex());
 	// Сохранение параметров окна
@@ -1442,7 +1444,7 @@ void SofMainWindow::applySettings()
 	// Сохранение статистики
 	settings->setBoolSetting(Settings::SettingSaveStatistic, saveStatistic_checkbox->isChecked());
 	// Применение фильтров вещей
-	Pers::instance()->setFingsFiltersEx(fingFiltersTable->getFilters());
+	pers->setFingsFiltersEx(fingFiltersTable->getFilters());
 	// Применение шрифтов
 	QFont f;
 	if (f.fromString(persNameFont_label->fontName())) {
