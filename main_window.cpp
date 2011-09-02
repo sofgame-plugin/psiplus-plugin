@@ -1584,7 +1584,7 @@ void SofMainWindow::createMap()
 			break;
 		if (newMapName.isEmpty())
 			continue;
-		if (GameMap::instance()->createMap(&newMapName) >= 0)
+		if (GameMap::instance()->createMap(newMapName) >= 0)
 			break;
 		QMessageBox::critical(this, QString::fromUtf8("Создание карты"), QString::fromUtf8("Произошла ошибка. Возможно такая карта уже существует"));
 	}
