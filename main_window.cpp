@@ -1223,6 +1223,8 @@ void SofMainWindow::setCurrentExperience(long long exp)
 	if (experienceMax != -1 ) {
 		// Формируем делитель, чтоб вписаться в значение int
 		long long div = experienceMax / 1000000000 + 1;
+		if (div <= 0)
+			div = 1;
 		long long val = exp / div;
 		if (exp % div >= 500000000) // Округляем
 			++val;
@@ -1241,6 +1243,8 @@ void SofMainWindow::setMaximumExperience(long long mExp)
 	experienceMax = mExp;
 	if (mExp != -1) {
 		long long div = mExp / 1000000000 + 1;
+		if (div <= 0)
+			div = 1;
 		long long max = mExp / div;
 		if (mExp % div >= 500000000) // Округляем
 			++max;
