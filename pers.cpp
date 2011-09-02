@@ -999,7 +999,7 @@ void Pers::endSetPersParams()
 					} else {
 						if (watchEnergyStartValue != QINT32_MIN) {
 							// Есть стартовое значение для замера энергии
-							if (persEnergyCurr < persEnergyMax) {
+							if (persEnergyCurr < persEnergyMax - 2) { // Что бы не провоцировать счет при хождении
 								int watchTimeDelta = watchEnergyStartTime.elapsed();
 								if (watchTimeDelta >= 10000) {
 									if (watchEnergySpeedDelta < watchTimeDelta) {

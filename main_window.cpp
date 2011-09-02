@@ -1366,7 +1366,9 @@ void SofMainWindow::applySettings()
 	// Сохранение параметров окна
 	settingWindowSizePos = windowSizePosCombo->currentIndex();
 	// Отслеживание восстановления здоровья и энергии
-	settings->setIntSetting(Settings::SettingWatchRestHealthEnergy, restHealthEnergyCombo->currentIndex());
+	int i = restHealthEnergyCombo->currentIndex();
+	settings->setIntSetting(Settings::SettingWatchRestHealthEnergy, i);
+	pers->setSetting(Settings::SettingWatchRestHealthEnergy, i);
 	// Таймер в бою
 	settingTimeOutDisplay = fightTimerCombo->currentIndex();
 	settings->setIntSetting(Settings::SettingFightTimerMode, settingTimeOutDisplay);
