@@ -40,15 +40,15 @@ Settings::Settings(QObject *parent) :
 	QObject(parent)
 {
 	defaultsListString[SettingPersName] = QString();
-	defaultsListInt[SettingPersSaveMode] = 1;
-	defaultsListInt[SettingMapsSaveMode] = 1;
+	defaultsListInt[SettingPersSaveMode] = 2;
+	defaultsListInt[SettingMapsSaveMode] = 2;
 	defaultsListBool[SettingSavePersParams] = true;
 	defaultsListBool[SettingSaveBackpack] = true;
 	defaultsListBool[SettingSaveStatistic] = true;
-	defaultsListInt[SettingMirrorSwitchMode] = 0;
-	defaultsListInt[SettingWatchRestHealthEnergy] = 0;
-	defaultsListBool[SettingInKillersCupPopup] = false;
-	defaultsListBool[SettingKillerAttackPopup] = false;
+	defaultsListInt[SettingMirrorSwitchMode] = 1;
+	defaultsListInt[SettingWatchRestHealthEnergy] = 1;
+	defaultsListBool[SettingInKillersCupPopup] = true;
+	defaultsListBool[SettingKillerAttackPopup] = true;
 	defaultsListBool[SettingShowQueryLength] = false;
 	defaultsListBool[SettingResetQueueForUnknowStatus] = true;
 	defaultsListBool[SettingResetQueuePopup] = false;

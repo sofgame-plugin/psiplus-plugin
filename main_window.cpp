@@ -903,46 +903,45 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 	QDomElement eThingsSettings = xml.firstChildElement("things-table");
 	fingsTable->loadSettingsFromXml(eThingsSettings);
 	QDomElement eGeometry = xml.firstChildElement("window-save-params");
-	settingWindowSizePos = 0;
 	if (!eGeometry.isNull()) {
 		if (eGeometry.attribute("mode") == "position-and-size") {
 			settingWindowSizePos = 1;
-		}
-		int posX = eGeometry.attribute("pos-x").toInt();
-		int posY = eGeometry.attribute("pos-y").toInt();
-		int width_ = eGeometry.attribute("width").toInt();
-		int height_ = eGeometry.attribute("height").toInt();
-		// Определяем геометрию рабочих столов (доступное пространство)
-		QRect scRect = QApplication::desktop()->availableGeometry(-1); //-- default system screen
-		// Корректируем наши параметры, если превышают допустимые
-		if (scRect.x() > posX)
-			posX = scRect.x();
-		if (scRect.y() > posY)
-			posY = scRect.y();
-		if (posX - scRect.x() + width_ > scRect.width()) {
-			// * Не вписываемся по горизонтали
-			// Исправляем за счет смещения окна
-			posX -= (posX + width_) - (scRect.x() + scRect.width());
-			if (posX < scRect.x()) {
+			int posX = eGeometry.attribute("pos-x").toInt();
+				int posY = eGeometry.attribute("pos-y").toInt();
+			int width_ = eGeometry.attribute("width").toInt();
+			int height_ = eGeometry.attribute("height").toInt();
+			// Определяем геометрию рабочих столов (доступное пространство)
+			QRect scRect = QApplication::desktop()->availableGeometry(-1); //-- default system screen
+			// Корректируем наши параметры, если превышают допустимые
+			if (scRect.x() > posX)
 				posX = scRect.x();
-				// Исправляем за счет ширины окна
-				width_ = scRect.width() - posX + scRect.x();
-			}
-		}
-		if (posY - scRect.y() + height_ > scRect.height()) {
-			// * Не вписываемся по вертикали
-			// Исправляем за счет смещения окна
-			posY -= (posY + height_) - (scRect.y() + scRect.height());
-			if (posY < scRect.y()) {
+			if (scRect.y() > posY)
 				posY = scRect.y();
-				// Исправляем за счет высоты окна
-				height_ = scRect.height() - posY + scRect.y();
+			if (posX - scRect.x() + width_ > scRect.width()) {
+				// * Не вписываемся по горизонтали
+				// Исправляем за счет смещения окна
+				posX -= (posX + width_) - (scRect.x() + scRect.width());
+				if (posX < scRect.x()) {
+					posX = scRect.x();
+					// Исправляем за счет ширины окна
+					width_ = scRect.width() - posX + scRect.x();
+				}
 			}
+			if (posY - scRect.y() + height_ > scRect.height()) {
+				// * Не вписываемся по вертикали
+				// Исправляем за счет смещения окна
+				posY -= (posY + height_) - (scRect.y() + scRect.height());
+				if (posY < scRect.y()) {
+					posY = scRect.y();
+					// Исправляем за счет высоты окна
+					height_ = scRect.height() - posY + scRect.y();
+				}
+			}
+			// Перемещаем окно
+			move(posX, posY);
+			// Изменяем размер окна
+			resize(width_, height_);
 		}
-		// Перемещаем окно
-		move(posX, posY);
-		// Изменяем размер окна
-		resize(width_, height_);
 	}
 	windowSizePosCombo->setCurrentIndex(settingWindowSizePos);
 }
