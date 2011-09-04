@@ -2405,7 +2405,7 @@ int GameMap::renameMap(int mapIndex, const QString &mapNewName)
 			return 2;
 		}
 	}
-	if (!loadMap(mapIndex))
+	if (mapsList.at(mapIndex).status == HeaderOnly && !loadMap(mapIndex))
 		return 3;
 	// Сохраняем старое имя карты
 	if (mapsList.at(mapIndex).old_name.isEmpty())
