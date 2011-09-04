@@ -1268,11 +1268,11 @@ void GameMap::moveMapElement(int souMapIndex, int desMapIndex, int elementIndex)
  */
 void GameMap::removeMapElement(int mapIndex, int elementIndex)
 {
-	struct map_element mapEl = (*mapsList[mapIndex].map)[elementIndex];
-	int elX = mapEl.x;
-	int elY = mapEl.y;
+	struct map_element *mapEl = &(*mapsList[mapIndex].map)[elementIndex];
+	int elX = mapEl->x;
+	int elY = mapEl->y;
 	// Отмечаем элемент как не используемый
-	(*mapsList[mapIndex].map)[elementIndex].status = 0;
+	mapEl->status = 0;
 	if (mapsList.at(mapIndex).min_x >= elX || mapsList.at(mapIndex).max_x <= elX || mapsList.at(mapIndex).min_y >= elY || mapsList.at(mapIndex).max_y <= elY) {
 		// Пересчитываем границы карты источника
 		QVector<map_element>* mapPtr = mapsList[mapIndex].map;
