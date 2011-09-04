@@ -589,6 +589,19 @@ bool GameMap::removeMap(int map_index)
 			unloadMap(map_index);
 		}
 		mapsList[map_index].status = None;
+		// Если выгружаемая карта текущая
+		if (map_index == mapCurrIndex) {
+			// Очищаем кэши индекса карт
+			lastX = QINT32_MIN;
+			lastY = QINT32_MIN;
+			// Прописываем индекс и указатель на текущую карту
+			mapCurrIndex = -1;
+			// Перерисовываем карту
+			redrawMap();
+			// Подгоняем размер сцены
+			setSceneRect(getMapRect());
+		}
+		//--
 		modifiedMapsCount++;
 		initSaveTimer();
 		return true;
