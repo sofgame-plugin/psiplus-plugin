@@ -1909,15 +1909,20 @@ void PluginCore::mapsCommands(QStringList* args)
 			stat_str.append("\n");
 			setConsoleText(stat_str, true);
 		} else if ((*args)[1] == "list") {
+			GameMap::maps_info mapsInf;
 			QVector<GameMap::maps_list2> mapsLst;
+			GameMap *maps = GameMap::instance();
+			maps->mapsInfo(&mapsInf);
+			int currMap = mapsInf.curr_map_index;
 			GameMap::instance()->getMapsList(&mapsLst);
 			int cntMaps = mapsLst.size();
 			for (int i = 0; i < cntMaps; i++) {
-				stat_str.append(QString::number(mapsLst[i].index) + " - " + mapsLst[i].name);
-				if (mapsLst[i].loaded) {
-					stat_str.append(tr(" [loaded]"));
-				}
-				stat_str.append("\n");
+				const int idx = mapsLst.at(i).index;
+				stat_str.append(QString("%1 - %2%3%4\n")
+					.arg(idx)
+					.arg((idx == currMap) ? "*" : QString())
+					.arg(mapsLst.at(i).name)
+					.arg((mapsLst.at(i).loaded) ? QString::fromUtf8(" [загружена]") : QString()));
 			}
 			stat_str.append(QString::fromUtf8("Всего карт: ") + QString::number(cntMaps) + "\n");
 			setConsoleText(stat_str, true);
