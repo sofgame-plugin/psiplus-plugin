@@ -64,6 +64,8 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void init();
 		void setGameText(QString, int);
 		void setConsoleText(QString, int, bool);
+		bool getAutoEnterMode() const {return autoEnterMode;};
+		void setAutoEnterMode(bool);
 		QDomElement exportAppearanceSettings(QDomDocument &xmlDoc) const;
 		QDomElement exportSlotsSettings(QDomDocument &xmlDoc) const;
 
@@ -83,7 +85,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		int  maxEventSlotId;                // Максимальный текущий идентификатор слота
 		int usedEventSlots;                 // Использовано слотов
 		QVector<int> eventSlots;            // Cлужебные структуры слотов событий и уведомлений
-		void setAutoEnterMode(bool);
 		void closeEvent(QCloseEvent *evnt);
 		void initStatisticData();           // Заполнение массивов статистики начальными значениями
 		void fillSlotCombo(QComboBox* slotCombo);

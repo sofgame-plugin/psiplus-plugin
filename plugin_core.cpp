@@ -1500,6 +1500,7 @@ bool PluginCore::sendString(const QString &str)
 		}
 	}
 	if (str1.startsWith("/help") || str1.startsWith("help")) {
+		setConsoleText(str1, true);
 		str1 = "--= help =--\n";
 		str1.append(QString::fromUtf8("/- — Сброс очереди команд\n"));
 		str1.append(QString::fromUtf8("/1... — Позволяет отдавать односимвольные числовые команды в игру без дублирования их клавишей <Enter>.\n  /1+ — Включение режима автоввода.\n  /1- — Отключение режима автоввода.\n  /1 — Состояние режима (вкл или выкл).\n  /1-<числовая_команда> — Отправка длинной команды без отключения режима. Пример: /1-02 — Отправка 02 игре не отключая режимом автоввода.\n"));
@@ -1516,6 +1517,7 @@ bool PluginCore::sendString(const QString &str)
 		str1.append(QString::fromUtf8("/ver — версия плагина\n"));
 		setConsoleText(str1, true);
 	} else if (str1 == "/-") {
+		setConsoleText(str1, false);
 		Sender *sender = Sender::instance();
 		int q_len = sender->getGameQueueLength();
 		if (q_len > 0) {
@@ -1526,12 +1528,32 @@ bool PluginCore::sendString(const QString &str)
 		}
 		setGameText(str1);
 		setConsoleText(str1, false);
+	} else if (str1 == "/1+") {
+		if (mainWindow != NULL)
+			mainWindow->setAutoEnterMode(true);
+	} else if (str1.startsWith("/1-")) {
+		if (str1.length() == 3) {
+			if (mainWindow != NULL)
+				mainWindow->setAutoEnterMode(false);
+		} else {
+			str1 = str1.mid(3);
+			setGameText(str1);
+			sendString(str1);
+		}
+	} else if (str1 == "/1") {
+		setConsoleText(str1, false);
+		str1 = QString("Auto enter mode is %1").arg((mainWindow != NULL && mainWindow->getAutoEnterMode()) ? "ON" : "OFF");
+		setGameText(str1);
+		setConsoleText(str1, false);
 	} else if (str1 == "/stat" || str1.startsWith("/stat ")) {
+		setConsoleText(str1, true);
 		getStatistics(&str1);
 	} else if (str1 == "/send_delta") {
+		setConsoleText(str1, true);
 		str1 = "send_delta = " + QString::number(Sender::instance()->getSendDelta()) + " msec.";
 		setConsoleText(str1, true);
 	} else if (str1.startsWith("/send_delta=")) {
+		setConsoleText(str1, true);
 		if (str1.length() >= 13) {
 			bool res;
 			int nDelta = str1.mid(12).toInt(&res);
@@ -1545,9 +1567,11 @@ bool PluginCore::sendString(const QString &str)
 			setConsoleText(str1, true);
 		}
 	} else if (str1 == "/server_timeout") {
+		setConsoleText(str1, true);
 		str1 = "server_timeout = " + QString::number(Sender::instance()->getServerTimeoutDuration()) + " sec.";
 		setConsoleText(str1, true);
 	} else if (str1.startsWith("/server_timeout=")) {
+		setConsoleText(str1, true);
 		if (str1.length() >= 17) {
 			bool res;
 			int nTimeout = str1.mid(16).toInt(&res);
@@ -1561,26 +1585,34 @@ bool PluginCore::sendString(const QString &str)
 			setConsoleText(str1, true);
 		}
 	} else if (str1.startsWith("/maps")) {
+		setConsoleText(str1, true);
 		QStringList mapsCmd = splitCommandString(str1);
 		mapsCommands(&mapsCmd);
 	} else if (str1.startsWith("/pers")) {
+		setConsoleText(str1, true);
 		QStringList persCmd = str1.split(" ");
 		persCommands(&persCmd);
 	} else if (str1.startsWith("/clear")) {
+		setConsoleText(str1, false);
 		QStringList clearCmd = str1.split(" ");
 		clearCommands(&clearCmd);
 	} else if (str1.startsWith("/things")) {
+		setConsoleText(str1, true);
 		QStringList thingsCmd = str1.split(" ");
 		fingsCommands(&thingsCmd);
 	} else if (str1.startsWith("/aliases")) {
+		setConsoleText(str1, true);
 		QStringList aliasesCmd = splitCommandString(str1);
 		aliasesCommands(aliasesCmd);
 	} else if (str1.startsWith("/settings")) {
+		setConsoleText(str1, true);
 		QStringList settingsCmd = str1.split(" ");
 		settingsCommands(settingsCmd);
 	} else if (str1 == "/ver") {
+		setConsoleText(str1, true);
 		setConsoleText(cVer, true);
 	} else {
+		setConsoleText(str1, true);
 		str1 = QString::fromUtf8("Неизвестная команда. Наберите /help для получения помощи\n");
 		setConsoleText(str1, true);
 	}

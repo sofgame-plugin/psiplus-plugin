@@ -313,33 +313,23 @@ void SofMainWindow::setAutoEnterMode(bool mode)
 {
 	if (autoEnterMode != mode) {
 		autoEnterMode = mode;
-		QPalette palette1;
-		QPalette palette2;
+		QPalette pal;
 		QBrush brush1;
 		QBrush brush2;
-		QBrush brush3;
-		QBrush brush4;
 		if (mode) {
+			cmd_send->setStyleSheet("background-color: rgba(255,0,0,64);");
 			brush1.setColor(QColor(255, 0, 0, 64)); // Красный
 			brush2.setColor(QColor(255, 0, 0, 64)); // Красный
-			brush3.setColor(QColor(255, 0, 0, 64)); // Красный
-			brush4.setColor(QColor(255, 0, 0, 64)); // Красный
 		} else {
-			brush1.setColor(QApplication::palette().color(QPalette::Active, QPalette::Button));
-			brush2.setColor(QApplication::palette().color(QPalette::Inactive, QPalette::Button));
-			brush3.setColor(QApplication::palette().color(QPalette::Active, QPalette::Base));
-			brush4.setColor(QApplication::palette().color(QPalette::Inactive, QPalette::Base));
+			cmd_send->setStyleSheet(QString());
+			brush1.setColor(QApplication::palette().color(QPalette::Active, QPalette::Base));
+			brush2.setColor(QApplication::palette().color(QPalette::Inactive, QPalette::Base));
 		}
 		brush1.setStyle(Qt::SolidPattern);
 		brush2.setStyle(Qt::SolidPattern);
-		brush3.setStyle(Qt::SolidPattern);
-		brush4.setStyle(Qt::SolidPattern);
-		palette1.setBrush(QPalette::Active, QPalette::Button, brush1);
-		palette1.setBrush(QPalette::Inactive, QPalette::Button, brush2);
-		palette2.setBrush(QPalette::Active, QPalette::Base, brush3);
-		palette2.setBrush(QPalette::Inactive, QPalette::Base, brush4);
-		cmd_send->setPalette(palette1);
-		userCommandLine->setPalette(palette2);
+		pal.setBrush(QPalette::Active, QPalette::Base, brush1);
+		pal.setBrush(QPalette::Inactive, QPalette::Base, brush2);
+		userCommandLine->setPalette(pal);
 	}
 }
 
@@ -1515,41 +1505,12 @@ void SofMainWindow::userCommandReturnPressed()
 	QString sText = userCommandLine->toPlainText().trimmed();
 	if (!sText.isEmpty()) {
 		userCommandLine->appendMessageHistory(sText);
-		if (sText.startsWith("/")) {
-			if (sText == "/1+") {
-				setAutoEnterMode(true);
-				userCommandLine->setText("");
-				return;
-			} else if (sText.startsWith("/1-")) {
-				if (sText.length() == 3) {
-					setAutoEnterMode(false);
-				} else {
-					sText = sText.mid(3);
-					setGameText(sText, 1);
-					PluginCore::instance()->sendString(sText);
-				}
-				userCommandLine->setText("");
-				return;
-			} else if (sText == "/1") {
-				sText = "Auto enter mode is ";
-				if (autoEnterMode) {
-					sText.append("ON");
-				} else {
-					sText.append("OFF");
-				}
-				setGameText(sText, 2);
-				setConsoleText(sText, 2, false);
-				userCommandLine->setText("");
-				return;
-			} else {
-				setConsoleText(sText, 1, true);
-			}
-		} else {
+		if (!sText.startsWith("/")) {
 			setGameText(sText, 1);
 		}
-		userCommandLine->setText("");
 		PluginCore::instance()->sendString(sText);
 	}
+	userCommandLine->setText(QString());
 }
 
 void SofMainWindow::timeoutEvent()
