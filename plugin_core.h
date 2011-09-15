@@ -34,7 +34,7 @@
 #include "popupaccessinghost.h"
 #include "optionaccessinghost.h"
 
-#define cVer "0.2.0"
+#define cVer "0.2.1"
 
 #include "pers.h"
 #include "pers_info.h"
@@ -136,8 +136,9 @@ class PluginCore: public QObject
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
 		void initPopup(QString, QString, int);
-		int parseFinghtGroups(const QStringList &, int);
-		int parseFinghtStepResult(const QStringList &, int);
+		int  parseFinghtGroups(const QStringList &, int);
+		int  parseFinghtStepResult(const QStringList &, int);
+		void searchHorseshoe(const QString &);
 
 	protected:
 
