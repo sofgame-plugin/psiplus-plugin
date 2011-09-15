@@ -34,7 +34,7 @@
 #include "popupaccessinghost.h"
 #include "optionaccessinghost.h"
 
-#define cVer "0.2.1"
+#define cVer "0.2.1-dev"
 
 #include "pers.h"
 #include "pers_info.h"
