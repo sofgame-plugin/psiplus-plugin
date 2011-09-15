@@ -732,6 +732,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				break;
 			} else {
 				// Строчка первая, но статус не определен
+				searchHorseshoe(sMessage);
 				// Статус не определяется на первой строке много где,
 				// но в данном случае нас интересует резутьтат удара в бою
 				if (fight->isActive() || persStatus == Pers::StatusFightMultiSelect || persStatus == Pers::StatusNotKnow) {
@@ -847,6 +848,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					fExperienceDrop = true;
 				}
 			}
+			searchHorseshoe(sMessage);
 		}
 		if (nPersStatus == Pers::StatusNotKnow) {
 			// Любая строка, статус еще не определен
@@ -1013,6 +1015,20 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		}
 	}
 	return myMessage;
+}
+
+void PluginCore::searchHorseshoe(const QString &sMessage)
+{
+	if (sMessage.endsWith('U')) {
+		initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Обнаружена подкова!"), 20);
+		QVector<GameMap::maps_other_pers> aHorseshoe;
+		GameMap::maps_other_pers mop;
+		mop.offset_x = 0;
+		mop.offset_y = 0;
+		mop.name = QString::fromUtf8("*подкова*");
+		aHorseshoe.append(mop);
+		GameMap::instance()->setOtherPersPos(&aHorseshoe);
+	}
 }
 
 void PluginCore::processError(int errorNum)
