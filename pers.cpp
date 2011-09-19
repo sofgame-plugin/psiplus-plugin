@@ -573,8 +573,22 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 	}
 	// Анализируем DOM ноду
 	QDomElement eFilters = eBackpack.firstChildElement("filters");
-	if (eFilters.isNull())
+	if (eFilters.isNull()) {
+		// Грузим фильтры по умолчанию
+		FingFilter *ffe = new FingFilter();
+		ffe->setName(QString::fromUtf8("Одето"));
+		ffe->setActive(true);
+		ffe->appendRule(FingFilter::DressedRole, false, FingFilter::NoOperRole, QString(), FingFilter::YesRole);
+		fingFiltersEx.append(ffe);
+		ffe = new FingFilter();
+		ffe->setName(QString::fromUtf8("Кристаллы и ветки"));
+		ffe->setActive(true);
+		ffe->appendRule(FingFilter::TypeRole, true, FingFilter::EqualRole, QString::fromUtf8("вещь"), FingFilter::NoRole);
+		ffe->appendRule(FingFilter::NameRole, false, FingFilter::ContainsRole, QString::fromUtf8("кристалл"), FingFilter::YesRole);
+		ffe->appendRule(FingFilter::NameRole, false, FingFilter::ContainsRole, QString::fromUtf8("ветка"), FingFilter::YesRole);
+		fingFiltersEx.append(ffe);
 		return;
+	}
 	QDomElement eFilter = eFilters.firstChildElement("filter");
 	while (!eFilter.isNull()) {
 		const QString sName = eFilter.attribute("name");
