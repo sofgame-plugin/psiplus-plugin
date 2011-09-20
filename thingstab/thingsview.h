@@ -1,5 +1,5 @@
 /*
- * fingsview.h - Sof Game Psi plugin
+ * thingsview.h - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,18 +23,18 @@
  *
  */
 
-#ifndef FINGSVIEW_H
-#define FINGSVIEW_H
+#ifndef THINGSVIEW_H
+#define THINGSVIEW_H
 
 #include <QTableView>
 #include <QDomDocument>
 
-class FingsView : public QTableView
+class ThingsView : public QTableView
 {
 	Q_OBJECT
 public:
-	FingsView( QWidget * parent = 0 );
-	~FingsView();
+	ThingsView( QWidget * parent = 0 );
+	~ThingsView();
 	void init();
 	QDomElement saveSettingsToXml(QDomDocument &xmlDoc) const;
 	void loadSettingsFromXml(QDomElement &xml);
@@ -47,4 +47,4 @@ protected:
 	void keyPressEvent(QKeyEvent *e);
 };
 
-#endif // FINGSVIEW_H
+#endif // THINGSVIEW_H

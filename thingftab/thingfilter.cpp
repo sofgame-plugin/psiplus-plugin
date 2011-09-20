@@ -1,5 +1,5 @@
 /*
- * fingfilter.cpp - Sof Game Psi plugin
+ * thingfilter.cpp - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -26,54 +26,54 @@
 #include "thingfilter.h"
 #include "utils.h"
 
-FingFilter::FingFilter()
+ThingFilter::ThingFilter() :
+	enabled(true)
 {
-	enabled = true;
 }
 
-FingFilter::FingFilter(const FingFilter& from)
+ThingFilter::ThingFilter(const ThingFilter& from)
 {
 	enabled = from.enabled;
 	filterName = from.filterName;
 	rules = from.rules;
 }
 
-FingFilter::~FingFilter()
+ThingFilter::~ThingFilter()
 {
 
 }
 
-QString FingFilter::name()
+QString ThingFilter::name() const
 {
 	return filterName;
 }
 
-void FingFilter::setName(QString newName)
+void ThingFilter::setName(const QString &newName)
 {
 	if (!newName.isEmpty())
 		filterName = newName;
 }
 
-bool FingFilter::isActive()
+bool ThingFilter::isActive() const
 {
 	return enabled;
 }
 
-void FingFilter::setActive(bool active)
+void ThingFilter::setActive(bool active)
 {
 	enabled = active;
 }
 
-int FingFilter::rulesCount()
+int ThingFilter::rulesCount() const
 {
 	return rules.size();
 }
 
-bool FingFilter::appendRule(ParamRole param, bool negative, OperandRole operand, QString value, ActionRole action)
+bool ThingFilter::appendRule(ParamRole param, bool negative, OperandRole operand, const QString &value, ActionRole action)
 {
 	if (param == NoParamRole || action == NoActionRole)
 		return false;
-	struct fing_rule_ex fr;
+	struct thing_rule_ex fr;
 	fr.param = param;
 	fr.negative = negative;
 	fr.operand = operand;
@@ -92,8 +92,8 @@ bool FingFilter::appendRule(ParamRole param, bool negative, OperandRole operand,
 		if (fr.int_value == -1)
 			return false;
 	} else if (param == DressedRole) {
-		operand = NoOperRole;
-		value = "";
+		fr.operand = NoOperRole;
+		fr.value = QString();
 	}
 	if (operand == NoOperRole) {
 		if (param != DressedRole)
@@ -109,19 +109,19 @@ bool FingFilter::appendRule(ParamRole param, bool negative, OperandRole operand,
 	return true;
 }
 
-void FingFilter::modifyRule(int index, const struct fing_rule_ex* new_rule) {
+void ThingFilter::modifyRule(int index, const struct thing_rule_ex* new_rule) {
 	// TODO Сделать проверку параметров !!!
 	if (index >= 0 && index < rules.size())
 		rules[index] = *new_rule;
 }
 
-void FingFilter::removeRule(int index)
+void ThingFilter::removeRule(int index)
 {
 	if (index >= 0 && index < rules.size())
 		rules.removeAt(index);
 }
 
-bool FingFilter::moveRuleUp(int index)
+bool ThingFilter::moveRuleUp(int index)
 {
 	if (index < 1 || index >= rules.size())
 		return false;
@@ -129,7 +129,7 @@ bool FingFilter::moveRuleUp(int index)
 	return true;
 }
 
-bool FingFilter::moveRuleDown(int index)
+bool ThingFilter::moveRuleDown(int index)
 {
 	if (index < 0 || index >= rules.size() - 1)
 		return false;
@@ -137,7 +137,7 @@ bool FingFilter::moveRuleDown(int index)
 	return true;
 }
 
-const struct FingFilter::fing_rule_ex* FingFilter::getRule(int rule_index)
+const struct ThingFilter::thing_rule_ex* ThingFilter::getRule(int rule_index) const
 {
 	if (rule_index >= 0 && rule_index < rules.size()) {
 		return &rules.at(rule_index);
@@ -146,9 +146,9 @@ const struct FingFilter::fing_rule_ex* FingFilter::getRule(int rule_index)
 }
 
 /**
- * Возвращает результат прохождения вещи (fingEl) про правилам rules
+ * Возвращает результат прохождения вещи через фильтр
  */
-bool FingFilter::isFingShow(const Thing* thing)
+bool ThingFilter::isThingShow(const Thing* thing) const
 {
 	int cnt = rules.size();
 	bool skeepNext = false;

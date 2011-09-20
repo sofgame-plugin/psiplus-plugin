@@ -48,8 +48,8 @@
 #define VALUE_DAMAGE_MIN_FROM_PERS      4
 #define VALUE_FIGHTS_COUNT              5
 #define VALUE_DROP_MONEYS               6
-#define VALUE_FINGS_DROP_COUNT          7
-#define VALUE_FING_DROP_LAST            8
+#define VALUE_THINGS_DROP_COUNT         7
+#define VALUE_THING_DROP_LAST           8
 #define VALUE_EXPERIENCE_DROP_COUNT     9
 #define VALUE_KILLED_ENEMIES            10
 

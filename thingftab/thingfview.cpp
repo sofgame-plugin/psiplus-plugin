@@ -1,5 +1,5 @@
 /*
- * fingfview.cpp - Sof Game Psi plugin
+ * thingfview.cpp - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -33,17 +33,18 @@
 #include "thingruledlg.h"
 
 
-FingFiltersView::FingFiltersView(QWidget* parent) : QTableView(parent)
+ThingFiltersView::ThingFiltersView(QWidget* parent) :
+	QTableView(parent),
+	thingFiltersTableModel(NULL)
 {
-	fingFiltersTableModel = 0;
 }
 
-void FingFiltersView::init(QList<FingFilter*>* flp)
+void ThingFiltersView::init(QList<ThingFilter*>* flp)
 {
 	//Создаем модель и связываем модель с представлением
-	fingFiltersTableModel = new FingFiltersModel(this, flp);
-	setModel(fingFiltersTableModel);
-	fingFiltersTableModel->reloadFilters();
+	thingFiltersTableModel = new ThingFiltersModel(this, flp);
+	setModel(thingFiltersTableModel);
+	thingFiltersTableModel->reloadFilters();
 	// Настройки поведения таблицы
 	resizeColumnsToContents();
 	horizontalHeader()->setResizeMode(0, QHeaderView::ResizeToContents);
@@ -55,7 +56,7 @@ void FingFiltersView::init(QList<FingFilter*>* flp)
 	connect(this, SIGNAL(clicked(const QModelIndex&)), this, SLOT(currRowChanged(const QModelIndex&)));
 }
 
-void FingFiltersView::contextMenuEvent( QContextMenuEvent * e )
+void ThingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 {
 	Q_UNUSED(e)
 	QMenu* popup = new QMenu(this);
@@ -78,7 +79,7 @@ void FingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 				if (true) {
 					bool active = true;
 					QString name = "";
-					FingFilterEditDialog* dlg = new FingFilterEditDialog(this, &active, &name);
+					ThingFilterEditDialog* dlg = new ThingFilterEditDialog(this, &active, &name);
 					if (dlg) {
 						if (dlg->exec() == QDialog::Accepted) {
 							int new_row = model()->rowCount();
@@ -98,7 +99,7 @@ void FingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 				if (row >= 0 && row < model()->rowCount()) {
 					bool active = model()->data(model()->index(row, 0), Qt::UserRole).toBool();
 					QString name = model()->data(model()->index(row, 1), Qt::DisplayRole).toString();
-					FingFilterEditDialog* dlg = new FingFilterEditDialog(this, &active, &name);
+					ThingFilterEditDialog* dlg = new ThingFilterEditDialog(this, &active, &name);
 					if (dlg) {
 						if (dlg->exec() == QDialog::Accepted) {
 							model()->setData(model()->index(row, 0), QVariant(active));
@@ -125,7 +126,7 @@ void FingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 				break;
 			case 3: // up
 				if (row > 0 && row < model()->rowCount()) {
-					fingFiltersTableModel->swapRows(row - 1, row);
+					thingFiltersTableModel->swapRows(row - 1, row);
 					selectionModel()->select(model()->index(row, 0), QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 					selectionModel()->select(model()->index(row -1, 0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
 					emit currRowChanged(model()->index(row - 1, 0));
@@ -133,7 +134,7 @@ void FingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 				break;
 			case 4: // down
 				if (row >= 0 && row < model()->rowCount() - 1) {
-					fingFiltersTableModel->swapRows(row, row + 1);
+					thingFiltersTableModel->swapRows(row, row + 1);
 					selectionModel()->select(model()->index(row, 0), QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 					selectionModel()->select(model()->index(row + 1, 0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
 					emit currRowChanged(model()->index(row + 1, 0));
@@ -144,7 +145,7 @@ void FingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 	delete popup;
 }
 
-void FingFiltersView::keyPressEvent( QKeyEvent * e )
+void ThingFiltersView::keyPressEvent( QKeyEvent * e )
 {
 	Q_UNUSED(e)
 /*	if (e->key() == Qt::Key_Space) {
@@ -164,12 +165,12 @@ void FingFiltersView::keyPressEvent( QKeyEvent * e )
 	}*/
 }
 
-QList<FingFilter*> FingFiltersView::getFilters()
+QList<ThingFilter*> ThingFiltersView::getFilters() const
 {
-	QList<FingFilter*> resList;
+	QList<ThingFilter*> resList;
 	int i = 0;
 	while (true) {
-		FingFilter* pf = fingFiltersTableModel->getFilterByRow(i++);
+		ThingFilter* pf = thingFiltersTableModel->getFilterByRow(i++);
 		if (!pf)
 			break;
 		resList.push_back(pf);
@@ -177,7 +178,7 @@ QList<FingFilter*> FingFiltersView::getFilters()
 	return resList;
 }
 
-void FingFiltersView::currRowChanged(const QModelIndex& index)
+void ThingFiltersView::currRowChanged(const QModelIndex& index)
 {
 	if (index.isValid()) {
 		emit currFilterChanged(index.row());
@@ -188,17 +189,18 @@ void FingFiltersView::currRowChanged(const QModelIndex& index)
 
 //*********************************************************************************************
 
-FingRulesView::FingRulesView(QWidget* parent) : QTableView(parent)
+ThingRulesView::ThingRulesView(QWidget* parent) :
+	QTableView(parent),
+	thingRulesTableModel(NULL)
 {
-	fingRulesTableModel = 0;
 	setEnabled(false);
 }
 
-void FingRulesView::init(QList<FingFilter*>* flp)
+void ThingRulesView::init(QList<ThingFilter*>* flp)
 {
 	//Создаем модель и связываем модель с представлением
-	fingRulesTableModel = new FingRulesModel(this, flp);
-	setModel(fingRulesTableModel);
+	thingRulesTableModel = new ThingRulesModel(this, flp);
+	setModel(thingRulesTableModel);
 
 	// Настройки поведения таблицы
 	resizeColumnsToContents();
@@ -210,7 +212,7 @@ void FingRulesView::init(QList<FingFilter*>* flp)
 	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
 }
 
-void FingRulesView::contextMenuEvent(QContextMenuEvent * e)
+void ThingRulesView::contextMenuEvent(QContextMenuEvent * e)
 {
 	Q_UNUSED(e)
 	QMenu* popup = new QMenu(this);
@@ -229,17 +231,17 @@ void FingRulesView::contextMenuEvent(QContextMenuEvent * e)
 		switch (iresult) {
 			case 0: // add
 				if (true) {
-					struct FingFilter::fing_rule_ex new_rule;
-					new_rule.param = FingFilter::NoParamRole;
+					struct ThingFilter::thing_rule_ex new_rule;
+					new_rule.param = ThingFilter::NoParamRole;
 					new_rule.negative = false;
-					new_rule.operand = FingFilter::NoOperRole;
+					new_rule.operand = ThingFilter::NoOperRole;
 					new_rule.int_value = 0;
 					new_rule.value = "";
-					new_rule.action = FingFilter::NoActionRole;
-					FingRuleEditDialog* dlg = new FingRuleEditDialog(this, &new_rule);
+					new_rule.action = ThingFilter::NoActionRole;
+					ThingRuleEditDialog* dlg = new ThingRuleEditDialog(this, &new_rule);
 					if (dlg) {
 						if (dlg->exec() == QDialog::Accepted) {
-							if (fingRulesTableModel->appendRule(new_rule.param, new_rule.negative, new_rule.operand, new_rule.value, new_rule.action)) {
+							if (thingRulesTableModel->appendRule(new_rule.param, new_rule.negative, new_rule.operand, new_rule.value, new_rule.action)) {
 								if (row >= 0 && row < model()->rowCount()) {
 									selectionModel()->select(model()->index(row, 0), QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 								}
@@ -253,14 +255,14 @@ void FingRulesView::contextMenuEvent(QContextMenuEvent * e)
 				break;
 			case 1: // edit
 				if (row >= 0 && row < model()->rowCount()) {
-					struct FingFilter::fing_rule_ex rule;
-					const struct FingFilter::fing_rule_ex* curr_rule = fingRulesTableModel->getRule(row);
+					struct ThingFilter::thing_rule_ex rule;
+					const struct ThingFilter::thing_rule_ex* curr_rule = thingRulesTableModel->getRule(row);
 					if (curr_rule) {
 						rule = *curr_rule;
-						FingRuleEditDialog* dlg = new FingRuleEditDialog(this, &rule);
+						ThingRuleEditDialog* dlg = new ThingRuleEditDialog(this, &rule);
 						if (dlg) {
 							if (dlg->exec() == QDialog::Accepted) {
-								fingRulesTableModel->modifyRule(row, &rule);
+								thingRulesTableModel->modifyRule(row, &rule);
 							}
 						}
 					}
@@ -281,14 +283,14 @@ void FingRulesView::contextMenuEvent(QContextMenuEvent * e)
 				break;
 			case 3: // up
 				if (row > 0 && row < model()->rowCount()) {
-					fingRulesTableModel->upRow(row);
+					thingRulesTableModel->upRow(row);
 					selectionModel()->select(model()->index(row, 0), QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 					selectionModel()->select(model()->index(row - 1, 0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
 				}
 				break;
 			case 4: // down
 				if (row >= 0 && row < model()->rowCount() - 1) {
-					fingRulesTableModel->downRow(row);
+					thingRulesTableModel->downRow(row);
 					selectionModel()->select(model()->index(row, 0), QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 					selectionModel()->select(model()->index(row + 1, 0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
 				}
@@ -298,10 +300,9 @@ void FingRulesView::contextMenuEvent(QContextMenuEvent * e)
 	delete popup;
 }
 
-void FingRulesView::keyPressEvent( QKeyEvent * e )
+void ThingRulesView::keyPressEvent( QKeyEvent * /*e*/ )
 {
-	Q_UNUSED(e)
-	/*	if (e->key() == Qt::Key_Space) {
+/*if (e->key() == Qt::Key_Space) {
 	int data = 2; //check
 	if (e->modifiers() & Qt::ControlModifier) {
    data = 3; //invert
@@ -318,12 +319,12 @@ void FingRulesView::keyPressEvent( QKeyEvent * e )
    }*/
 }
 
-void FingRulesView::currFilterChanged(int row)
+void ThingRulesView::currFilterChanged(int row)
 {
 	if (row < 0) {
 		setEnabled(false);
 	} else {
 		setEnabled(true);
 	}
-	fingRulesTableModel->reloadRules(row);
+	thingRulesTableModel->reloadRules(row);
 }

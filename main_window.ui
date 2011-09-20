@@ -523,7 +523,7 @@
           <widget class="QWidget" name="page_4">
            <layout class="QVBoxLayout" name="verticalLayout_10">
             <item>
-             <widget class="FingsView" name="fingsTable">
+             <widget class="ThingsView" name="thingsTable">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -542,7 +542,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="fingsSummaryLayout">
+             <layout class="QHBoxLayout" name="thingsSummaryLayout">
               <item>
                <widget class="QLabel" name="label_39">
                 <property name="text">
@@ -551,7 +551,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="labelFingsCountAll">
+               <widget class="QLabel" name="labelThingsCountAll">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -565,7 +565,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="labelFingsPriceAll">
+               <widget class="QLabel" name="labelThingsPriceAll">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -855,7 +855,7 @@
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_15">
                    <item>
-                    <widget class="QLabel" name="fingsCountCaption_label">
+                    <widget class="QLabel" name="fightsCountCaption_label">
                      <property name="text">
                       <string>Всего боев:</string>
                      </property>
@@ -864,7 +864,7 @@
                    <item>
                     <widget class="QLabel" name="damageMaxFromPersCaption_label">
                      <property name="text">
-                      <string>Лудший удар:</string>
+                      <string>Лучший удар:</string>
                      </property>
                     </widget>
                    </item>
@@ -883,14 +883,14 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingsDropCountCaption_label">
+                    <widget class="QLabel" name="thingsDropCountCaption_label">
                      <property name="text">
                       <string>Вещей собрано:</string>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingDropLastCaption_label">
+                    <widget class="QLabel" name="thingDropLastCaption_label">
                      <property name="text">
                       <string>Последняя вещь:</string>
                      </property>
@@ -915,7 +915,7 @@
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_16">
                    <item>
-                    <widget class="QLabel" name="fingsCountValue_label">
+                    <widget class="QLabel" name="fightsCountValue_label">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -967,7 +967,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingsDropCountValue_label">
+                    <widget class="QLabel" name="thingsDropCountValue_label">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -980,7 +980,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingDropLastValue_label">
+                    <widget class="QLabel" name="thingDropLastValue_label">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -1875,7 +1875,7 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="checkbox_FingDropPopup">
+                 <widget class="QCheckBox" name="checkbox_ThingDropPopup">
                   <property name="text">
                    <string>Всплывающее сообщение при дропе вещей</string>
                   </property>
@@ -1896,13 +1896,13 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="settFingsTab">
+              <widget class="QWidget" name="settThingsTab">
                <attribute name="title">
                 <string>Вещи</string>
                </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_27">
                 <item>
-                 <widget class="QCheckBox" name="checkbox_ShowFingsParams">
+                 <widget class="QCheckBox" name="checkbox_ShowThingsParams">
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
@@ -1922,7 +1922,7 @@
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
                      </property>
-                     <widget class="FingFiltersView" name="fingFiltersTable">
+                     <widget class="ThingFiltersView" name="thingFiltersTable">
                       <property name="selectionMode">
                        <enum>QAbstractItemView::SingleSelection</enum>
                       </property>
@@ -1930,7 +1930,7 @@
                        <enum>QAbstractItemView::SelectRows</enum>
                       </property>
                      </widget>
-                     <widget class="FingRulesView" name="fingRulesTable">
+                     <widget class="ThingRulesView" name="thingRulesTable">
                       <property name="selectionMode">
                        <enum>QAbstractItemView::SingleSelection</enum>
                       </property>
@@ -3516,17 +3516,17 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FingsView</class>
+   <class>ThingsView</class>
    <extends>QTableView</extends>
    <header>thingstab/thingsview.h</header>
   </customwidget>
   <customwidget>
-   <class>FingRulesView</class>
+   <class>ThingRulesView</class>
    <extends>QTableView</extends>
    <header>thingftab/thingfview.h</header>
   </customwidget>
   <customwidget>
-   <class>FingFiltersView</class>
+   <class>ThingFiltersView</class>
    <extends>QTableView</extends>
    <header>thingftab/thingfview.h</header>
   </customwidget>
@@ -3571,10 +3571,10 @@ p, li { white-space: pre-wrap; }
   <tabstop>fightTimerCombo</tabstop>
   <tabstop>fightSelectAction</tabstop>
   <tabstop>setAutoCloseFight</tabstop>
-  <tabstop>checkbox_FingDropPopup</tabstop>
-  <tabstop>checkbox_ShowFingsParams</tabstop>
-  <tabstop>fingFiltersTable</tabstop>
-  <tabstop>fingRulesTable</tabstop>
+  <tabstop>checkbox_ThingDropPopup</tabstop>
+  <tabstop>checkbox_ShowThingsParams</tabstop>
+  <tabstop>thingFiltersTable</tabstop>
+  <tabstop>thingRulesTable</tabstop>
   <tabstop>slot1Combo</tabstop>
   <tabstop>slot2Combo</tabstop>
   <tabstop>slot3Combo</tabstop>
@@ -3599,7 +3599,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkbox_ResetQueuePopup</tabstop>
   <tabstop>mapsParamSaveMode</tabstop>
   <tabstop>mapsUnloadInterval</tabstop>
-  <tabstop>fingsTable</tabstop>
+  <tabstop>thingsTable</tabstop>
  </tabstops>
  <resources>
   <include location="sofgameplugin.qrc"/>

@@ -71,22 +71,22 @@ class PluginCore: public QObject
 		int statFightsCount;
 		int statFightDamageMin;
 		int statFightDamageMax;
-		int statFingsDropCount;
-		QString statFingDropLast;
+		int statThingsDropCount;
+		QString statThingDropLast;
 		long long statExperienceDropCount;
 		int statKilledEnemies;
 
 		QRegExp mapCoordinatesExp;
 		QRegExp parPersRegExp;
 		QRegExp fightDropMoneyReg2;
-		QRegExp secretDropFingReg;
+		QRegExp secretDropThingReg;
 		QRegExp experienceDropReg;
 		QRegExp experienceDropReg2;
 		QRegExp secretBeforeReg;
 		QRegExp secretBeforeReg2;
 		QRegExp takeBeforeReg;
 		QRegExp commandStrReg;
-		QRegExp fingElementReg;
+		QRegExp thingElementReg;
 		QRegExp persInfoReg;
 		QRegExp persInfoMainReg;
 		QRegExp persInfoSitizenshipReg;
@@ -132,12 +132,12 @@ class PluginCore: public QObject
 		void mapsCommands(QStringList*);
 		void persCommands(QStringList*);
 		void clearCommands(QStringList*);
-		void fingsCommands(QStringList*);
+		void thingsCommands(QStringList*);
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
 		void initPopup(QString, QString, int);
-		int  parseFinghtGroups(const QStringList &, int);
-		int  parseFinghtStepResult(const QStringList &, int);
+		int  parseFightGroups(const QStringList &, int);
+		int  parseFightStepResult(const QStringList &, int);
 		void searchHorseshoe(const QString &);
 
 	protected:

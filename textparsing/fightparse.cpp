@@ -35,7 +35,7 @@
  * Парсит строки с описанием команды союзников, противников и их ауры
  * Возврат - количество принятых парсингом строк
  */
-int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
+int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
 {
 /*
 Открытый бой. (*- закр.)
@@ -167,7 +167,7 @@ int PluginCore::parseFinghtGroups(const QStringList &strs, int start_pos)
 	return n_pos;
 }
 
-int PluginCore::parseFinghtStepResult(const QStringList &strs, int start_pos)
+int PluginCore::parseFightStepResult(const QStringList &strs, int start_pos)
 {
 	int n_pos = start_pos;
 	int cnt = strs.size();
@@ -274,9 +274,9 @@ xxxxx*2 атаковали матерый волк/повр:4524
 					statisticsChanged();
 				}
 				if (nDropThings != 0) {
-					statFingsDropCount += nDropThings;
-					statFingDropLast = sDropThingLast;
-					valueChanged(VALUE_FINGS_DROP_COUNT, TYPE_INTEGER_FULL, statFingsDropCount);
+					statThingsDropCount += nDropThings;
+					statThingDropLast = sDropThingLast;
+					valueChanged(VALUE_THINGS_DROP_COUNT, TYPE_INTEGER_FULL, statThingsDropCount);
 					statisticsChanged();
 				}
 			}

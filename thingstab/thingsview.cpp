@@ -1,5 +1,5 @@
 /*
- * fingsview.cpp - Sof Game Psi plugin
+ * thingsview.cpp - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -30,16 +30,16 @@
 #include "thingsview.h"
 #include "thingsmodel.h"
 
-FingsView::FingsView( QWidget * parent ) : QTableView(parent)
+ThingsView::ThingsView( QWidget * parent ) : QTableView(parent)
 {
 	connect(horizontalHeader(), SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(headerContentMenu(const QPoint &)));
 }
 
-FingsView::~FingsView()
+ThingsView::~ThingsView()
 {
 }
 
-void FingsView::init()
+void ThingsView::init()
 {
 	resizeColumnsToContents();
 
@@ -64,7 +64,7 @@ void FingsView::init()
 /**
  * Сохраняет настройки таблицы вещей в xml элемент
  */
-QDomElement FingsView::saveSettingsToXml(QDomDocument &xmlDoc) const
+QDomElement ThingsView::saveSettingsToXml(QDomDocument &xmlDoc) const
 {
 	QDomElement eThingsTable = xmlDoc.createElement("things-table");
 	QDomElement eColumns = xmlDoc.createElement("columns");
@@ -84,7 +84,7 @@ QDomElement FingsView::saveSettingsToXml(QDomDocument &xmlDoc) const
  * Загружает настройки таблицы из xml элемента
  * Если xml пустой, то применяются дефолтные настройки
  */
-void FingsView::loadSettingsFromXml(QDomElement &xml)
+void ThingsView::loadSettingsFromXml(QDomElement &xml)
 {
 	QHash<QString, bool>colSet;
 	if (!xml.isNull()) {
@@ -117,18 +117,18 @@ void FingsView::loadSettingsFromXml(QDomElement &xml)
 	}
 }
 
-void FingsView::contextMenuEvent(QContextMenuEvent */*e*/)
+void ThingsView::contextMenuEvent(QContextMenuEvent */*e*/)
 {
 }
 
-void FingsView::keyPressEvent(QKeyEvent */*e*/)
+void ThingsView::keyPressEvent(QKeyEvent */*e*/)
 {
 }
 
 /**
  * Формирование меню для шапки таблицы
  */
-void FingsView::headerContentMenu(const QPoint &/*p*/)
+void ThingsView::headerContentMenu(const QPoint &/*p*/)
 {
 	QMenu *menu = new QMenu();
 	QHeaderView *header = horizontalHeader();

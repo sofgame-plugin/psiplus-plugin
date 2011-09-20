@@ -77,7 +77,7 @@ PluginCore::PluginCore()
 	mapCoordinatesExp.setPattern(QString::fromUtf8("^(-?[0-9]+):(-?[0-9]+)$"));
 	parPersRegExp.setPattern(QString::fromUtf8("^(\\w+)\\[у:([0-9]{1,2})\\|з:(-?[0-9]{1,6})/([0-9]{1,6})\\|э:(-?[0-9]{1,6})/([0-9]{1,6})\\|о:([0-9]{1,12})/([0-9]{1,12})\\]$"));
 	fightDropMoneyReg2.setPattern(QString::fromUtf8("(нашли|выпало) ([0-9]+) дринк"));
-	secretDropFingReg.setPattern(QString::fromUtf8("(забрали|нашли|выпала) \"(.+)\"")); // забрали "панцирь раритет" и ушли
+	secretDropThingReg.setPattern(QString::fromUtf8("(забрали|нашли|выпала) \"(.+)\"")); // забрали "панцирь раритет" и ушли
 	experienceDropReg.setCaseSensitivity(Qt::CaseInsensitive);
 	experienceDropReg.setPattern(QString::fromUtf8("^Очки опыта:? \\+([0-9]+)$")); // очки опыта +1500 || Очки опыта: +50000
 	experienceDropReg2.setPattern(QString::fromUtf8("^\\+([0-9]+) опыта\\.?")); // +4800 опыта за разбитый ящик.
@@ -85,7 +85,7 @@ PluginCore::PluginCore()
 	secretBeforeReg2.setPattern(QString::fromUtf8("^[0-9]- разбить ящик$"));  // 1- разбить ящик
 	takeBeforeReg.setPattern(QString::fromUtf8("^[0-9]- забрать$"));  // 1- забрать
 	commandStrReg.setPattern(QString::fromUtf8("^([0-9])- (.+)$")); // Команды перемещения
-	fingElementReg.setPattern(QString::fromUtf8("^([0-9]+)- (.+)\\((\\w+)\\)((.+)\\{(.+)\\})?(И:([0-9]+)ур\\.)?(- ([0-9]+)шт\\.)?$")); // Вещь
+	thingElementReg.setPattern(QString::fromUtf8("^([0-9]+)- (.+)\\((\\w+)\\)((.+)\\{(.+)\\})?(И:([0-9]+)ур\\.)?(- ([0-9]+)шт\\.)?$")); // Вещь
 	persInfoReg.setPattern(QString::fromUtf8("^Характеристики (героя|героини): (\\w+)( \\{\\w+\\})?$"));
 	persInfoMainReg.setPattern(QString::fromUtf8("^Уровень:([0-9]+), Здоровье:(-?[0-9]+)/([0-9]+), Энергия:(-?[0-9]+)/([0-9]+), Опыт:([0-9]+)(\\.|, Ост. до след уровня:([0-9]+))$")); // Уровень:25, Здоровье:6051/6051, Энергия:7956/7956, Опыт:186821489, Ост. до след уровня:133178511
 	persInfoSitizenshipReg.setPattern(QString::fromUtf8("^Гражданство: (.+)$")); // Гражданство: город "Вольный"
@@ -119,7 +119,7 @@ PluginCore::PluginCore()
 	connect(sender, SIGNAL(accountChanged(const QString)), this, SLOT(changeAccountJid(const QString)));
 	Pers *pers = Pers::instance();
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged()));
-	connect(pers, SIGNAL(fingsChanged()), this, SLOT(persBackpackChanged()));
+	connect(pers, SIGNAL(thingsChanged()), this, SLOT(persBackpackChanged()));
 	connect(&saveStatusTimer, SIGNAL(timeout()), this, SLOT(saveStatusTimeout()));
 }
 
@@ -254,7 +254,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	bool fPower = false; int nPowerC = 0; int nPowerF = 0;
 	bool fDropMoneys = false; int nDropMoneys = 0;
 	bool fStatFightDamageMin = false; bool fStatFightDamageMax = false;
-	int nFingsDropCount = 0; QString sFingDropLast;
+	int nThingsDropCount = 0; QString sThingDropLast;
 	bool fExperienceDrop = false;
 	int nTimeout = -1;
 	//bool fFight = false;
@@ -567,7 +567,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				nPersStatus = Pers::StatusPersInform;
 			} else if (sMessage == QString::fromUtf8("Экипировка:")) {
 				// Список вещей персонажа
-				Pers::instance()->setFingsStart(true);
+				Pers::instance()->setThingsStart(true);
 				sMessage = aMessage[++i].trimmed();
 				// Деньги
 
@@ -582,14 +582,14 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						Thing* fg = new Thing(sMessage);
 						if (fg->isValid()) {
 							fg->setDressed(fDressed);
-							Pers::instance()->setFingElement(FING_APPEND, fg);
+							Pers::instance()->setThingElement(THING_APPEND, fg);
 						} else {
 							delete fg;
 						}
 					}
 					i++;
 				}
-				Pers::instance()->setFingsEnd();
+				Pers::instance()->setThingsEnd();
 				nPersStatus = Pers::StatusThingsList;
 			} else if (sMessage.startsWith(QString::fromUtf8("Выбрана вещь: "))) {
 				// Выбрана вещь: кровавый кристалл (вещь)
@@ -693,11 +693,11 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					if (fightDropMoneyReg2.indexIn(sMessage, 0) != -1) {
 						fDropMoneys = true;
 						nDropMoneys = nDropMoneys + fightDropMoneyReg2.cap(2).toInt();
-					} else if (secretDropFingReg.indexIn(sMessage, 0) != -1) {
-						++nFingsDropCount;
-						sFingDropLast = secretDropFingReg.cap(2);
+					} else if (secretDropThingReg.indexIn(sMessage, 0) != -1) {
+						++nThingsDropCount;
+						sThingDropLast = secretDropThingReg.cap(2);
 						if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
-							initPopup(QString::fromUtf8("Sof game"), "+" + sFingDropLast, 3);
+							initPopup(QString::fromUtf8("Sof game"), "+" + sThingDropLast, 3);
 						}
 					}
 				}
@@ -707,11 +707,11 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				if (fightDropMoneyReg2.indexIn(sMessage, 0) != -1) {
 					fDropMoneys = true;
 					nDropMoneys = nDropMoneys + fightDropMoneyReg2.cap(2).toInt();
-				} else if (secretDropFingReg.indexIn(sMessage, 0) != -1) {
-					++nFingsDropCount;
-					sFingDropLast = secretDropFingReg.cap(2);
+				} else if (secretDropThingReg.indexIn(sMessage, 0) != -1) {
+					++nThingsDropCount;
+					sThingDropLast = secretDropThingReg.cap(2);
 					if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
-						initPopup(QString::fromUtf8("Sof game"), "+" + sFingDropLast, 3);
+						initPopup(QString::fromUtf8("Sof game"), "+" + sThingDropLast, 3);
 					}
 				}
 			} else if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
@@ -719,7 +719,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				fight->start();
 				fight->setMode(FIGHT_MODE_OPEN);
 				i++;
-				i += parseFinghtGroups(aMessage, i);
+				i += parseFightGroups(aMessage, i);
 				nTimeout = fight->timeout();
 				break;
 			} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
@@ -727,7 +727,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				fight->start();
 				fight->setMode(FIGHT_MODE_CLOSE);
 				i++;
-				i += parseFinghtGroups(aMessage, i);
+				i += parseFightGroups(aMessage, i);
 				nTimeout = fight->timeout();
 				break;
 			} else {
@@ -737,7 +737,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				// но в данном случае нас интересует резутьтат удара в бою
 				if (fight->isActive() || persStatus == Pers::StatusFightMultiSelect || persStatus == Pers::StatusNotKnow) {
 					// Сейчас статус не известен. На предыдущем ходе были в бою или не известно чего делали.
-					int p_cnt = parseFinghtStepResult(aMessage, i);
+					int p_cnt = parseFightStepResult(aMessage, i);
 					if (p_cnt != 0) { // Это был текст с результатами боя
 						if (fight->allyCount() == 0) { // Мин. и макс. удары считаем только когда в один в бою
 							int num1 = fight->minDamage();
@@ -759,7 +759,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 								fight->start();
 							fight->setMode(FIGHT_MODE_OPEN);
 							i++;
-							i += parseFinghtGroups(aMessage, i);
+							i += parseFightGroups(aMessage, i);
 							nTimeout = fight->timeout();
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"))) {
@@ -768,7 +768,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 								fight->start();
 							fight->setMode(FIGHT_MODE_CLOSE);
 							i++;
-							i += parseFinghtGroups(aMessage, i);
+							i += parseFightGroups(aMessage, i);
 							nTimeout = fight->timeout();
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Бой завершен!"))) {
@@ -953,10 +953,10 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		statisticsChanged();
 	}
 	// Отправляем количество найденных вещей
-	if (nFingsDropCount > 0) {
-		statFingsDropCount += nFingsDropCount;
-		statFingDropLast = sFingDropLast;
-		valueChanged(VALUE_FINGS_DROP_COUNT, TYPE_INTEGER_FULL, statFingsDropCount);
+	if (nThingsDropCount > 0) {
+		statThingsDropCount += nThingsDropCount;
+		statThingDropLast = sThingDropLast;
+		valueChanged(VALUE_THINGS_DROP_COUNT, TYPE_INTEGER_FULL, statThingsDropCount);
 		statisticsChanged();
 	}
 	// Отправляем упавший опыт
@@ -1117,8 +1117,8 @@ bool PluginCore::getIntValue(int valueId, int* valuePtr)
 		*valuePtr = statFightDamageMax;
 		return true;
 	}
-	if (valueId == VALUE_FINGS_DROP_COUNT) {
-		*valuePtr = statFingsDropCount;
+	if (valueId == VALUE_THINGS_DROP_COUNT) {
+		*valuePtr = statThingsDropCount;
 		return true;
 	}
 	if (valueId == VALUE_FIGHTS_COUNT) {
@@ -1151,11 +1151,11 @@ bool PluginCore::getTextValue(int valueId, QString* valuePtr)
 		*valuePtr = lastGameJid;
 		return true;
 	}
-	if (valueId == VALUE_FING_DROP_LAST) {
-		if (statFingDropLast.length() == 0) {
+	if (valueId == VALUE_THING_DROP_LAST) {
+		if (statThingDropLast.length() == 0) {
 			return false;
 		}
-		*valuePtr = statFingDropLast;
+		*valuePtr = statThingDropLast;
 		return true;
 	}
 	if (valueId == VALUE_LAST_CHAT_JID) {
@@ -1182,18 +1182,18 @@ void PluginCore::resetStatistic(int valueId)
 	} else if (valueId == VALUE_DAMAGE_MAX_FROM_PERS) {
 		statFightDamageMax = -1;
 		valueChanged(VALUE_DAMAGE_MAX_FROM_PERS, TYPE_NA, 0);
-	} else if (valueId == VALUE_FINGS_DROP_COUNT) {
-		statFingsDropCount = 0;
-		valueChanged(VALUE_FINGS_DROP_COUNT, TYPE_INTEGER_FULL, statFingsDropCount);
+	} else if (valueId == VALUE_THINGS_DROP_COUNT) {
+		statThingsDropCount = 0;
+		valueChanged(VALUE_THINGS_DROP_COUNT, TYPE_INTEGER_FULL, statThingsDropCount);
 	} else if (valueId == VALUE_FIGHTS_COUNT) {
 		statFightsCount = 0;
 		valueChanged(VALUE_FIGHTS_COUNT, TYPE_INTEGER_FULL, statFightsCount);
 	} else if (valueId == VALUE_LAST_GAME_JID) {
 		lastGameJid = "";
 		valueChanged(VALUE_LAST_GAME_JID, TYPE_NA, 0);
-	} else if (valueId == VALUE_FING_DROP_LAST) {
-		statFingDropLast = "";
-		valueChanged(VALUE_FING_DROP_LAST, TYPE_NA, 0);
+	} else if (valueId == VALUE_THING_DROP_LAST) {
+		statThingDropLast = "";
+		valueChanged(VALUE_THING_DROP_LAST, TYPE_NA, 0);
 	} else if (valueId == VALUE_LAST_CHAT_JID) {
 		lastChatJid = "";
 		valueChanged(VALUE_LAST_CHAT_JID, TYPE_NA, 0);
@@ -1334,14 +1334,14 @@ bool PluginCore::savePersStatus()
 				domElement.appendChild(xmlDoc.createTextNode(QString::number(statMoneysDropCount)));
 				eStat.appendChild(domElement);
 			}
-			if (statFingsDropCount != 0) {
+			if (statThingsDropCount != 0) {
 				domElement = xmlDoc.createElement("fings-drop-count");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFingsDropCount)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(statThingsDropCount)));
 				eStat.appendChild(domElement);
 			}
-			if (statFingDropLast.length() != 0) {
+			if (statThingDropLast.length() != 0) {
 				domElement = xmlDoc.createElement("fing-drop-last");
-				domElement.appendChild(xmlDoc.createTextNode(statFingDropLast));
+				domElement.appendChild(xmlDoc.createTextNode(statThingDropLast));
 				eStat.appendChild(domElement);
 			}
 			if (statExperienceDropCount != 0) {
@@ -1400,8 +1400,8 @@ bool PluginCore::loadPersStatus()
 	statFightsCount = 0;
 	statFightDamageMin = -1;
 	statFightDamageMax = -1;
-	statFingsDropCount = 0;
-	statFingDropLast = "";
+	statThingsDropCount = 0;
+	statThingDropLast = "";
 	statExperienceDropCount = 0;
 	statKilledEnemies = 0;
 	// Загрузка статуса
@@ -1472,9 +1472,9 @@ bool PluginCore::loadPersStatus()
 							} else if (sTagName == "moneys-drop-count") {
 								statMoneysDropCount = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "fings-drop-count") {
-								statFingsDropCount = getTextFromNode(&childStatNode).toInt();
+								statThingsDropCount = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "fing-drop-last") {
-								statFingDropLast = getTextFromNode(&childStatNode);
+								statThingDropLast = getTextFromNode(&childStatNode);
 							} else if (sTagName == "experience-drop-count") {
 								statExperienceDropCount = getTextFromNode(&childStatNode).toLongLong();
 							} else if (sTagName == "killed-enemies") {
@@ -1615,7 +1615,7 @@ bool PluginCore::sendString(const QString &str)
 	} else if (str1.startsWith("/things")) {
 		setConsoleText(str1, true);
 		QStringList thingsCmd = str1.split(" ");
-		fingsCommands(&thingsCmd);
+		thingsCommands(&thingsCmd);
 	} else if (str1.startsWith("/aliases")) {
 		setConsoleText(str1, true);
 		QStringList aliasesCmd = splitCommandString(str1);
@@ -1700,13 +1700,13 @@ void PluginCore::getStatistics(QString* commandPtr)
 			stat_str.append(NA_TEXT);
 		}
 		stat_str.append(QString::fromUtf8("\nВещей собрано: "));
-		if (getIntValue(VALUE_FINGS_DROP_COUNT, &i)) {
+		if (getIntValue(VALUE_THINGS_DROP_COUNT, &i)) {
 			stat_str.append(numToStr(i, "'"));
 		} else {
 			stat_str.append(NA_TEXT);
 		}
 		stat_str.append(QString::fromUtf8("\nПоследняя вещь: "));
-		if (getTextValue(VALUE_FING_DROP_LAST, &str1)) {
+		if (getTextValue(VALUE_THING_DROP_LAST, &str1)) {
 			stat_str.append(str1);
 		} else {
 			stat_str.append(NA_TEXT);
@@ -2654,8 +2654,8 @@ void PluginCore::clearCommands(QStringList* args)
 				resetStatistic(VALUE_DAMAGE_MAX_FROM_PERS);
 				resetStatistic(VALUE_DAMAGE_MIN_FROM_PERS);
 				resetStatistic(VALUE_DROP_MONEYS);
-				resetStatistic(VALUE_FINGS_DROP_COUNT);
-				resetStatistic(VALUE_FING_DROP_LAST);
+				resetStatistic(VALUE_THINGS_DROP_COUNT);
+				resetStatistic(VALUE_THING_DROP_LAST);
 				resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
 				resetStatistic(VALUE_KILLED_ENEMIES);
 				str1.append(QString::fromUtf8("Статистика боев сброшена\n"));
@@ -2671,7 +2671,7 @@ void PluginCore::clearCommands(QStringList* args)
 /**
  * Обработка команд уровня things
  */
-void PluginCore::fingsCommands(QStringList* args)
+void PluginCore::thingsCommands(QStringList* args)
 {
 	if ((*args)[0] != "/things")
 		return;
@@ -2686,8 +2686,8 @@ void PluginCore::fingsCommands(QStringList* args)
 			filterNum = (*args)[2].toInt(&fOk);
 		}
 		if (fOk && filterNum >= 0) {
-			QList<FingFilter*> filtersList;
-			Pers::instance()->getFingsFiltersEx(&filtersList);
+			QList<ThingFilter*> filtersList;
+			Pers::instance()->getThingsFiltersEx(&filtersList);
 			if (filterNum <= filtersList.size()) {
 				int iface = Pers::instance()->getThingsInterface();
 				if (filterNum == 0) {
@@ -2703,16 +2703,16 @@ void PluginCore::fingsCommands(QStringList* args)
 					str1.append(QString::fromUtf8("--- Вещи из фильтра \"%1\" ---\n").arg(sFltrName));
 					Pers::instance()->setThingsInterfaceFilter(iface, filterNum);
 				}
-				int fingsCnt = 0;
+				int thingsCnt = 0;
 				while (true) {
-					const Thing* thing = Pers::instance()->getFingByRow(fingsCnt, iface);
+					const Thing* thing = Pers::instance()->getThingByRow(thingsCnt, iface);
 					if (!thing) break;
 					str1.append(thing->toString(Thing::ShowAll));
 					str1.append("\n");
-					fingsCnt++;
+					thingsCnt++;
 				}
-				if (fingsCnt > 0) {
-					int nCountAll = Pers::instance()->getFingsCount(iface);
+				if (thingsCnt > 0) {
+					int nCountAll = Pers::instance()->getThingsCount(iface);
 					int nPriceAll = Pers::instance()->getPriceAll(iface);
 					str1.append(QString::fromUtf8("Всего предметов: %1, на сумму: %2 дринк.\n").arg(numToStr(nCountAll, "'")).arg(numToStr(nPriceAll, "'")));
 					int noPrice = Pers::instance()->getNoPriceCount(iface);
@@ -2732,8 +2732,8 @@ void PluginCore::fingsCommands(QStringList* args)
 	} else if ((*args)[1] == "filters") {
 		str1.append(QString::fromUtf8("--- Фильтры вещей ---\n"));
 		if (argsCount == 2 && (*args)[2] == "list") {
-			QList<FingFilter*> filtersList;
-			Pers::instance()->getFingsFiltersEx(&filtersList);
+			QList<ThingFilter*> filtersList;
+			Pers::instance()->getThingsFiltersEx(&filtersList);
 			int cntFilters = filtersList.size();
 			if (cntFilters > 0) {
 				for (int i = 0; i < cntFilters; i++) {
@@ -2751,7 +2751,7 @@ void PluginCore::fingsCommands(QStringList* args)
 	} else if ((*args)[1] == "price") {
 		str1.append(QString::fromUtf8("--- Цены вещей ---\n"));
 		if (argsCount == 2 && (*args)[2] == "list") {
-			const QVector<Pers::price_item>* priceListPrt = Pers::instance()->getFingsPrice();
+			const QVector<Pers::price_item>* priceListPrt = Pers::instance()->getThingsPrice();
 			int sizePrice = priceListPrt->size();
 			if (sizePrice > 0) {
 				for (int i = 0; i < sizePrice; i++) {

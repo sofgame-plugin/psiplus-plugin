@@ -1,5 +1,5 @@
 /*
- * fingfmodel.h - Sof Game Psi plugin
+ * thingfmodel.h - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,15 +23,15 @@
  *
  */
 
-#ifndef FINGFMODEL_H
-#define FINGFMODEL_H
+#ifndef THINGFMODEL_H
+#define THINGFMODEL_H
 
 #include <QAbstractTableModel>
 #include <QStringList>
 
-#include "../pers.h"
+#include "pers.h"
 
-class FingFiltersModel : public QAbstractTableModel
+class ThingFiltersModel : public QAbstractTableModel
 {
 	Q_OBJECT
 	public:
@@ -41,18 +41,18 @@ class FingFiltersModel : public QAbstractTableModel
 			NameRole,
 			CountRole
 		};
-		FingFiltersModel(QObject* parent, QList<FingFilter*>*);
-		~FingFiltersModel();
+		ThingFiltersModel(QObject* parent, QList<ThingFilter*>*);
+		~ThingFiltersModel();
 		void reloadFilters();
-		FingFilter* getFilterByRow(int);
+		ThingFilter* getFilterByRow(int) const;
 		int rowCount(const QModelIndex &parent = QModelIndex()) const;
-		int columnCount(const QModelIndex & parent = QModelIndex()) const;
+		int columnCount(const QModelIndex &parent = QModelIndex()) const;
 		QVariant data(const QModelIndex &index, int role) const;
 		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-		bool insertRows(int, int, const QModelIndex&  = QModelIndex());
-		bool setData(const QModelIndex& idx, const QVariant& value, int role = Qt::EditRole);
+		bool insertRows(int, int, const QModelIndex &parent  = QModelIndex());
+		bool setData(const QModelIndex &idx, const QVariant &value, int role = Qt::EditRole);
 		bool swapRows(int, int);
-		bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
+		bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
 		void clear();
 		Qt::ItemFlags flags(const QModelIndex & index) const;
 
@@ -66,7 +66,7 @@ class FingFiltersModel : public QAbstractTableModel
 			QString  name;
 			int      rulesCount;
 		};
-		QList<FingFilter*>* filtersListPtr;
+		QList<ThingFilter*>* filtersListPtr;
 		QStringList columnNames;
 		QList<Role> roles;
 
@@ -77,19 +77,19 @@ class FingFiltersModel : public QAbstractTableModel
 
 };
 
-#endif // FINGSMODEL_H
+#endif // THINGSMODEL_H
 
 //**********************************************************************************
 
-#ifndef FINGFMODEL2_H
-#define FINGFMODEL2_H
+#ifndef THINGFMODEL2_H
+#define THINGFMODEL2_H
 
 #include <QAbstractTableModel>
 #include <QStringList>
 
-#include "../pers.h"
+#include "pers.h"
 
-class FingRulesModel : public QAbstractTableModel
+class ThingRulesModel : public QAbstractTableModel
 {
 	Q_OBJECT
 	public:
@@ -99,16 +99,16 @@ class FingRulesModel : public QAbstractTableModel
 			ValueRole,
 			ActionRole
 		};
-		FingRulesModel(QObject* parent, QList<FingFilter*>*);
+		ThingRulesModel(QObject* parent, QList<ThingFilter*>*);
 		void reloadRules(int);
-		const struct FingFilter::fing_rule_ex* getRule(int);
+		const struct ThingFilter::thing_rule_ex* getRule(int) const;
 		int rowCount(const QModelIndex &parent = QModelIndex()) const;
-		int columnCount(const QModelIndex & parent = QModelIndex()) const;
+		int columnCount(const QModelIndex &parent = QModelIndex()) const;
 		QVariant data(const QModelIndex &index, int role) const;
 		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-		bool appendRule(FingFilter::ParamRole, bool, FingFilter::OperandRole, QString, FingFilter::ActionRole);
-		bool modifyRule(int, const struct FingFilter::fing_rule_ex*);
-		bool setData (const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
+		bool appendRule(ThingFilter::ParamRole, bool, ThingFilter::OperandRole, const QString &, ThingFilter::ActionRole);
+		bool modifyRule(int, const struct ThingFilter::thing_rule_ex *);
+		bool setData (const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
 		bool upRow(int);
 		bool downRow(int);
 		bool removeRows(int, int, const QModelIndex& = QModelIndex());
@@ -116,8 +116,7 @@ class FingRulesModel : public QAbstractTableModel
 
 
 	private:
-		//QList<struct fing_rule> rulesList;
-		QList<FingFilter*>* filtersListPtr;
+		QList<ThingFilter*> *filtersListPtr;
 		int currFilterIndex;
 		QStringList columnNames;
 		QList<Role> roles;
@@ -131,4 +130,4 @@ class FingRulesModel : public QAbstractTableModel
 		//void doAction(QWidget*, int, int);
 };
 
-#endif // FINGSMODEL2_H
+#endif // THINGSMODEL2_H

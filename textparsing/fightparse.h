@@ -28,7 +28,7 @@
 
 #include <QStringList>
 
-int parseFinghtGroups(QStringList, int);
-int parseFinghtStepResult(QStringList, int);
+int parseFightGroups(QStringList, int);
+int parseFightStepResult(QStringList, int);
 
 #endif // FIGHTPARSE_H

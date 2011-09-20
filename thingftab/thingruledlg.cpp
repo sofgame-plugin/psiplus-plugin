@@ -1,5 +1,5 @@
 /*
-* FingRuleEditDialog.cpp - Sof Game Psi plugin
+ * thingruledlg.cpp - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -30,15 +30,15 @@
 #include "utils.h"
 
 
-FingRuleEditDialog::FingRuleEditDialog(QWidget* parent, struct FingFilter::fing_rule_ex* rulePtr) : QDialog(parent)
+ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex* rulePtr) : QDialog(parent)
 {
 	setupUi(this);
 	// Сохраняем указатель
 	savedRulePtr = rulePtr;
 	// Заполняем массив ролей
-	paramRoles << FingFilter::NameRole << FingFilter::TypeRole << FingFilter::NamedRole << FingFilter::DressedRole << FingFilter::PriceRole << FingFilter::CountRole;
-	operandRoles << FingFilter::ContainsRole << FingFilter::EqualRole << FingFilter::AboveRole << FingFilter::LowRole;
-	actionRoles << FingFilter::YesRole << FingFilter::NoRole << FingFilter::NextRole;
+	paramRoles << ThingFilter::NameRole << ThingFilter::TypeRole << ThingFilter::NamedRole << ThingFilter::DressedRole << ThingFilter::PriceRole << ThingFilter::CountRole;
+	operandRoles << ThingFilter::ContainsRole << ThingFilter::EqualRole << ThingFilter::AboveRole << ThingFilter::LowRole;
+	actionRoles << ThingFilter::YesRole << ThingFilter::NoRole << ThingFilter::NextRole;
 	// Заполняем элемент параметров вещи
 	param->clear();
 	param->addItem(QString::fromUtf8("Имя вещи"), 0);
@@ -47,7 +47,7 @@ FingRuleEditDialog::FingRuleEditDialog(QWidget* parent, struct FingFilter::fing_
 	param->addItem(QString::fromUtf8("Одета"), 3);
 	param->addItem(QString::fromUtf8("Цена вещи"), 4);
 	param->addItem(QString::fromUtf8("Количество"), 5);
-	FingFilter::ParamRole par_num = rulePtr->param;
+	ThingFilter::ParamRole par_num = rulePtr->param;
 	int index = -1;
 	for (int i = 0; i < paramRoles.size(); i++) {
 		if (paramRoles.at(i) == par_num) {
@@ -62,7 +62,7 @@ FingRuleEditDialog::FingRuleEditDialog(QWidget* parent, struct FingFilter::fing_
 		negative->setCheckState(Qt::Checked);
 	// Заполняем элемент операнда
 	paramChanged(par_index);
-	FingFilter::OperandRole oper_num = rulePtr->operand;
+	ThingFilter::OperandRole oper_num = rulePtr->operand;
 	index = -1;
 	for (int i = 0; i < operandRoles.size(); i++) {
 		if (operandRoles.at(i) == oper_num) {
@@ -78,7 +78,7 @@ FingRuleEditDialog::FingRuleEditDialog(QWidget* parent, struct FingFilter::fing_
 	action->addItem(QString::fromUtf8("отображать"), 0);
 	action->addItem(QString::fromUtf8("не отображать"), 1);
 	action->addItem(QString::fromUtf8("следующее правило"), 2);
-	FingFilter::ActionRole action_num = rulePtr->action;
+	ThingFilter::ActionRole action_num = rulePtr->action;
 	index = -1;
 	for (int i = 0; i < actionRoles.size(); i++) {
 		if (actionRoles.at(i) == action_num) {
@@ -94,20 +94,20 @@ FingRuleEditDialog::FingRuleEditDialog(QWidget* parent, struct FingFilter::fing_
 	setAttribute(Qt::WA_DeleteOnClose);
 }
 
-FingRuleEditDialog::~FingRuleEditDialog()
+ThingRuleEditDialog::~ThingRuleEditDialog()
 {
 	disconnect(param, SIGNAL(currentIndexChanged(int)), this, SLOT(paramChanged(int)));
 	disconnect(OkCancelBtn, SIGNAL(accepted()), this, SLOT(okBtnClick()));
 }
 
-void FingRuleEditDialog::paramChanged(int index)
+void ThingRuleEditDialog::paramChanged(int index)
 {
-	FingFilter::ParamRole par_num = FingFilter::NoParamRole;
+	ThingFilter::ParamRole par_num = ThingFilter::NoParamRole;
 	int par_data = param->itemData(index).toInt();
 	if (par_data >= 0 && par_data < paramRoles.size()) {
 		par_num = paramRoles.at(par_data);
 	}
-	if (par_num == FingFilter::DressedRole) { // Одето
+	if (par_num == ThingFilter::DressedRole) { // Одето
 		operand->setCurrentIndex(-1);
 		operand->setEnabled(false);
 		negative->setText(QString::fromUtf8("нет"));
@@ -120,21 +120,21 @@ void FingRuleEditDialog::paramChanged(int index)
 	}
 	// Заполняем элемент операнда
 	operand->clear();
-	if (par_num == FingFilter::NameRole) {
+	if (par_num == ThingFilter::NameRole) {
 		operand->addItem(QString::fromUtf8("содержит"), 0);
 	}
-	if (par_num == FingFilter::NameRole || par_num == FingFilter::TypeRole || par_num == FingFilter::NamedRole || par_num == FingFilter::PriceRole || par_num == FingFilter::CountRole) {
+	if (par_num == ThingFilter::NameRole || par_num == ThingFilter::TypeRole || par_num == ThingFilter::NamedRole || par_num == ThingFilter::PriceRole || par_num == ThingFilter::CountRole) {
 		operand->addItem(QString::fromUtf8("равно"), 1);
 	}
-	if (par_num == FingFilter::NamedRole || par_num == FingFilter::PriceRole || par_num == FingFilter::CountRole) {
+	if (par_num == ThingFilter::NamedRole || par_num == ThingFilter::PriceRole || par_num == ThingFilter::CountRole) {
 		operand->addItem(QString::fromUtf8("больше"), 2);
 	}
-	if (par_num == FingFilter::NamedRole || par_num == FingFilter::PriceRole || par_num == FingFilter::CountRole) {
+	if (par_num == ThingFilter::NamedRole || par_num == ThingFilter::PriceRole || par_num == ThingFilter::CountRole) {
 		operand->addItem(QString::fromUtf8("меньше"), 3);
 	}
 }
 
-void FingRuleEditDialog::okBtnClick()
+void ThingRuleEditDialog::okBtnClick()
 {
 	int par_index = param->currentIndex();
 	if (par_index == -1) {
@@ -143,11 +143,11 @@ void FingRuleEditDialog::okBtnClick()
 		return;
 	}
 	int val_num = 0;
-	FingFilter::OperandRole oper_num = FingFilter::NoOperRole;
+	ThingFilter::OperandRole oper_num = ThingFilter::NoOperRole;
 	QString val_str = "";
-	FingFilter::ParamRole par_num = paramRoles.at(param->itemData(par_index).toInt());
-	FingFilter::ActionRole act_num = FingFilter::NoActionRole;
-	if (par_num != FingFilter::DressedRole) { // Кроме "одето"
+	ThingFilter::ParamRole par_num = paramRoles.at(param->itemData(par_index).toInt());
+	ThingFilter::ActionRole act_num = ThingFilter::NoActionRole;
+	if (par_num != ThingFilter::DressedRole) { // Кроме "одето"
 		int oper_index = operand->currentIndex();
 		if (oper_index == -1) {
 			QMessageBox::warning(this, QString::fromUtf8("Сохранение правила"), QString::fromUtf8("Необходимо указать операнд"), QMessageBox::Ok);
@@ -161,7 +161,7 @@ void FingRuleEditDialog::okBtnClick()
 			value_str->setFocus();
 			return;
 		}
-		if (par_num == FingFilter::NamedRole || par_num == FingFilter::PriceRole || par_num == FingFilter::CountRole) {
+		if (par_num == ThingFilter::NamedRole || par_num == ThingFilter::PriceRole || par_num == ThingFilter::CountRole) {
 			bool fOk;
 			val_str = val_str.trimmed();
 			val_num = val_str.toInt(&fOk);
@@ -170,7 +170,7 @@ void FingRuleEditDialog::okBtnClick()
 				value_str->setFocus();
 				return;
 			}
-		} else if (par_num == FingFilter::TypeRole) {
+		} else if (par_num == ThingFilter::TypeRole) {
 			val_str = val_str.trimmed();
 			val_num = thingTypeFromString(val_str);
 			if (val_num == -1) {

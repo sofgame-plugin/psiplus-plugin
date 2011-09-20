@@ -1,5 +1,5 @@
 /*
-* FingFilterEditDialog.cpp - Sof Game Psi plugin
+ * thingfilterdlg.cpp - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 //#include "../pers_info.h"
 
 
-FingFilterEditDialog::FingFilterEditDialog(QWidget* parent, bool* enable_, QString* name_) : QDialog(parent)
+ThingFilterEditDialog::ThingFilterEditDialog(QWidget* parent, bool* enable_, QString* name_) : QDialog(parent)
 {
 	setupUi(this);
 	if (*enable_)
@@ -43,13 +43,13 @@ FingFilterEditDialog::FingFilterEditDialog(QWidget* parent, bool* enable_, QStri
 	setAttribute(Qt::WA_DeleteOnClose);
 }
 
-FingFilterEditDialog::~FingFilterEditDialog()
+ThingFilterEditDialog::~ThingFilterEditDialog()
 {
 	disconnect(OkCancelBtn, SIGNAL(accepted()), this, SLOT(okBtnClick()));
 }
 
 
-void FingFilterEditDialog::okBtnClick()
+void ThingFilterEditDialog::okBtnClick()
 {
 	QString name_str = name->text();
 	if (name_str.trimmed().isEmpty()) {

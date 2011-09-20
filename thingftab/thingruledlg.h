@@ -1,5 +1,5 @@
 /*
- * FingRuleEditDialog.h - Sof Game Psi plugin
+ * thingruledlg.h - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,24 +23,24 @@
  *
  */
 
-#ifndef FINGRULEEDIT_H
-#define FINGRULEEDIT_H
+#ifndef THINGRULEEDIT_H
+#define THINGRULEEDIT_H
 
 #include "ui_thingruledlg.h"
-#include "../pers.h"
+#include "pers.h"
 
-class FingRuleEditDialog : public QDialog, public Ui::FingRuleEdit
+class ThingRuleEditDialog : public QDialog, public Ui::ThingRuleEdit
 {
 	Q_OBJECT
 public:
-	FingRuleEditDialog(QWidget* parent, struct FingFilter::fing_rule_ex*);
-	~FingRuleEditDialog();
+	ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex*);
+	~ThingRuleEditDialog();
 
 protected:
-	struct FingFilter::fing_rule_ex* savedRulePtr;
-	QList<FingFilter::ParamRole> paramRoles;
-	QList<FingFilter::OperandRole> operandRoles;
-	QList<FingFilter::ActionRole> actionRoles;
+	struct ThingFilter::thing_rule_ex* savedRulePtr;
+	QList<ThingFilter::ParamRole> paramRoles;
+	QList<ThingFilter::OperandRole> operandRoles;
+	QList<ThingFilter::ActionRole> actionRoles;
 
 protected slots:
 	void paramChanged(int);
@@ -48,4 +48,4 @@ protected slots:
 
 };
 
-#endif // FINGRULEEDIT_H
+#endif // THINGRULEEDIT_H

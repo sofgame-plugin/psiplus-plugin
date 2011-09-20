@@ -112,12 +112,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 
 	private:
 		static QList< QPair<int, QString> > statisticXmlStrings;
-		int statMessagesCount;
-		long statDropMoneys; // ???? Это откуда лонг???
-		int statDamageMinFromPers;
-		int statDamageMaxFromPers;
-		int statFingsCount;
-		int statFightsCount;
 		int settingTimeOutDisplay;
 		int selectedMapElement;
 		QDateTime* timeoutStamp;
@@ -125,22 +119,20 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		int timeoutEventSlot;
 		int queueEventSlot;
 		bool queueShowFlag;
-		bool fingsChanged;
-		QString statGameJid;
-		QString statFingDropLast;
+		bool thingsChanged;
 		int currentPage;
 		QMenu* mapMenu;
-		QMenu* fingsMenu;
+		QMenu* thingsMenu;
 		QAction* actionMarkMapElement;
 		QAction* actionMoveMapElement;
 		QAction* actionRemoveMapElement;
-		QAction* actionSetFingPrice;
-		QAction* actionFingsParamToConsole;
-		QTabBar* fingsTabBar;
+		QAction* actionSetThingPrice;
+		QAction* actionThingsParamToConsole;
+		QTabBar* thingsTabBar;
 		QList<FontLabel*>fontLabelGroup;
 		QButtonGroup* fontButtonGroup;
-		ThingsModel* fingsTableModel;
-		QList<FingFilter*> filtersList;
+		ThingsModel* thingsTableModel;
+		QList<ThingFilter*> filtersList;
 		bool autoEnterMode;
 		int  thingsIface;
 		QString lastMapForMoveElement; // Запоминается имя карты последнего переноса элемента
@@ -150,7 +142,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 
 	public slots:
 		void valueChanged(int eventId, int valueType, int value); // Приходят сообщения и событиях, часто об обновлении статистики.
-		void updateFingFiltersTab(); // Обновляет список (имена) табов у вещей
+		void updateThingFiltersTab(); // Обновляет список (имена) табов у вещей
 		void showQueueLen(int); // Отображение очереди команд
 		void chooseFont(QAbstractButton* button); // Нажата кнопка выбора фонта
 
@@ -159,7 +151,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void activateMainPage();
 		void activateFightPage();
 		void activatePersInfoPage();
-		void activateFingsPage();
+		void activateThingsPage();
 		void activateStatPage();
 		void activateSettingsPage();
 		void resetCommonStatistic();
@@ -179,11 +171,11 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void moveMapElement();
 		void removeMapElement();
 		void markMapElement();
-		void showFings(int);
-		void fingsShowContextMenu(const QPoint &);
-		void setFingPrice();
-		void fingParamToConsole();
-		void persFingsChanged();
+		void showThings(int);
+		void thingsShowContextMenu(const QPoint &);
+		void setThingPrice();
+		void thingParamToConsole();
+		void persThingsChanged();
 		void persParamChanged(int, int, int);
 
 };
