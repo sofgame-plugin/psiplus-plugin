@@ -1722,7 +1722,7 @@ void SofMainWindow::showThingsSummary()
 	labelThingsPriceAll->setText(str1);
 }
 
-void SofMainWindow::thingsShowContextMenu(const QPoint &pos)
+void SofMainWindow::thingsShowContextMenu(const QPoint &/*pos*/)
 {
 	/**
 	* Отображает контекстное меню для таблицы с вещами
@@ -1734,7 +1734,7 @@ void SofMainWindow::thingsShowContextMenu(const QPoint &pos)
 		actionSetThingPrice->setEnabled(false);
 		actionThingsParamToConsole->setEnabled(false);
 	}
-	thingsMenu->exec(thingsTable->mapToGlobal(pos));
+	thingsMenu->exec(QCursor::pos());
 }
 
 /**
