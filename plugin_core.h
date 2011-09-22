@@ -135,7 +135,7 @@ class PluginCore: public QObject
 		void thingsCommands(QStringList*);
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
-		void initPopup(QString, QString, int);
+		void initPopup(const QString &, int);
 		int  parseFightGroups(const QStringList &, int);
 		int  parseFightStepResult(const QStringList &, int);
 		void searchHorseshoe(const QString &);

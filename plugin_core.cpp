@@ -649,12 +649,12 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			} else if (sMessage == QString::fromUtf8("Ваше имя в кубке конторы убийц...")) {
 				nPersStatus = Pers::StatusInKillersCup;
 				if (Settings::instance()->getBoolSetting(Settings::SettingInKillersCupPopup)) {
-					initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Ваше имя в кубке конторы убийц!"), 60);
+					initPopup(QString::fromUtf8("Ваше имя в кубке конторы убийц!"), 60);
 				}
 				i = nCount; // Блокируем дальнейший анализ
 			} else if (killerAttackReg.indexIn(sMessage, 0) != -1) {
 				if (Settings::instance()->getBoolSetting(Settings::SettingKillerAttackPopup)) {
-					initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("На вас совершено нападение! Убийца: ") + killerAttackReg.cap(1), 10);
+					initPopup(QString::fromUtf8("На вас совершено нападение! Убийца: ") + killerAttackReg.cap(1), 10);
 				}
 				nPersStatus = Pers::StatusKillerAttack;
 				i = nCount; // Блокируем дальнейший анализ
@@ -697,7 +697,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						++nThingsDropCount;
 						sThingDropLast = secretDropThingReg.cap(2);
 						if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
-							initPopup(QString::fromUtf8("Sof game"), "+" + sThingDropLast, 3);
+							initPopup("+" + sThingDropLast, 3);
 						}
 					}
 				}
@@ -711,7 +711,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					++nThingsDropCount;
 					sThingDropLast = secretDropThingReg.cap(2);
 					if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
-						initPopup(QString::fromUtf8("Sof game"), "+" + sThingDropLast, 3);
+						initPopup("+" + sThingDropLast, 3);
 					}
 				}
 			} else if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
@@ -1007,7 +1007,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		if (q_len > 0) {
 			sender->resetGameQueue();
 			if (Settings::instance()->getBoolSetting(Settings::SettingResetQueuePopup)) {
-				initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Очередь сброшена"), 30);
+				initPopup(QString::fromUtf8("Очередь сброшена"), 30);
 			}
 			QString str1 = QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len);
 			setGameText(str1);
@@ -1020,7 +1020,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 void PluginCore::searchHorseshoe(const QString &sMessage)
 {
 	if (sMessage.endsWith('U')) {
-		initPopup(QString::fromUtf8("Sof game"), QString::fromUtf8("Обнаружена подкова!"), 20);
+		initPopup(QString::fromUtf8("Обнаружена подкова!"), 20);
 		QVector<GameMap::maps_other_pers> aHorseshoe;
 		GameMap::maps_other_pers mop;
 		mop.offset_x = 0;
@@ -2875,7 +2875,7 @@ void PluginCore::settingsCommands(const QStringList &args)
 /**
  * Инициализация всплывающего окна
  */
-void PluginCore::initPopup(QString title, QString string, int secs)
+void PluginCore::initPopup(const QString &string, int secs)
 {
 	// Устанавливаем свои настройки
 	int msecs = secs * 1000;
@@ -2890,7 +2890,7 @@ void PluginCore::initPopup(QString title, QString string, int secs)
 		psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
 	}
 	// Вызываем popup
-	myPopupHost->initPopup(string, title);
+	myPopupHost->initPopup(string, QString::fromUtf8("Sof game"));
 	// Восстанавливаем настройки
 	if (delay_ != msecs) {
 		QVariant delay(delay_);

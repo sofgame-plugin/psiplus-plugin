@@ -264,7 +264,7 @@ xxxxx*2 атаковали матерый волк/повр:4524
 						++nDropThings;
 						sDropThingLast = fightDropThingReg1.cap(1);
 						if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
-							initPopup(QString::fromUtf8("Sof game"), "+" + sDropThingLast, 3);
+							initPopup("+" + sDropThingLast, 3);
 						}
 					}
 				}
