@@ -221,6 +221,8 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	// Сигнал на смену фильтров
 	connect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
+	// Завязки в настройках
+	connect(restPopup, SIGNAL(toggled(bool)), restDurationPopup, SLOT(setEnabled(bool)));
 	// Инициируем форму
 	init();
 	// Устанавливаем фокус ввода
@@ -624,6 +626,19 @@ void SofMainWindow::getAllDataFromCore() {
 	console_textedit->setMaximumBlockCount(newIntValue);
 	// Режим сохранения карт
 	mapsParamSaveMode->setCurrentIndex(GameMap::instance()->getMapsSettingParam(GameMap::AutoSaveMode));
+	// Длительность регена для отображения Popup-а
+	newIntValue = settings->getIntSetting(Settings::SettingRegenDurationForPopup);
+	if (newIntValue > 0) {
+		if (newIntValue < restDurationPopup->minimum())
+			newIntValue = restDurationPopup->minimum();
+		restDurationPopup->setValue(newIntValue);
+		restDurationPopup->setEnabled(true);
+		restPopup->setChecked(true);
+	} else {
+		restDurationPopup->setValue(restDurationPopup->minimum());
+		restDurationPopup->setEnabled(false);
+		restPopup->setChecked(false);
+	}
 }
 
 /**
@@ -1457,6 +1472,9 @@ void SofMainWindow::applySettings()
 	maps->setPersPosColor(btnPersPosColor->getColor());
 	// Период автовыгрузки карт
 	maps->setUnloadInterval(mapsUnloadInterval->value());
+	// Длительность регена для отображения popup-а
+	i = (restPopup->isChecked()) ? restDurationPopup->value() : 0;
+	settings->setIntSetting(Settings::SettingRegenDurationForPopup, i);
 }
 
 void SofMainWindow::saveSettings()

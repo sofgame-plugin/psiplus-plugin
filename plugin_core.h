@@ -58,6 +58,7 @@ class PluginCore: public QObject
 		bool sendCommandToCore(qint32 commandId);
 		bool sendString(const QString &str);
 		PersInfo* getPersInfo(QString);
+		void initPopup(const QString &, int);
 
 	private:
 		static PluginCore *instance_;
@@ -135,13 +136,9 @@ class PluginCore: public QObject
 		void thingsCommands(QStringList*);
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
-		void initPopup(const QString &, int);
 		int  parseFightGroups(const QStringList &, int);
 		int  parseFightStepResult(const QStringList &, int);
 		void searchHorseshoe(const QString &);
-
-	protected:
-
 
 	public slots:
 		void changeAccountJid(const QString);

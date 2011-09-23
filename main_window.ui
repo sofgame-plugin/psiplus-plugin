@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>637</width>
-    <height>612</height>
+    <height>652</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1645,6 +1645,43 @@
                       <string>Каждые 60 секунд</string>
                      </property>
                     </item>
+                   </widget>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_10">
+                    <property name="toolTip">
+                     <string>Если регенерация будет длиться не менее указанного количества секунд, то по окончанию регенерации появится сообшение.</string>
+                    </property>
+                    <property name="text">
+                     <string> * длительность регена:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QSpinBox" name="restDurationPopup">
+                    <property name="suffix">
+                     <string> сек.</string>
+                    </property>
+                    <property name="minimum">
+                     <number>20</number>
+                    </property>
+                    <property name="maximum">
+                     <number>1000000</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_11">
+                    <property name="text">
+                     <string>Сообщать о восстановлении:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QCheckBox" name="restPopup">
+                    <property name="text">
+                     <string>Всплыв. сообщение</string>
+                    </property>
                    </widget>
                   </item>
                  </layout>

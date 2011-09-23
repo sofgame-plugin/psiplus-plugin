@@ -57,6 +57,7 @@ Settings::Settings(QObject *parent) :
 	defaultsListInt[SettingFightSelectAction] = 0;
 	defaultsListInt[SettingFightAutoClose] = 0;
 	defaultsListBool[SettingThingDropPopup] = true;
+	defaultsListInt[SettingRegenDurationForPopup] = 0;
 }
 
 Settings::~Settings()
@@ -215,6 +216,12 @@ void Settings::setMainSettings(const QDomElement &xml)
 			if (i != -1) {
 				settingsListInt[SettingWatchRestHealthEnergy] = i;
 			}
+		} else if (tagName == "finish-rest-popup") {
+			bool fOk = false;
+			int i = eChild.attribute("rest-duration").toInt(&fOk);
+			if (fOk) {
+				settingsListInt[SettingRegenDurationForPopup] = i;
+			}
 		} else if (tagName == "in-killers-cup-popup") {
 			settingsListBool[SettingInKillersCupPopup] = (eChild.attribute("value").toLower() == "true");
 		} else if (tagName == "killer-attack-popup") {
@@ -324,6 +331,9 @@ bool Settings::save()
 		eWatchRest.setAttribute("value", Settings::watchRestHealthEnergyStrings.at(restMode));
 		eMain.appendChild(eWatchRest);
 	}
+	QDomElement eRestPopup = xmlDoc.createElement("finish-rest-popup");
+	eRestPopup.setAttribute("rest-duration", getIntSetting(SettingRegenDurationForPopup));
+	eMain.appendChild(eRestPopup);
 	QDomElement eInKillersCupPopup = xmlDoc.createElement("in-killers-cup-popup");
 	eInKillersCupPopup.setAttribute("value", getBoolSetting(SettingInKillersCupPopup) ? "true" : "false");
 	eMain.appendChild(eInKillersCupPopup);

@@ -802,6 +802,8 @@ void Pers::endSetPersParams()
 				}
 			}
 		}
+		if (persHealthCurr > persHealthCurr_ && persHealthCurr_ < persHealthMax)
+			lastNegativeHealthUpdate = QDateTime::currentDateTime();
 		persHealthCurr = persHealthCurr_;
 	}
 	if (setPersEnergyMaxFlag) {
@@ -826,6 +828,8 @@ void Pers::endSetPersParams()
 				}
 			}
 		}
+		if (persEnergyCurr > persEnergyCurr_ + 1 && persEnergyCurr_ < persEnergyMax - 1)
+			lastNegativeEnergyUpdate = QDateTime::currentDateTime();
 		persEnergyCurr = persEnergyCurr_;
 	}
 	if (setPersLevelValueFlag) persLevelValue = persLevelValue_;
@@ -857,6 +861,8 @@ void Pers::endSetPersParams()
 	if (setPersHealthCurrFlag) {
 		if (persHealthCurr != QINT32_MIN) {
 			emit persParamChanged(ParamHealthCurr, TYPE_INTEGER_FULL, persHealthCurr);
+			if (persHealthCurr >= persHealthMax)
+				showRegenEvent(ParamHealthCurr);
 		} else {
 			emit persParamChanged(ParamHealthCurr, TYPE_NA, 0);
 		}
@@ -871,6 +877,8 @@ void Pers::endSetPersParams()
 	if (setPersEnergyCurrFlag) {
 		if (persEnergyCurr != QINT32_MIN) {
 			emit persParamChanged(ParamEnergyCurr, TYPE_INTEGER_FULL, persEnergyCurr);
+			if (persEnergyCurr >= persEnergyMax -1)
+				showRegenEvent(ParamEnergyCurr);
 		} else {
 			emit persParamChanged(ParamEnergyCurr, TYPE_NA, 0);
 		}
@@ -1319,6 +1327,8 @@ void Pers::doWatchHealthRestTime()
 				if (persHealthCurr > persHealthMax) persHealthCurr = persHealthMax;
 				if (persHealthCurr == persHealthMax) watchHealthRestTimer->stop();
 				emit persParamChanged(ParamHealthCurr, TYPE_INTEGER_FULL, persHealthCurr);
+				if (persHealthCurr >= persHealthMax)
+					showRegenEvent(ParamHealthCurr);
 			}
 		}
 	}
@@ -1343,6 +1353,8 @@ void Pers::doWatchEnergyRestTime()
 			if (persEnergyCurr == persEnergyMax)
 				watchEnergyRestTimer->stop();
 			emit persParamChanged(ParamEnergyCurr, TYPE_INTEGER_FULL, persEnergyCurr);
+			if (persEnergyCurr >= persEnergyMax)
+				showRegenEvent(ParamEnergyCurr);
 		}
 	}
 }
@@ -1358,6 +1370,27 @@ void Pers::setCoordinates(const QPoint &p)
 				--watchEnergyStartValue;
 				--watchEnergyStartValue2;
 			}
+		}
+	}
+}
+
+void Pers::showRegenEvent(PersParams param)
+{
+	if (param == ParamHealthCurr) {
+		if (!lastNegativeHealthUpdate.isNull()) {
+			const int regenDuration = Settings::instance()->getIntSetting(Settings::SettingRegenDurationForPopup);
+			if (regenDuration > 0 && lastNegativeHealthUpdate.secsTo(QDateTime::currentDateTime()) >= regenDuration) {
+				PluginCore::instance()->initPopup(QString::fromUtf8("Здоровье восстановлено"), 10);
+			}
+			lastNegativeHealthUpdate = QDateTime();
+		}
+	} else if (param == ParamEnergyCurr) {
+		if (!lastNegativeEnergyUpdate.isNull()) {
+			const int regenDuration = Settings::instance()->getIntSetting(Settings::SettingRegenDurationForPopup);
+			if (regenDuration > 0 && lastNegativeEnergyUpdate.secsTo(QDateTime::currentDateTime()) >= regenDuration) {
+				PluginCore::instance()->initPopup(QString::fromUtf8("Энергия восстановлена"), 10);
+			}
+			lastNegativeEnergyUpdate = QDateTime();
 		}
 	}
 }

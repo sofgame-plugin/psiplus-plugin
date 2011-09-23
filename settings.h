@@ -52,7 +52,8 @@ public:
 		SettingFightTimerMode,
 		SettingFightSelectAction,
 		SettingFightAutoClose,
-		SettingThingDropPopup
+		SettingThingDropPopup,
+		SettingRegenDurationForPopup
 	};
 	static QStringList persSaveModeStrings; // !!! Из за настроек карт
 	static Settings *instance();

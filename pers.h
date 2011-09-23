@@ -130,7 +130,6 @@ private:
 	QTimer *watchRestTimer;
 	QTimer *watchHealthRestTimer;
 	QTimer *watchEnergyRestTimer;
-
 	QTime watchHealthStartTime;
 	QTime watchHealthStartTime2;
 	QTime watchEnergyStartTime;
@@ -142,11 +141,14 @@ private:
 	static Pers *instance_;
 	static QHash<PersStatus, QString> statusStrings;
 	QPoint coordinates;
+	QDateTime lastNegativeHealthUpdate;
+	QDateTime lastNegativeEnergyUpdate;
 
 private:
 	Pers(QObject *parent = 0);
 	~Pers();
 	void loadBackpackSettingsFromDomNode(const QDomElement &);
+	void showRegenEvent(PersParams param);
 
 private slots:
 	void doWatchRestTime();
