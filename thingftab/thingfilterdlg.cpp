@@ -29,7 +29,8 @@
 //#include "../pers_info.h"
 
 
-ThingFilterEditDialog::ThingFilterEditDialog(QWidget* parent, bool* enable_, QString* name_) : QDialog(parent)
+ThingFilterEditDialog::ThingFilterEditDialog(QWidget* parent, bool* enable_, QString* name_) :
+	QDialog(parent)
 {
 	setupUi(this);
 	if (*enable_)
@@ -37,15 +38,12 @@ ThingFilterEditDialog::ThingFilterEditDialog(QWidget* parent, bool* enable_, QSt
 	name->setText(*name_);
 	activePtr = enable_;
 	namePtr = name_;
-	// Сигналы и слоты
-	connect(OkCancelBtn, SIGNAL(accepted()), this, SLOT(okBtnClick()));
 	// Удалять диалог после закрытия
-	setAttribute(Qt::WA_DeleteOnClose);
+	//setAttribute(Qt::WA_DeleteOnClose);
 }
 
 ThingFilterEditDialog::~ThingFilterEditDialog()
 {
-	disconnect(OkCancelBtn, SIGNAL(accepted()), this, SLOT(okBtnClick()));
 }
 
 

@@ -92,6 +92,7 @@ void ThingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 							selectionModel()->select(model()->index(new_row, 0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
 							emit currRowChanged(model()->index(new_row, 0));
 						}
+						delete dlg;
 					}
 					break;
 				}
@@ -105,6 +106,7 @@ void ThingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 							model()->setData(model()->index(row, 0), QVariant(active));
 							model()->setData(model()->index(row, 1), QVariant(name));
 						}
+						delete dlg;
 					}
 				}
 				break;
@@ -250,6 +252,7 @@ void ThingRulesView::contextMenuEvent(QContextMenuEvent * e)
 								QMessageBox::warning(this, QString::fromUtf8("Добавление правила"), QString::fromUtf8("Произошла ошибка при добавлении правила"), QMessageBox::Ok, QMessageBox::Ok);
 							}
 						}
+						delete dlg;
 					}
 				}
 				break;
@@ -264,6 +267,7 @@ void ThingRulesView::contextMenuEvent(QContextMenuEvent * e)
 							if (dlg->exec() == QDialog::Accepted) {
 								thingRulesTableModel->modifyRule(row, &rule);
 							}
+							delete dlg;
 						}
 					}
 				}

@@ -30,7 +30,8 @@
 #include "utils.h"
 
 
-ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex* rulePtr) : QDialog(parent)
+ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex* rulePtr) :
+	QDialog(parent)
 {
 	setupUi(this);
 	// Сохраняем указатель
@@ -89,15 +90,13 @@ ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::th
 	action->setCurrentIndex(param->findData(index));
 	// Сигналы и слоты
 	connect(param, SIGNAL(currentIndexChanged(int)), this, SLOT(paramChanged(int)));
-	connect(OkCancelBtn, SIGNAL(accepted()), this, SLOT(okBtnClick()));
 	// Удалять диалог после закрытия
-	setAttribute(Qt::WA_DeleteOnClose);
+	//setAttribute(Qt::WA_DeleteOnClose);
 }
 
 ThingRuleEditDialog::~ThingRuleEditDialog()
 {
 	disconnect(param, SIGNAL(currentIndexChanged(int)), this, SLOT(paramChanged(int)));
-	disconnect(OkCancelBtn, SIGNAL(accepted()), this, SLOT(okBtnClick()));
 }
 
 void ThingRuleEditDialog::paramChanged(int index)

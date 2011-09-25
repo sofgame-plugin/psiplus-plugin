@@ -160,5 +160,24 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>OkCancelBtn</sender>
+   <signal>accepted()</signal>
+   <receiver>ThingRuleEdit</receiver>
+   <slot>okBtnClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>74</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>50</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>okBtnClick()</slot>
+ </slots>
 </ui>
