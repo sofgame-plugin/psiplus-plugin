@@ -40,17 +40,18 @@
 #include "accountinfoaccessinghost.h"
 #include "applicationinfoaccessor.h"
 #include "popupaccessor.h"
+#include "iconfactoryaccessor.h"
 
 #define constGameJids "game-jids"
 #define constChatJids "chat-jids"
 #define constShortCut "shortcut"
 #define constGameAccount "game-account"
 
-class SofGamePlugin: public QObject, public PsiPlugin, public OptionAccessor, public StanzaSender, public ShortcutAccessor, public StanzaFilter, public ApplicationInfoAccessor, public AccountInfoAccessor, public PopupAccessor, public PluginInfoProvider
+class SofGamePlugin: public QObject, public PsiPlugin, public OptionAccessor, public StanzaSender, public ShortcutAccessor, public StanzaFilter, public ApplicationInfoAccessor, public AccountInfoAccessor, public PopupAccessor, public PluginInfoProvider, public IconFactoryAccessor
 
 {
 	Q_OBJECT
-	Q_INTERFACES(PsiPlugin OptionAccessor StanzaSender ShortcutAccessor StanzaFilter ApplicationInfoAccessor AccountInfoAccessor PopupAccessor PluginInfoProvider)
+	Q_INTERFACES(PsiPlugin OptionAccessor StanzaSender ShortcutAccessor StanzaFilter ApplicationInfoAccessor AccountInfoAccessor PopupAccessor PluginInfoProvider IconFactoryAccessor)
 
 public:
 	SofGamePlugin();
@@ -80,7 +81,9 @@ public:
 	virtual bool incomingStanza(int, const QDomElement&);
 	virtual bool outgoingStanza(int, QDomElement&);
 	// PopupAccessor
-	virtual void setPopupAccessingHost(PopupAccessingHost* host);
+	virtual void setPopupAccessingHost(PopupAccessingHost*);
+	// IconFactoryAccessor
+	virtual void setIconFactoryAccessingHost(IconFactoryAccessingHost*);
 	//---
 
 private:

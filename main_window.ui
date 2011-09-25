@@ -434,10 +434,6 @@
                  <property name="text">
                   <string/>
                  </property>
-                 <property name="icon">
-                  <iconset resource="sofgameplugin.qrc">
-                   <normaloff>:/icons/action_button_send.png</normaloff>:/icons/action_button_send.png</iconset>
-                 </property>
                  <property name="checked">
                   <bool>false</bool>
                  </property>
@@ -3658,8 +3654,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>mapsUnloadInterval</tabstop>
   <tabstop>thingsTable</tabstop>
  </tabstops>
- <resources>
-  <include location="sofgameplugin.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

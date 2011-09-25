@@ -31,6 +31,7 @@
 #include "popupaccessinghost.h"
 #include "optionaccessinghost.h"
 #include "applicationinfoaccessinghost.h"
+#include "iconfactoryaccessinghost.h"
 
 class PluginHosts
 {
@@ -38,6 +39,7 @@ public:
 	static PopupAccessingHost *myPopupHost;
 	static OptionAccessingHost* psiOptions;
 	static ApplicationInfoAccessingHost *appInfoHost;
+	static IconFactoryAccessingHost *psiIcon;
 
 };
 

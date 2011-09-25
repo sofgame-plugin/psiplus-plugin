@@ -28,4 +28,5 @@
 PopupAccessingHost *PluginHosts::myPopupHost = NULL;
 OptionAccessingHost *PluginHosts::psiOptions = NULL;
 ApplicationInfoAccessingHost *PluginHosts::appInfoHost = NULL;
+IconFactoryAccessingHost *PluginHosts::psiIcon = NULL;
 

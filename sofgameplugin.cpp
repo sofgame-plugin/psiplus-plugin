@@ -387,6 +387,12 @@ void SofGamePlugin::setPopupAccessingHost(PopupAccessingHost* host) {
 	PluginHosts::myPopupHost = host;
 }
 
+// ----------------- IconFactoryAccessor --------------------------
+void SofGamePlugin::setIconFactoryAccessingHost(IconFactoryAccessingHost *host)
+{
+	PluginHosts::psiIcon = host;
+}
+
 // ----------------------- StanzaFilter ------------------------------
 bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 {

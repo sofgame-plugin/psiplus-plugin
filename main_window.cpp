@@ -36,6 +36,7 @@
 #include "pers_info.h"
 #include "sender.h"
 #include "settings.h"
+#include "pluginhosts.h"
 
 QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
 				<< (QPair<int, QString>) {VALUE_LAST_GAME_JID, "last-game-jid"}
@@ -123,6 +124,7 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
 	connect(userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
 	// Кнопка ввода команд
+	cmd_send->setIcon(PluginHosts::psiIcon->getIcon("psi/action_button_send"));
 	connect(cmd_send, SIGNAL(clicked()), SLOT(userCommandReturnPressed()));
 	// Таббар вещей (фильтры)
 	thingsTabBar = new QTabBar(page_4);
