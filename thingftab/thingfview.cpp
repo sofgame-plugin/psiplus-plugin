@@ -31,7 +31,7 @@
 #include "thingfview.h"
 #include "thingfilterdlg.h"
 #include "thingruledlg.h"
-
+#include "pluginhosts.h"
 
 ThingFiltersView::ThingFiltersView(QWidget* parent) :
 	QTableView(parent),
@@ -61,11 +61,11 @@ void ThingFiltersView::contextMenuEvent( QContextMenuEvent * e )
 	Q_UNUSED(e)
 	QMenu* popup = new QMenu(this);
 	QList<QAction *> actions;
-	actions	<<new QAction(QString::fromUtf8("Добавить"), popup)
-	<<new QAction(QString::fromUtf8("Редактировать"), popup)
-	<<new QAction(QString::fromUtf8("Удалить"), popup)
-	<<new QAction(QString::fromUtf8("Выше"), popup)
-	<<new QAction(QString::fromUtf8("Ниже"), popup);
+	actions	<< new QAction(QString::fromUtf8("Добавить"), popup)
+	<< new QAction(PluginHosts::psiIcon->getIcon("psi/action_templates_edit"), QString::fromUtf8("Редактировать"), popup)
+	<< new QAction(PluginHosts::psiIcon->getIcon("psi/remove"), QString::fromUtf8("Удалить"), popup)
+	<< new QAction(PluginHosts::psiIcon->getIcon("psi/arrowUp"), QString::fromUtf8("Выше"), popup)
+	<< new QAction(PluginHosts::psiIcon->getIcon("psi/arrowDown"), QString::fromUtf8("Ниже"), popup);
 	popup->addActions(actions);
 	QAction *result = popup->exec(e->globalPos());
 	int iresult;
@@ -218,10 +218,10 @@ void ThingRulesView::contextMenuEvent(QContextMenuEvent * e)
 	QMenu* popup = new QMenu(this);
 	QList<QAction *> actions;
 	actions	<<new QAction(QString::fromUtf8("Добавить"), popup)
-			<<new QAction(QString::fromUtf8("Редактировать"), popup)
-			<<new QAction(QString::fromUtf8("Удалить"), popup)
-			<<new QAction(QString::fromUtf8("Выше"), popup)
-			<<new QAction(QString::fromUtf8("Ниже"), popup);
+			<<new QAction(PluginHosts::psiIcon->getIcon("psi/action_templates_edit"), QString::fromUtf8("Редактировать"), popup)
+			<<new QAction(PluginHosts::psiIcon->getIcon("psi/remove"), QString::fromUtf8("Удалить"), popup)
+			<<new QAction(PluginHosts::psiIcon->getIcon("psi/arrowUp"), QString::fromUtf8("Выше"), popup)
+			<<new QAction(PluginHosts::psiIcon->getIcon("psi/arrowDown"), QString::fromUtf8("Ниже"), popup);
 	popup->addActions(actions);
 	QAction *result = popup->exec(e->globalPos());
 	int iresult;
