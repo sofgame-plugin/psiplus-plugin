@@ -37,12 +37,8 @@
 #include "textparsing/fightparse.h"
 #include "aliases/aliases.h"
 #include "settings.h"
+#include "pluginhosts.h"
 
-
-// Глобальные переменные (знаю что не кошерно, зато работает быстро и... удобно)
-PopupAccessingHost *myPopupHost;
-OptionAccessingHost* psiOptions;
-//-----
 
 PluginCore *PluginCore::instance_ = NULL;
 
@@ -2879,26 +2875,26 @@ void PluginCore::initPopup(const QString &string, int secs)
 {
 	// Устанавливаем свои настройки
 	int msecs = secs * 1000;
-	int delay_ = psiOptions->getGlobalOption("options.ui.notifications.passive-popups.delays.status").toInt();
-	bool enbl_ = psiOptions->getGlobalOption("options.ui.notifications.passive-popups.enabled").toBool();
+	int delay_ = PluginHosts::psiOptions->getGlobalOption("options.ui.notifications.passive-popups.delays.status").toInt();
+	bool enbl_ = PluginHosts::psiOptions->getGlobalOption("options.ui.notifications.passive-popups.enabled").toBool();
 	if (delay_ != msecs) {
 		QVariant delay(msecs);
-		psiOptions->setGlobalOption("options.ui.notifications.passive-popups.delays.status", delay);
+		PluginHosts::psiOptions->setGlobalOption("options.ui.notifications.passive-popups.delays.status", delay);
 	}
 	if (!enbl_) {
 		QVariant enbl(true);
-		psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
+		PluginHosts::psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
 	}
 	// Вызываем popup
-	myPopupHost->initPopup(string, QString::fromUtf8("Sof game"));
+	PluginHosts::myPopupHost->initPopup(string, QString::fromUtf8("Sof game"));
 	// Восстанавливаем настройки
 	if (delay_ != msecs) {
 		QVariant delay(delay_);
-		psiOptions->setGlobalOption("options.ui.notifications.passive-popups.delays.status", delay);
+		PluginHosts::psiOptions->setGlobalOption("options.ui.notifications.passive-popups.delays.status", delay);
 	}
 	if (!enbl_) {
 		QVariant enbl(false);
-		psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
+		PluginHosts::psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
 	}
 }
 

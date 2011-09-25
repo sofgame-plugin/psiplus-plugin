@@ -31,9 +31,6 @@
 #include <QDateTime>
 #include <QtDebug>
 
-#include "popupaccessinghost.h"
-#include "optionaccessinghost.h"
-
 #define cVer "0.2.1-dev"
 
 #include "pers.h"
@@ -151,8 +148,5 @@ class PluginCore: public QObject
 		void saveStatusTimeout();
 
 };
-
-extern PopupAccessingHost *myPopupHost;
-extern OptionAccessingHost* psiOptions;
 
 #endif

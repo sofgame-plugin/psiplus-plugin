@@ -27,10 +27,9 @@
 #define PLUGIN_MAIN_H
 
 #include <QtGui>
-//#include <QtCore>
+
 #include "psiplugin.h"
 #include "optionaccessor.h"
-//#include "optionaccessinghost.h"
 #include "shortcutaccessor.h"
 #include "shortcutaccessinghost.h"
 #include "stanzasender.h"
@@ -40,9 +39,7 @@
 #include "accountinfoaccessor.h"
 #include "accountinfoaccessinghost.h"
 #include "applicationinfoaccessor.h"
-#include "applicationinfoaccessinghost.h"
 #include "popupaccessor.h"
-#include "popupaccessinghost.h"
 
 #define constGameJids "game-jids"
 #define constChatJids "chat-jids"

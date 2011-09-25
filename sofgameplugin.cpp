@@ -46,9 +46,9 @@ SofGamePlugin::SofGamePlugin() :
 	accInfoHost(NULL)
 
 {
-	psiOptions = 0;
+	PluginHosts::psiOptions = 0;
 	sender_ = 0;
-	myPopupHost = 0;
+	PluginHosts::myPopupHost = 0;
 
 	chatJids << tr("sofch@jabber.ru");
 }
@@ -74,7 +74,7 @@ QString SofGamePlugin::version() const
 
 bool SofGamePlugin::enable()
 {
-	if (!psiOptions || !sender_)
+	if (PluginHosts::psiOptions == NULL || sender_ == NULL)
 		return false;
 	// Инициируем модуль приема/передачи плагина
 	Sender *senderObj = Sender::instance();
@@ -84,7 +84,7 @@ bool SofGamePlugin::enable()
 	enabled = true;
 	// Получаем данные аккаунта
 	QVariant vGameAccount(accountJid);
-	vGameAccount = psiOptions->getPluginOption(constGameAccount);
+	vGameAccount = PluginHosts::psiOptions->getPluginOption(constGameAccount);
 	int newAccountId = -1;
 	QString newAccJid;
 	if (!vGameAccount.isNull()) {
@@ -97,7 +97,7 @@ bool SofGamePlugin::enable()
 	// Передаем модулю данные об выбранном аккаунте
 	senderObj->changeAccount(currentAccount, accountJid);
 	// Получаем список игровых джидов из настроек
-	QStringList game_jids = psiOptions->getPluginOption(constGameJids).toStringList();
+	QStringList game_jids = PluginHosts::psiOptions->getPluginOption(constGameJids).toStringList();
 	// Отправляем модулю
 	if (game_jids.isEmpty()) {
 		senderObj->insertGameJid("sof@jabbergames.ru", -1);
@@ -109,9 +109,9 @@ bool SofGamePlugin::enable()
 		}
 	}
 	// Данные о джиде чата
-	chatJids = psiOptions->getPluginOption(constChatJids).toStringList();
+	chatJids = PluginHosts::psiOptions->getPluginOption(constChatJids).toStringList();
 	// Горячая клавиша для вызова окна планина
-	shortCut = psiOptions->getPluginOption(constShortCut).toString();
+	shortCut = PluginHosts::psiOptions->getPluginOption(constShortCut).toString();
 	if (psiShortcuts)
 		psiShortcuts->connectShortcut(QKeySequence(shortCut), this, SLOT(doShortCut()));
 	// --
@@ -216,7 +216,7 @@ void SofGamePlugin::applyOptions() {
 		newAccJid = accountsWid->itemData(index).toString();
 	}
 	// Сохраняем новый джид
-	psiOptions->setPluginOption(constGameAccount, newAccJid);
+	PluginHosts::psiOptions->setPluginOption(constGameAccount, newAccJid);
 	// Если он изменился, отсылаем новые данные акка sender-у и обнавляем у себя
 	int newAccountId = getAccountByJid(newAccJid);
 	if (currentAccount != newAccountId || newAccJid != accountJid) {
@@ -227,7 +227,7 @@ void SofGamePlugin::applyOptions() {
 	// *** Jid-ы игры ***
 	QStringList game_jids = gameJidsWid->toPlainText().split(QRegExp("\\s+"), QString::SkipEmptyParts);
 	// Сохраняем в настройках
-	psiOptions->setPluginOption(constGameJids, game_jids);
+	PluginHosts::psiOptions->setPluginOption(constGameJids, game_jids);
 	// Получаем старый набор джидов игры
 	QStringList old_game_jids = senderObj->getGameJids();
 	// Производим изменения списка зеркал в модуле отправки
@@ -249,11 +249,11 @@ void SofGamePlugin::applyOptions() {
 	}
 	// *** Jid-ы чата ***
 	chatJids = chatJidsWid->toPlainText().split(QRegExp("\\s+"), QString::SkipEmptyParts);
-	psiOptions->setPluginOption(constChatJids, chatJids);
+	PluginHosts::psiOptions->setPluginOption(constChatJids, chatJids);
 	// --
 	psiShortcuts->disconnectShortcut(QKeySequence(shortCut), this, SLOT(doShortCut()));
 	shortCut = shortCutWid->text();
-	psiOptions->setPluginOption(constShortCut, shortCut);
+	PluginHosts::psiOptions->setPluginOption(constShortCut, shortCut);
 	psiShortcuts->connectShortcut(QKeySequence(shortCut), this, SLOT(doShortCut()));
 }
 
@@ -343,12 +343,11 @@ void SofGamePlugin::sendLastActiveQuery(const QString &from_jid, const QString &
 
 void SofGamePlugin::setOptionAccessingHost(OptionAccessingHost* host)
 {
-	psiOptions = host;
+	PluginHosts::psiOptions = host;
 }
 
-void SofGamePlugin::optionChanged(const QString& option)
+void SofGamePlugin::optionChanged(const QString& /*option*/)
 {
-	Q_UNUSED(option);
 }
 
 //-- StanzaSender ---------------------------------------------------
@@ -385,7 +384,7 @@ void SofGamePlugin::setAccountInfoAccessingHost(AccountInfoAccessingHost* host) 
 // ----------------- PopupAccessor -------------------
 void SofGamePlugin::setPopupAccessingHost(PopupAccessingHost* host) {
 	//qDebug() << "SofGamePlugin::setPopupAccessingHost";
-	myPopupHost = host;
+	PluginHosts::myPopupHost = host;
 }
 
 // ----------------------- StanzaFilter ------------------------------
