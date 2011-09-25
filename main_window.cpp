@@ -301,6 +301,9 @@ void SofMainWindow::init()
 	setAutoEnterMode(false);
 	// Инициируем слоты событий и уведомлений
 	initEventSlots();
+	// Фрейм аватара
+	if (!avatarFrame->updateAvatar())
+		avatarFrame->showPluginInfo();
 }
 
 void SofMainWindow::setAutoEnterMode(bool mode)

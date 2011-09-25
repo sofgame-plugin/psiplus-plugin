@@ -2680,12 +2680,18 @@
          <number>2</number>
         </property>
         <item>
-         <widget class="QGraphicsView" name="persPhoto">
+         <widget class="AvatarFrameView" name="avatarFrame">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>146</width>
+            <height>146</height>
+           </size>
           </property>
           <property name="maximumSize">
            <size>
@@ -2695,6 +2701,15 @@
           </property>
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -3581,6 +3596,11 @@ p, li { white-space: pre-wrap; }
    <class>ColorButton</class>
    <extends>QToolButton</extends>
    <header>subclasses/colorbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AvatarFrameView</class>
+   <extends>QGraphicsView</extends>
+   <header>avatarframe.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

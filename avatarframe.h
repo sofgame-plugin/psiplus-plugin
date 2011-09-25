@@ -1,6 +1,6 @@
 /*
- * utils.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * avatarframe.h - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,22 +23,34 @@
  *
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef AVATARFRAME_H
+#define AVATARFRAME_H
 
-#include <QtCore>
-#include <QDomDocument>
+#include <QGraphicsView>
+#include <QGraphicsScene>
 
+class AvatarFrameView : public QGraphicsView
+{
+Q_OBJECT
+public:
+	AvatarFrameView(QWidget *parent = 0);
+	static QString avatarFilePath();
+	bool updateAvatar();
+	void showPluginInfo();
 
-bool savePluginXml(QDomDocument* xmlDoc, QString filename);
-bool saveXmlToFile(QDomDocument* xmlDoc, QString filename);
-bool loadPluginXml(QDomDocument* xmlDoc, QString filename);
-bool loadXmlFromFile(QDomDocument* xmlDoc, QString filename);
-QString getTextFromNode(QDomNode*);
-QString numToStr(qint64, QString);
-QString thingTypeToString(int);
-int thingTypeFromString(QString);
-QString thingTypes();
-QStringList splitCommandString(const QString &str);
+private:
+	QGraphicsScene *scene_;
+	QGraphicsPixmapItem *avatarItem;
+	QGraphicsTextItem *pluginInfoItem;
 
-#endif
+private:
+	void clear();
+	void loadAvatar();
+	void clearAvatar();
+
+private slots:
+	void showContextMenu();
+
+};
+
+#endif // AVATARFRAME_H

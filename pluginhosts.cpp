@@ -1,6 +1,6 @@
 /*
- * utils.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * pluginhosts.cpp - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,22 +23,7 @@
  *
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#include "pluginhosts.h"
 
-#include <QtCore>
-#include <QDomDocument>
+ApplicationInfoAccessingHost *PluginHosts::appInfoHost = NULL;
 
-
-bool savePluginXml(QDomDocument* xmlDoc, QString filename);
-bool saveXmlToFile(QDomDocument* xmlDoc, QString filename);
-bool loadPluginXml(QDomDocument* xmlDoc, QString filename);
-bool loadXmlFromFile(QDomDocument* xmlDoc, QString filename);
-QString getTextFromNode(QDomNode*);
-QString numToStr(qint64, QString);
-QString thingTypeToString(int);
-int thingTypeFromString(QString);
-QString thingTypes();
-QStringList splitCommandString(const QString &str);
-
-#endif

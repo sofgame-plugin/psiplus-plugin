@@ -27,7 +27,7 @@
 //#include <QtCore>
 
 #include "sofgameplugin.h"
-#include "utils.h"
+#include "pluginhosts.h"
 #include "sender.h"
 #include "plugin_core.h"
 
@@ -374,7 +374,7 @@ void SofGamePlugin::setShortcuts()
 
 // ----------------- ApplicationInfoAccessor -------------------
 void SofGamePlugin::setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) {
-	appInfoHost = host;
+	PluginHosts::appInfoHost = host;
 }
 
 // ----------------- AccountInfoAccessor -------------------

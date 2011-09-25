@@ -10,7 +10,9 @@ HEADERS += sofgameplugin.h \
     pers.h \
     pers_info.h \
     cmdlineedit.h \
-    settings.h
+    settings.h \
+    avatarframe.h \
+    pluginhosts.h
 SOURCES += sofgameplugin.cpp \
     plugin_core.cpp \
     main_window.cpp \
@@ -20,7 +22,9 @@ SOURCES += sofgameplugin.cpp \
     pers.cpp \
     pers_info.cpp \
     cmdlineedit.cpp \
-    settings.cpp
+    settings.cpp \
+    avatarframe.cpp \
+    pluginhosts.cpp
 FORMS += main_window.ui
 
 # Resources
