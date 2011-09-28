@@ -12,7 +12,8 @@ HEADERS += sofgameplugin.h \
     cmdlineedit.h \
     settings.h \
     avatarframe.h \
-    pluginhosts.h
+    pluginhosts.h \
+    specificenemiesview.h
 SOURCES += sofgameplugin.cpp \
     plugin_core.cpp \
     main_window.cpp \
@@ -24,7 +25,8 @@ SOURCES += sofgameplugin.cpp \
     cmdlineedit.cpp \
     settings.cpp \
     avatarframe.cpp \
-    pluginhosts.cpp
+    pluginhosts.cpp \
+    specificenemiesview.cpp
 FORMS += main_window.ui
 
 # Resources

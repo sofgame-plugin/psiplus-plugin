@@ -1782,7 +1782,7 @@
                <attribute name="title">
                 <string>Бой</string>
                </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_26">
+               <layout class="QVBoxLayout" name="verticalLayout_34">
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_43">
                   <item>
@@ -1912,6 +1912,43 @@
                   <property name="text">
                    <string>Всплывающее сообщение при дропе вещей</string>
                   </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QGroupBox" name="groupBox_12">
+                  <property name="title">
+                   <string>Особые противники</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_26">
+                   <item>
+                    <widget class="QLabel" name="label_12">
+                     <property name="text">
+                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Противники, находящиеся в этом списке не будут отмечаться на картах и при их появлении будет сбрасываться очередь, если установить соответствующие опции.&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ВНИМАНИЕ!&lt;/span&gt; Регистр в имени противника имеет значение!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="SpecificEnemiesView" name="specificEnemiesTable"/>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_13">
+                     <property name="text">
+                      <string>* Для удаления противника из этого списка укажите пустое имя противника</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </widget>
                 </item>
                 <item>
@@ -3597,6 +3634,11 @@ p, li { white-space: pre-wrap; }
    <class>AvatarFrameView</class>
    <extends>QGraphicsView</extends>
    <header>avatarframe.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SpecificEnemiesView</class>
+   <extends>QTableView</extends>
+   <header>specificenemiesview.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

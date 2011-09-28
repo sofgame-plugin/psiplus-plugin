@@ -94,6 +94,7 @@ void Settings::init(const QString &jid)
 	backpackSettingsElement.clear();
 	appearanceSettingsElement.clear();
 	mapsSettingsElement.clear();
+	specificEnemies.clear();
 	load();
 }
 
@@ -261,6 +262,21 @@ void Settings::setFightSettings(const QDomElement &xml)
 			}
 		} else if (tagName == "fing-drop-popup") {
 			settingsListBool[SettingThingDropPopup] = (eChild.attribute("value").toLower() == "true");
+		} else if (tagName == "specific-enemies") {
+			QDomElement eChild2 = eChild.firstChildElement("enemy");
+			QHash<QString, int> names;
+			while (!eChild2.isNull()) {
+				const QString name = eChild2.attribute("name").trimmed();
+				if (!name.isEmpty()) {
+					if (!names.contains(name)) {
+						names[name] = 1;
+						bool notMark = (eChild2.attribute("not-mark-on-map").toLower() == "true");
+						bool resetQueue = (eChild2.attribute("reset-queue").toLower() == "true");
+						specificEnemies.append(SpecificEnemy(name, notMark, resetQueue));
+					}
+				}
+				eChild2 = eChild2.nextSiblingElement("enemy");
+			}
 		}
 		eChild = eChild.nextSiblingElement();
 	}
@@ -378,6 +394,17 @@ bool Settings::save()
 	QDomElement eThingDropPopup = xmlDoc.createElement("fing-drop-popup");
 	eThingDropPopup.setAttribute("value", getBoolSetting(SettingThingDropPopup) ? "true" : "false");
 	eFight.appendChild(eThingDropPopup);
+	QDomElement eSpecificEnemies = xmlDoc.createElement("specific-enemies");
+	foreach (SpecificEnemy se, specificEnemies) {
+		QDomElement eEnemy = xmlDoc.createElement("enemy");
+		eEnemy.setAttribute("name", se.name);
+		if (se.mapNotMark)
+			eEnemy.setAttribute("not-mark-on-map", "true");
+		if (se.resetQueue)
+			eEnemy.setAttribute("reset-queue", "true");
+		eSpecificEnemies.appendChild(eEnemy);
+	}
+	eFight.appendChild(eSpecificEnemies);
 	// Сохраняем настройки слотов
 	if (!slotsSettingsElement.isNull()) {
 		eNewAccount.appendChild(slotsSettingsElement);

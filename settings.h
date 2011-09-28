@@ -55,6 +55,12 @@ public:
 		SettingThingDropPopup,
 		SettingRegenDurationForPopup
 	};
+	struct SpecificEnemy {
+		QString name;
+		bool    mapNotMark;
+		bool    resetQueue;
+		SpecificEnemy(QString name_, bool notMark, bool reset) : name(name_), mapNotMark(notMark), resetQueue(reset) {};
+	};
 	static QStringList persSaveModeStrings; // !!! Из за настроек карт
 	static Settings *instance();
 	static void reset();
@@ -76,6 +82,8 @@ public:
 	const QDomElement & getMapsData() const {return mapsSettingsElement;};
 	void setMapsData(const QDomElement xmlData) {mapsSettingsElement = xmlData;};
 	bool save();
+	const QList<struct SpecificEnemy> & getSpecificEnemies() const {return specificEnemies;};
+	void setSpecificEnemies(const QList<struct SpecificEnemy> &enemies) {specificEnemies = enemies;};
 
 private:
 	static Settings *instance_;
@@ -96,6 +104,7 @@ private:
 	QDomElement backpackSettingsElement;
 	QDomElement appearanceSettingsElement;
 	QDomElement mapsSettingsElement;
+	QList<struct SpecificEnemy> specificEnemies;
 
 private:
 	Settings(QObject *parent = 0);

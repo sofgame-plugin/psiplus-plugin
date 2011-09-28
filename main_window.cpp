@@ -306,6 +306,8 @@ void SofMainWindow::init()
 	// Фрейм аватара
 	if (!avatarFrame->updateAvatar())
 		avatarFrame->showPluginInfo();
+	// Особые враги
+	specificEnemiesTable->init();
 }
 
 void SofMainWindow::setAutoEnterMode(bool mode)
@@ -1480,6 +1482,8 @@ void SofMainWindow::applySettings()
 	// Длительность регена для отображения popup-а
 	i = (restPopup->isChecked()) ? restDurationPopup->value() : 0;
 	settings->setIntSetting(Settings::SettingRegenDurationForPopup, i);
+	// Особые враги
+	specificEnemiesTable->save();
 }
 
 void SofMainWindow::saveSettings()

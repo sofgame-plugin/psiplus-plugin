@@ -877,12 +877,39 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		}
 		if (fight->isActive()) {
 			if (fight->getStep() == 1) {
-				int enCnt = fight->gameMobEnemyCount();
-				if (enCnt > 0) {
-					if (fight->getStep() == 1) {
+				QStringList enemies = fight->mobEnemiesList();
+				bool specReset = false;
+				bool specNotMark = false;
+				Settings *settings = Settings::instance();
+				foreach (Settings::SpecificEnemy se, settings->getSpecificEnemies()) {
+					if (enemies.indexOf(se.name) != -1) {
+						if (!specNotMark && se.mapNotMark)
+							specNotMark = true;
+						if (!specReset && se.resetQueue)
+							specReset = true;
+						if (specNotMark && specReset)
+							break;
+					}
+				}
+				if (!specNotMark) {
+					int enCnt = fight->gameMobEnemyCount();
+					if (enCnt > 0) {
 						GameMap *maps = GameMap::instance();
 						maps->setMapElementEnemies(persX, persY, enCnt, enCnt);
 						maps->setMapElementEnemiesList(persX, persY, fight->mobEnemiesList());
+					}
+				}
+				Sender *sd = Sender::instance();
+				if (specReset) {
+					const int q_len = sd->getGameQueueLength();
+					if (q_len > 0) {
+						sd->resetGameQueue();
+						if (settings->getBoolSetting(Settings::SettingResetQueuePopup)) {
+							initPopup(QString::fromUtf8("Очередь сброшена"), 30);
+						}
+						QString str1 = QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len);
+						setGameText(str1);
+						setConsoleText(str1, false);
 					}
 				}
 			}
