@@ -832,7 +832,11 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					}
 				}
 			} else if (nPersStatus == Pers::StatusSecretGet || nPersStatus == Pers::StatusTake) {
-				if (experienceDropReg2.indexIn(sMessage, 0) != -1) {
+				if (experienceDropReg.indexIn(sMessage, 0) != -1) {
+					// Берем опыт, который дали в тайнике
+					statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
+					fExperienceDrop = true;
+				} else if (experienceDropReg2.indexIn(sMessage, 0) != -1) {
 					// Берем опыт, который дали в тайнике
 					statExperienceDropCount += experienceDropReg2.cap(1).toLongLong();
 					fExperienceDrop = true;
