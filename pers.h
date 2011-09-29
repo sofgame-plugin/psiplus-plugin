@@ -54,6 +54,7 @@ public:
 	};
 	enum PersParams {
 		ParamPersName,
+		ParamMoneysCount,
 		ParamPersLevel,
 		ParamPersStatus,
 		ParamExperienceCurr, ParamExperienceMax,
@@ -71,6 +72,8 @@ public:
 	void init();
 	void setName(const QString &);
 	const QString & name() const;
+	int  moneysCount() const {return moneys;};
+	void setMoneys(int);
 	void setThingsStart(bool clear);
 	void setThingsEnd();
 	void setThingElement(int, Thing*);
@@ -81,9 +84,7 @@ public:
 	void getThingsFiltersEx(QList<ThingFilter*>*) const;
 	void setThingsFiltersEx(QList<ThingFilter*>);
 	const QVector<price_item>* getThingsPrice() const;
-	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
-	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
-	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
+	void backpackToXml(QDomElement &eBackpack) const;
 	void loadThingsFromDomElement(QDomElement &);
 	void setThingPrice(int, int, int);
 	void beginSetPersParams();
@@ -101,6 +102,7 @@ public:
 	QString getPersStatusString();
 	const QPoint &getCoordinates() const {return coordinates;};
 	void setCoordinates(const QPoint &p);
+	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 private:
 	QString pers_name;
@@ -143,12 +145,15 @@ private:
 	QPoint coordinates;
 	QDateTime lastNegativeHealthUpdate;
 	QDateTime lastNegativeEnergyUpdate;
+	int moneys;
 
 private:
 	Pers(QObject *parent = 0);
 	~Pers();
 	void loadBackpackSettingsFromDomNode(const QDomElement &);
 	void showRegenEvent(PersParams param);
+	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
+	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
 
 private slots:
 	void doWatchRestTime();

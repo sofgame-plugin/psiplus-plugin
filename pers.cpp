@@ -54,7 +54,8 @@ Pers::Pers(QObject *parent):
 	watchHealthSpeed(0.0f), watchHealthSpeedDelta(0),
 	watchEnergyStartValue(QINT32_MIN), watchEnergyStartValue2(QINT32_MIN),
 	watchEnergySpeed(0.0f), watchEnergySpeedDelta(0),
-	watchRestTimer(NULL), watchHealthRestTimer(NULL), watchEnergyRestTimer(NULL)
+	watchRestTimer(NULL), watchHealthRestTimer(NULL), watchEnergyRestTimer(NULL),
+	moneys(QINT32_MIN)
 {
 	/**
 	* Конструктор
@@ -180,6 +181,18 @@ void Pers::setName(const QString &new_name)
 const QString & Pers::name() const
 {
 	return pers_name;
+}
+
+void Pers::setMoneys(int moneys_)
+{
+	if (moneys != moneys_) {
+		moneys = moneys_;
+		if (moneys != QINT32_MIN) {
+			emit persParamChanged(ParamMoneysCount, TYPE_INTEGER_FULL, moneys);
+		} else {
+			emit persParamChanged(ParamMoneysCount, TYPE_NA, 0);
+		}
+	}
 }
 
 void Pers::setThingsStart(bool /*clear*/)
@@ -375,6 +388,26 @@ const QVector<Pers::price_item>* Pers::getThingsPrice() const
 }
 
 /**
+ * Выгружает все данные рюкзака в DOM элемент
+ */
+void Pers::backpackToXml(QDomElement &eBackpack) const
+{
+	QDomDocument xmlDoc = eBackpack.ownerDocument();
+	QDomElement eChild;
+	if (moneys != QINT32_MIN) {
+		eChild = xmlDoc.createElement("moneys");
+		eChild.appendChild(xmlDoc.createTextNode(QString::number(moneys)));
+		eBackpack.appendChild(eChild);
+	}
+	eChild = exportThingsToDomElement(xmlDoc);
+	if (!eChild.isNull())
+		eBackpack.appendChild(eChild);
+	eChild = exportPriceToDomElement(xmlDoc);
+	if (!eChild.isNull())
+		eBackpack.appendChild(eChild);
+}
+
+/**
  * Выгружает данные о вещах в DOM элемент
  */
 QDomElement Pers::exportThingsToDomElement(QDomDocument &xmlDoc) const
@@ -506,12 +539,18 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
  */
 void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 {
+	moneys = QINT32_MIN;
 	things->clear();
 	thingPrice.clear();
 	QDomElement eChild1 = eBackpack.firstChildElement();
 	while (!eChild1.isNull()) {
 		const QString sTagName = eChild1.tagName();
-		if (sTagName == "fings") {
+		if (sTagName == "moneys") {
+			bool fOk;
+			const int i = eChild1.text().toInt(&fOk);
+			if (fOk)
+				moneys = i;
+		} else if (sTagName == "fings") {
 			QDomElement eThing = eChild1.firstChildElement("fing");
 			while (!eThing.isNull()) {
 				Thing* thing = new Thing();

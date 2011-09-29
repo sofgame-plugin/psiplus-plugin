@@ -76,6 +76,7 @@ class PluginCore: public QObject
 
 		QRegExp mapCoordinatesExp;
 		QRegExp parPersRegExp;
+		QRegExp moneysCountExp;
 		QRegExp fightDropMoneyReg2;
 		QRegExp secretDropThingReg;
 		QRegExp experienceDropReg;

@@ -134,9 +134,11 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	QLayout* lt = page_4->layout();
 	lt->removeWidget(thingsTable);
 	lt->removeItem(thingsSummaryLayout);
+	lt->removeItem(moneyCountLayout);
 	lt->addWidget(thingsTabBar);
 	lt->addWidget(thingsTable);
 	lt->addItem(thingsSummaryLayout);
+	lt->addItem(moneyCountLayout);
 	// Создаем контекстное меню вещей
 	actionSetThingPrice = new QAction(thingsTable);
 	actionSetThingPrice->setText(QString::fromUtf8("Цена у торговца"));
@@ -525,7 +527,7 @@ void SofMainWindow::getAllDataFromCore() {
 	changePersStatus();
 	newStrValue = pers->name();
 	if (newStrValue.isEmpty())
-		newStrValue = "n/a";
+		newStrValue = NA_TEXT;
 	persNameLabel->setText(newStrValue);
 	if (!pers->getIntParamValue(Pers::ParamPersLevel, &newIntValue)) {
 		newStrValue = NA_TEXT;
@@ -558,6 +560,12 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	energyBar->setRange(0, newIntValue);
+	newIntValue = pers->moneysCount();
+	if (newIntValue == QINT32_MIN) {
+		labelMoneysCount->setText(NA_TEXT);
+	} else {
+		labelMoneysCount->setText(numToStr(newIntValue, "'"));
+	}
 	// Прокрутка карты к позиции персонажа
 	scrollMapToPersPosition();
 	// *** Статистические данные ***
@@ -1848,6 +1856,9 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			levelLabel->setText(QString::number(paramValue));
 		} else if (paramId == Pers::ParamCoordinates) {
 			scrollMapToPersPosition();
+		} else if (paramId == Pers::ParamMoneysCount) {
+			// Количество денег
+			labelMoneysCount->setText(numToStr(paramValue, "'"));
 		}
 	} else if (paramType == TYPE_LONGLONG_FULL) {
 		if (paramId == Pers::ParamExperienceCurr) {
@@ -1884,6 +1895,9 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 		} else if (paramId == Pers::ParamExperienceMax) {
 			// Максимальный опыт для уровня
 			setMaximumExperience(0);
+		} else if (paramId == Pers::ParamExperienceMax) {
+			// Количество денег
+			labelMoneysCount->setText(NA_TEXT);
 		}
 	}
 }

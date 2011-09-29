@@ -72,6 +72,7 @@ PluginCore::PluginCore()
 	// Настройка регулярок
 	mapCoordinatesExp.setPattern(QString::fromUtf8("^(-?[0-9]+):(-?[0-9]+)$"));
 	parPersRegExp.setPattern(QString::fromUtf8("^(\\w+)\\[у:([0-9]{1,2})\\|з:(-?[0-9]{1,6})/([0-9]{1,6})\\|э:(-?[0-9]{1,6})/([0-9]{1,6})\\|о:([0-9]{1,12})/([0-9]{1,12})\\]$"));
+	moneysCountExp.setPattern(QString::fromUtf8("^деньги:? (-?[0-9]+) дринк$")); //деньги: 100000 дринк
 	fightDropMoneyReg2.setPattern(QString::fromUtf8("(нашли|выпало) ([0-9]+) дринк"));
 	secretDropThingReg.setPattern(QString::fromUtf8("(забрали|нашли|выпала) \"(.+)\"")); // забрали "панцирь раритет" и ушли
 	experienceDropReg.setCaseSensitivity(Qt::CaseInsensitive);
@@ -376,14 +377,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 
 						sMessage = aMessage[++i].trimmed();
 					}
-					// Вещи:  (02- список вещей)
-					if (sMessage.startsWith(QString::fromUtf8("Вещи:"))) {
-
-						sMessage = aMessage[++i].trimmed();
-					}
-					// деньги: 10292833 дринк
-					if (sMessage.startsWith(QString::fromUtf8("деньги:"))) {
-
+					// деньги: 100000 дринк
+					if (moneysCountExp.indexIn(sMessage, 0) != -1) {
+						Pers::instance()->setMoneys(moneysCountExp.cap(1).toInt());
 						sMessage = aMessage[++i].trimmed();
 					}
 				}
@@ -563,10 +559,12 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				nPersStatus = Pers::StatusPersInform;
 			} else if (sMessage == QString::fromUtf8("Экипировка:")) {
 				// Список вещей персонажа
-				Pers::instance()->setThingsStart(true);
-				sMessage = aMessage[++i].trimmed();
 				// Деньги
-
+				sMessage = aMessage[++i].trimmed();
+				if (moneysCountExp.indexIn(sMessage, 0) != -1) {
+					pers->setMoneys(moneysCountExp.cap(1).toInt());
+				}
+				Pers::instance()->setThingsStart(true);
 				bool fDressed = false;
 				while (i < nCount) {
 					sMessage = aMessage[i].trimmed();
@@ -1385,13 +1383,8 @@ bool PluginCore::savePersStatus()
 		if (settings->getBoolSetting(Settings::SettingSaveBackpack)) {
 			// Сохраняем данные о вещах
 			QDomElement eBackpack = xmlDoc.createElement("backpack");
+			pers->backpackToXml(eBackpack);
 			eNewAccount.appendChild(eBackpack);
-			QDomElement eThings = pers->exportThingsToDomElement(xmlDoc);
-			eBackpack.appendChild(eThings);
-			QDomElement ePrice = pers->exportPriceToDomElement(xmlDoc);
-			if (!ePrice.isNull()) {
-				eBackpack.appendChild(ePrice);
-			}
 		}
 	}
 	if (!bReplace) {
