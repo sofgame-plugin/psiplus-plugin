@@ -24,9 +24,12 @@
  */
 
 #include <QHeaderView>
+#include <QMenu>
+#include <QAction>
 
 #include "specificenemiesview.h"
 #include "settings.h"
+#include "pluginhosts.h"
 
 SpecificEnemiesModel::SpecificEnemiesModel(QObject *parent) :
 	QAbstractTableModel(parent)
@@ -66,7 +69,7 @@ QVariant SpecificEnemiesModel::data(const QModelIndex &index, int role) const
 		if (row >=0 && row < enemyList.size()) {
 			const int col = index.column();
 			if (col == 0) {
-				if (role == Qt::DisplayRole) {
+				if (role == Qt::DisplayRole || role == Qt::EditRole) {
 					return enemyList.at(row).name;
 				}
 			} else {
@@ -154,6 +157,24 @@ bool SpecificEnemiesModel::setData(const QModelIndex &index, const QVariant &val
 	return false;
 }
 
+bool SpecificEnemiesModel::removeRows(int row, int count, const QModelIndex &/*parent*/)
+{
+	const int cntAll = enemyList.size();
+	if (row < cntAll) {
+		int lastRow = row + count - 1;
+		if (lastRow >= cntAll)
+			lastRow = cntAll - 1;
+		beginRemoveRows(QModelIndex(), row, lastRow);
+		while (row <= lastRow) {
+			enemyList.removeAt(row);
+			--lastRow;
+		}
+		endRemoveRows();
+		return true;
+	}
+	return false;
+}
+
 //----------------------------------------------------------------------
 
 SpecificEnemiesView::SpecificEnemiesView(QWidget *parent) :
@@ -180,10 +201,43 @@ void SpecificEnemiesView::init()
 	horizontalHeader()->setResizeMode(2, QHeaderView::ResizeToContents);
 	verticalHeader()->setDefaultAlignment( Qt::AlignHCenter );
 	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+	connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
 }
 
 void SpecificEnemiesView::save()
 {
 	if (model_ != NULL)
 		model_->save();
+}
+
+void SpecificEnemiesView::showContextMenu(QPoint /*pos*/)
+{
+	QModelIndex index_ = currentIndex();
+	if (!index_.isValid())
+		return;
+	const int row = index_.row();
+	QMenu *menu = new QMenu();
+	QAction *actAppend = new QAction(QString::fromUtf8("Добавить"), menu);
+	menu->addAction(actAppend);
+	QAction *actEdit = new QAction(PluginHosts::psiIcon->getIcon("psi/action_templates_edit"), QString::fromUtf8("Редактировать"), menu);
+	menu->addAction(actEdit);
+	QAction *actRemove = new QAction(PluginHosts::psiIcon->getIcon("psi/remove"), QString::fromUtf8("Удалить"), menu);
+	menu->addAction(actRemove);
+	if (row + 1 >= model_->rowCount(QModelIndex())) {
+		actRemove->setEnabled(false);
+	}
+	QAction *res = menu->exec(QCursor::pos());
+	if (res != NULL) {
+		if (res == actAppend) {
+			QModelIndex newItemIndex = model_->index(model_->rowCount(QModelIndex()) - 1, 0);
+			setCurrentIndex(newItemIndex);
+			edit(newItemIndex);
+		} else if (res == actEdit) {
+			QModelIndex itemIndex = model_->index(row, 0);
+			edit(itemIndex);
+		} else if (res == actRemove) {
+			model_->removeRow(row, QModelIndex());
+		}
+	}
+	delete menu;
 }

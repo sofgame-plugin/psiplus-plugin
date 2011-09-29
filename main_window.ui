@@ -1967,12 +1967,19 @@ p, li { white-space: pre-wrap; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="SpecificEnemiesView" name="specificEnemiesTable"/>
+                    <widget class="SpecificEnemiesView" name="specificEnemiesTable">
+                     <property name="contextMenuPolicy">
+                      <enum>Qt::CustomContextMenu</enum>
+                     </property>
+                     <property name="selectionMode">
+                      <enum>QAbstractItemView::SingleSelection</enum>
+                     </property>
+                    </widget>
                    </item>
                    <item>
                     <widget class="QLabel" name="label_13">
                      <property name="text">
-                      <string>* Для удаления противника из этого списка укажите пустое имя противника</string>
+                      <string>* Список можно редактировать непосредственно в таблице, а так же воспользовавшись контекстным меню.</string>
                      </property>
                      <property name="wordWrap">
                       <bool>true</bool>
