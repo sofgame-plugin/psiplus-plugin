@@ -242,6 +242,7 @@ void Settings::setMainSettings(const QDomElement &xml)
 
 void Settings::setFightSettings(const QDomElement &xml)
 {
+	bool specEnemF = false;
 	QDomElement eChild = xml.firstChildElement();
 	while (!eChild.isNull()) {
 		QString tagName = eChild.tagName();
@@ -263,6 +264,7 @@ void Settings::setFightSettings(const QDomElement &xml)
 		} else if (tagName == "fing-drop-popup") {
 			settingsListBool[SettingThingDropPopup] = (eChild.attribute("value").toLower() == "true");
 		} else if (tagName == "specific-enemies") {
+			specEnemF = true;
 			QDomElement eChild2 = eChild.firstChildElement("enemy");
 			QHash<QString, int> names;
 			while (!eChild2.isNull()) {
@@ -279,6 +281,10 @@ void Settings::setFightSettings(const QDomElement &xml)
 			}
 		}
 		eChild = eChild.nextSiblingElement();
+	}
+	if (!specEnemF) {
+		// Нет настроек для особых врагов. Заполняем по умолчанию
+		specificEnemies.append(SpecificEnemy(QString::fromUtf8("Смертокрыл"), true, false));
 	}
 }
 
