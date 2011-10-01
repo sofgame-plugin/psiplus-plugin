@@ -255,7 +255,7 @@ int Sender::getSendDelta() const
  */
 bool Sender::setServerTimeoutDuration(int duration)
 {
-	if (duration > 5 && duration <= 60) {
+	if (duration > 5 && duration <= 120) {
 		waitForReceivePeriod = duration * 1000;
 		return true;
 	}
