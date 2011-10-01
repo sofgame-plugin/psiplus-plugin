@@ -28,7 +28,6 @@
 #include <QDomDocument>
 
 
-#include "common.h"
 #include "game_map.h"
 #include "utils.h"
 #include "settings.h"
@@ -40,10 +39,6 @@ GameMap::GameMap(QObject *parent) : QGraphicsScene(parent),
 	null_element_y(QINT32_MIN),
 	null_pers_pos_x(QINT32_MIN),
 	null_pers_pos_y(QINT32_MIN),
-	lastX(QINT32_MIN),
-	lastY(QINT32_MIN),
-	persPosX(QINT32_MIN),
-	persPosY(QINT32_MIN),
 	lastIndex(-1),
 	persPosIndex(-1),
 	mapCurrIndex(-1),
@@ -56,6 +51,10 @@ GameMap::GameMap(QObject *parent) : QGraphicsScene(parent),
 	unloadTimer(NULL),
 	autoUnloadInterval(0)
 {
+	lastPos.setX(QINT32_MIN);
+	lastPos.setY(QINT32_MIN);
+	persPos.setX(QINT32_MIN);
+	persPos.setY(QINT32_MIN);
 	connect(Pers::instance(), SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 }
 
@@ -103,11 +102,11 @@ void GameMap::init(const QString &acc_jid)
 	null_element_y = QINT32_MIN;
 	null_pers_pos_x = QINT32_MIN;
 	null_pers_pos_y = QINT32_MIN;
-	persPosX = QINT32_MIN;
-	persPosY = QINT32_MIN;
+	persPos.setX(QINT32_MIN);
+	persPos.setY(QINT32_MIN);
 	persGraphicItem = NULL;
-	lastX = QINT32_MIN;
-	lastY = QINT32_MIN;
+	lastPos.setX(QINT32_MIN);
+	lastPos.setY(QINT32_MIN);
 	lastIndex = -1;
 	persPosIndex = -1;
 	mapCurrIndex = -1;
@@ -179,29 +178,21 @@ bool GameMap::loadMapsList()
 			QString sName = eMap.attribute("name").trimmed();
 			if (!sName.isEmpty()) {
 				// Добавляем карту в список карт
-				struct maps_list map_head;
-				map_head.status = HeaderOnly; // Карта существует но не загружена
-				map_head.name = sName;
-				map_head.old_name = "";
-				bool flag;
-				map_head.min_x = eMap.attribute("min-x").toInt(&flag);
-				if (!flag) {
-					map_head.min_x = QINT32_MIN;
+				MapInfo map_head(HeaderOnly, sName);// Карта существует но не загружена
+				bool fOk;
+				int minX = eMap.attribute("min-x").toInt(&fOk);
+				if (fOk) {
+					int minY = eMap.attribute("min-y").toInt(&fOk);
+					if (fOk) {
+						int maxX = eMap.attribute("max-x").toInt(&fOk);
+						if (fOk) {
+							int maxY = eMap.attribute("max-y").toInt(&fOk);
+							if (fOk) {
+								map_head.rect = MapRect(minX, maxX, minY, maxY);
+							}
+						}
+					}
 				}
-				map_head.max_x = eMap.attribute("max-x").toInt(&flag);
-				if (!flag) {
-					map_head.max_x = QINT32_MIN;
-				}
-				map_head.min_y = eMap.attribute("min-y").toInt(&flag);
-				if (!flag) {
-					map_head.min_y = QINT32_MIN;
-				}
-				map_head.max_y = eMap.attribute("max-y").toInt(&flag);
-				if (!flag) {
-					map_head.max_y = QINT32_MIN;
-				}
-				map_head.map = 0;
-				map_head.modified = false;
 				mapsList.push_back(map_head);
 			}
 		}
@@ -225,15 +216,8 @@ int GameMap::createMap(const QString &map_name)
 			return -1;
 		}
 	}
-	struct maps_list mapHeader;
-	mapHeader.status = NewMap; // Отмечаем как новую
-	mapHeader.name = map_name;
-	mapHeader.old_name = "";
-	mapHeader.min_x = QINT32_MIN;
-	mapHeader.max_x = QINT32_MIN;
-	mapHeader.min_y = QINT32_MIN;
-	mapHeader.max_y = QINT32_MIN;
-	mapHeader.map = new QVector<struct GameMap::map_element>;
+	MapInfo mapHeader(NewMap, map_name); // Отмечаем как новую
+	mapHeader.map = new QVector<struct GameMap::MapElement>;
 	mapHeader.modified = true;
 	modifiedMapsCount++;
 	mapHeader.last_access = QDateTime::currentDateTime();
@@ -307,7 +291,7 @@ bool GameMap::loadMap(int map_index)
 		return false;
 	}
 	// Нашли нужную нам карту, теперь грузим ее в память
-	makeMapFromDomElement(&mapsList[map_index], eMap);
+	makeMapFromDomElement(mapsList[map_index], eMap);
 	// Отмечаем карту как загруженную
 	mapsList[map_index].status = InMemory;
 	// Другие флаги
@@ -373,7 +357,7 @@ bool GameMap::saveMap()
 							MapStatus nStatus = mapsList.at(i).status;
 							if (nStatus == InMemory) {
 								// Эта карта загружена в память, формируем XML элемент
-								QDomNode eNewMap = makeMapXmlElement(xmlDoc, &mapsList.at(i));
+								QDomNode eNewMap = makeMapXmlElement(xmlDoc, mapsList.at(i));
 								if (!eNewMap.isNull()) {
 									if (oldVer) {
 										eRoot.replaceChild(eNewMap, eMap);
@@ -437,7 +421,7 @@ bool GameMap::saveMap()
 		const MapStatus nStatus = mapsList.at(i).status;
 		if (nStatus == NewMap) {
 			// Новая карта
-			QDomNode eNewMap = makeMapXmlElement(xmlDoc, &mapsList.at(i));
+			QDomNode eNewMap = makeMapXmlElement(xmlDoc, mapsList.at(i));
 			if (!eNewMap.isNull()) {
 				eAcc.appendChild(eNewMap);
 			}
@@ -504,7 +488,7 @@ int GameMap::exportMaps(const QStringList &maps_list, int exp_type, const QStrin
 						continue;
 				}
 				// Формируем DOM элемент карты
-				QDomNode mapElement = makeMapXmlElement(xmlDoc, &mapsList.at(i));
+				QDomNode mapElement = makeMapXmlElement(xmlDoc, mapsList.at(i));
 				if (!mapElement.isNull()) {
 					eRoot.appendChild(mapElement);
 					expCnt++;
@@ -549,9 +533,8 @@ int GameMap::importMaps(const QString &imp_file)
 	while (!eRootChild.isNull()) {
 		if (eRootChild.tagName() == "map") {
 			// Получаем карту из DOM ноды
-			struct maps_list ml;
-			ml.map = 0;
-			if (makeMapFromDomElement(&ml, eRootChild)) {
+			MapInfo ml(NewMap, QString()); // Отмечаем карту как новую
+			if (makeMapFromDomElement(ml, eRootChild)) {
 				QString mapName = ml.name;
 				expMapsCnt++;
 				// Проверяем наличие карты с таким же именем
@@ -563,8 +546,6 @@ int GameMap::importMaps(const QString &imp_file)
 						ml.name = mapName;
 					}
 				}
-				// Отмечаем карту как новую
-				ml.status = NewMap;
 				// Карта модифицирована
 				ml.modified = true;
 				modifiedMapsCount++;
@@ -592,8 +573,8 @@ bool GameMap::removeMap(int map_index)
 		// Если выгружаемая карта текущая
 		if (map_index == mapCurrIndex) {
 			// Очищаем кэши индекса карт
-			lastX = QINT32_MIN;
-			lastY = QINT32_MIN;
+			lastPos.setX(QINT32_MIN);
+			lastPos.setY(QINT32_MIN);
 			// Прописываем индекс и указатель на текущую карту
 			mapCurrIndex = -1;
 			// Перерисовываем карту
@@ -621,8 +602,8 @@ bool GameMap::mergeMaps(int map1_index, int map2_index)
 	if (map1_index >= mapsCnt || map2_index >= mapsCnt)
 		return false;
 	// Загружаем карты, если не загружены
-	struct maps_list* ml1 = &mapsList[map1_index];
-	struct maps_list* ml2 = &mapsList[map2_index];
+	MapInfo *ml1 = &mapsList[map1_index];
+	MapInfo *ml2 = &mapsList[map2_index];
 	if (ml1->status == HeaderOnly)
 		loadMap(map1_index);
 	if (ml2->status == HeaderOnly)
@@ -631,42 +612,26 @@ bool GameMap::mergeMaps(int map1_index, int map2_index)
 	if ((ml1->status != InMemory && ml1->status != NewMap) || (ml2->status != InMemory  && ml2->status != NewMap))
 		return false;
 	// Начинаем сканирование и объединение карт
-	qint32 nMinX = ml1->min_x;
-	qint32 nMaxX = ml1->max_x;
-	qint32 nMinY = ml1->min_y;
-	qint32 nMaxY = ml1->max_y;
-	QVector<struct GameMap::map_element>* mel1 = ml1->map;
-	QVector<struct GameMap::map_element>* mel2 = ml2->map;
+	MapRect newRect = ml1->rect;
+	QVector<MapElement>* mel1 = ml1->map;
+	QVector<MapElement>* mel2 = ml2->map;
 	int cnt = mel2->size();
 	for (int i = 0; i < cnt; i++) {
-		const struct map_element* me2 = &mel2->at(i);
+		const struct MapElement* me2 = &mel2->at(i);
 		if (me2->status == 1) {
-			qint32 x = me2->x;
-			qint32 y = me2->y;
+			const QPoint &pos = me2->pos;
+			newRect.addPoint(pos);
 			bool fNew = true;
-			struct map_element* me1 = 0;
-			int me1_index = getMapElementIndex(map1_index, x, y);
+			MapElement *me1 = NULL;
+			int me1_index = getMapElementIndex(map1_index, pos);
 			if (me1_index != -1) {
 				me1 = &(*mel1)[me1_index];
 				if (me1->status == 1)
 					fNew = false;
 			}
-			if (nMinX == QINT32_MIN || x < nMinX) {
-				nMinX = x;
-			}
-			if (nMaxX == QINT32_MIN || x > nMaxX) {
-				nMaxX = x;
-			}
-			if (nMinY == QINT32_MIN || y < nMinY) {
-				nMinY = y;
-			}
-			if (nMaxY == QINT32_MIN || y > nMaxY) {
-				nMaxY = y;
-			}
 			if (fNew) {
 				// Нет такого элемента. Добавляем новый
-				struct map_element me_new = *me2;
-				mel1->push_back(me_new);
+				mel1->append(*me2);
 			} else {
 				// Есть такой элемент в базовой карте
 				if (me1->type == GameMap::TypeNormal)
@@ -705,10 +670,7 @@ bool GameMap::mergeMaps(int map1_index, int map2_index)
 			}
 		}
 	}
-	ml1->min_x = nMinX;
-	ml1->max_x = nMaxX;
-	ml1->min_y = nMinY;
-	ml1->max_y = nMaxY;
+	ml1->rect = newRect;
 	// Удаляем вторую карту
 	removeMap(map2_index);
 	// Обновляем время последнего доступа
@@ -727,41 +689,32 @@ bool GameMap::mergeMaps(int map1_index, int map2_index)
 	return true;
 }
 
-QDomNode GameMap::makeMapXmlElement(QDomDocument xmlDoc, const struct maps_list* map_head) const
+QDomNode GameMap::makeMapXmlElement(QDomDocument xmlDoc, const MapInfo &map_head) const
 {
 	// Создаем элемент с нашей картой
 	QDomElement eMap = xmlDoc.createElement("map");
-	eMap.setAttribute("name", map_head->name);
-	qint32 nPos = map_head->min_x;
-	if (nPos != QINT32_MIN) {
-		eMap.setAttribute("min-x", nPos);
-	}
-	nPos = map_head->max_x;
-	if (nPos != QINT32_MIN) {
-		eMap.setAttribute("max-x", nPos);
-	}
-	nPos = map_head->min_y;
-	if (nPos != QINT32_MIN) {
-		eMap.setAttribute("min-y", nPos);
-	}
-	nPos = map_head->max_y;
-	if (nPos != QINT32_MIN) {
-		eMap.setAttribute("max-y", nPos);
+	eMap.setAttribute("name", map_head.name);
+	const MapRect &mapRect = map_head.rect;
+	if (mapRect.isValid()) {
+		eMap.setAttribute("min-x", mapRect.left());
+		eMap.setAttribute("max-x", mapRect.right());
+		eMap.setAttribute("min-y", mapRect.bottom());
+		eMap.setAttribute("max-y", mapRect.top());
 	}
 	// Создаем временный указатель
-	QVector<struct GameMap::map_element>* mapPtr = map_head->map;
+	QVector<struct GameMap::MapElement>* mapPtr = map_head.map;
 	if (mapPtr) {
 		int map_size = mapPtr->size();
 		// Выгружаем элементы массива
 		QDomElement eMapItems = xmlDoc.createElement("map-items");
 		eMap.appendChild(eMapItems);
 		for (int mapIdx = 0; mapIdx < map_size; mapIdx++) {
-			map_element *me = &(*mapPtr)[mapIdx];
+			MapElement *me = &(*mapPtr)[mapIdx];
 			if (me->status == 1) { // Только если элемент карты в памяти
 				QDomElement eMapItem = xmlDoc.createElement("map-item");
 				// Координаты карты
-				eMapItem.setAttribute("pos-x", QString::number(me->x));
-				eMapItem.setAttribute("pos-y", QString::number(me->y));
+				eMapItem.setAttribute("pos-x", QString::number(me->pos.x()));
+				eMapItem.setAttribute("pos-y", QString::number(me->pos.y()));
 				// Отметка на карте
 				if (me->mark.enabled) {
 					QDomElement eMapItemMark = xmlDoc.createElement("mark");
@@ -911,26 +864,23 @@ QDomNode GameMap::makeMapXmlElement(QDomDocument xmlDoc, const struct maps_list*
 	return eMap;
 }
 
-bool GameMap::makeMapFromDomElement(struct maps_list* mapHeaderPtr, const QDomElement &mapElement)
+bool GameMap::makeMapFromDomElement(MapInfo &mapHeader, const QDomElement &mapElement)
 {
 	QString mapName = mapElement.attribute("name").trimmed();
 	if (mapName.isEmpty())
 		return false;
-	QVector<struct GameMap::map_element>* mapPtr = mapHeaderPtr->map;
+	QVector<struct GameMap::MapElement>* mapPtr = mapHeader.map;
 	if (mapPtr) {
 		if (!mapPtr->isEmpty())
 			mapPtr->remove(0, mapPtr->size());
 		//mapPtr->clear(); //Достали варнинги у QT (!!! Проверить на новых версиях!!!)
 	} else {
-		mapPtr = new QVector<struct map_element>;
+		mapPtr = new QVector<struct MapElement>;
 	}
-	mapHeaderPtr->status = InMemory;
-	mapHeaderPtr->name = mapName;
-	mapHeaderPtr->old_name = "";
-	qint32 nMinX = QINT32_MIN;
-	qint32 nMaxX = QINT32_MIN;
-	qint32 nMinY = QINT32_MIN;
-	qint32 nMaxY = QINT32_MIN;
+	mapHeader.status = InMemory;
+	mapHeader.name = mapName;
+	mapHeader.old_name = QString();
+	MapRect mapRect;
 	QDomElement eMapItems = mapElement.firstChildElement();
 	while (!eMapItems.isNull()) {
 		if (eMapItems.tagName() == "map-items") {
@@ -944,29 +894,11 @@ bool GameMap::makeMapFromDomElement(struct maps_list* mapHeaderPtr, const QDomEl
 						str1 = eMapItem.attribute("pos-y");
 						int nPosY = str1.toInt(&bFlag);
 						if (bFlag) {
-							struct map_element map_el;
-							map_el.status = 1;
-							map_el.type = GameMap::TypeNormal;
-							map_el.x = nPosX;
-							map_el.y = nPosY;
-							if (nMinX == QINT32_MIN || nPosX < nMinX) {
-								nMinX = nPosX;
-							}
-							if (nMaxX == QINT32_MIN || nPosX > nMaxX) {
-								nMaxX = nPosX;
-							}
-							if (nMinY == QINT32_MIN || nPosY < nMinY) {
-								nMinY = nPosY;
-							}
-							if (nMaxY == QINT32_MIN || nPosY > nMaxY) {
-								nMaxY = nPosY;
-							}
-							map_el.can_north = 0; map_el.can_south = 0; map_el.can_west = 0; map_el.can_east = 0;
-							map_el.north_type = 1; map_el.south_type = 1; map_el.west_type = 1; map_el.east_type = 1;
-							map_el.past_pers_pos = -1;
-							map_el.enemies_min = -1;
-							map_el.enemies_max = 0;
-							map_el.mark.enabled = false;
+							QPoint pos(nPosX, nPosY);
+							MapElement map_el(TypeNormal, pos);
+							map_el.north_type = 1; map_el.south_type = 1;
+							map_el.west_type = 1; map_el.east_type = 1;
+							mapRect.addPoint(pos);
 							if (eMapItem.attribute("marked") == "true") { // Атрибут устарел!!!
 								// Блок оставлен для совместимости со старым форматом
 								// Через пару версий необходимо убрать. Правильный код будет ниже.
@@ -1100,32 +1032,21 @@ bool GameMap::makeMapFromDomElement(struct maps_list* mapHeaderPtr, const QDomEl
 		}
 		eMapItems = eMapItems.nextSiblingElement();
 	}
-	mapHeaderPtr->min_x = nMinX;
-	mapHeaderPtr->max_x = nMaxX;
-	mapHeaderPtr->min_y = nMinY;
-	mapHeaderPtr->max_y = nMaxY;
-	mapHeaderPtr->map = mapPtr;
+	mapHeader.rect = mapRect;
+	mapHeader.map = mapPtr;
 	return true;
 }
 
-void GameMap::selectMap(int x, int y)
+void GameMap::selectMap(const QPoint &pos)
 {
 	/**
 	* Выбор и загрузка подходящей карты для указанной точки
 	**/
 	// Сначала проверяем текущую карту
 	if (mapCurrIndex != -1) {
-		int nMinX = mapsList.at(mapCurrIndex).min_x;
-		int nMaxX = mapsList.at(mapCurrIndex).max_x;
-		if (nMinX != QINT32_MIN && nMaxX != QINT32_MIN) {
-			int nMinY = mapsList.at(mapCurrIndex).min_y;
-			int nMaxY = mapsList.at(mapCurrIndex).max_y;
-			if (nMinY != QINT32_MIN && nMaxY != QINT32_MIN) {
-				if (nMinX <= x && nMaxX >= x && nMinY <= y && nMaxY >= y) {
-					// Текущая карта нам вполне подходит
-					return;
-				}
-			}
+		if (mapsList.at(mapCurrIndex).rect.contains(pos)) {
+			// Текущая карта нам вполне подходит
+			return;
 		}
 	}
 	// Сканируем имеющиеся карты
@@ -1134,18 +1055,19 @@ void GameMap::selectMap(int x, int y)
 	int mapGoodIndex = -1;
 	int mapsCnt = mapsList.size();
 	for (int i = 0; i < mapsCnt; i++) {
-		const maps_list *mh = &mapsList.at(i);
+		const MapInfo *mh = &mapsList.at(i);
 		if (mh->status != None) {
 			if (mapDefIndex == -1 && mh->name == "default") {
 				mapDefIndex = i;
 			}
-			int minX = mh->min_x; int maxX = mh->max_x;
-			int minY = mh->min_y; int maxY = mh->max_y;
-			if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+			MapRect mapRect = mh->rect;
+			if (mapRect.contains(pos)) {
 				mapGoodIndex = i;
 				break;
-			} else {
-				if (x >= minX - 10 && x <= maxX + 10 && y >= minY - 10 && y <= maxY + 10) {
+			}
+			if (mapRect.isValid()) {
+				mapRect = MapRect(mapRect.left() - 10, mapRect.right() + 10, mapRect.bottom() - 10, mapRect.top() + 10);
+				if (mapRect.contains(pos)) {
 					if (mapNearIndex == -1) {
 						mapNearIndex = i;
 					}
@@ -1168,8 +1090,9 @@ void GameMap::selectMap(int x, int y)
 				break;
 			}
 		}
-		if (selMap != -1)
+		if (selMap != -1) {
 			break;
+		}
 	}
 	if (selMap == -1) {
 		// Смены карты не произошло
@@ -1194,7 +1117,7 @@ int GameMap::getIndexByCoordinate(qreal x, qreal y)
 	mapX += null_element_x;
 	int mapY = y / (qreal)MAP_ELEMENT_SIZE;
 	mapY = null_element_y - mapY + 1;
-	int i = getMapElementIndex(-1, mapX, mapY);
+	int i = getMapElementIndex(-1, QPoint(mapX, mapY));
 	return i;
 }
 
@@ -1220,27 +1143,19 @@ void GameMap::moveMapElement(int souMapIndex, int desMapIndex, int elementIndex)
 	// Проверяем корректность индекса элемента
 	if (elementIndex >= mapsList.at(souMapIndex).map->size())
 		return;
-	struct map_element mapEl = (*mapsList[souMapIndex].map)[elementIndex];
+	struct MapElement mapEl = (*mapsList[souMapIndex].map)[elementIndex];
 	if (mapEl.status == 0)
 		return;
 	// Ищем такой же элемент в карте получателе
-	int elX = mapEl.x;
-	int elY = mapEl.y;
-	int desElIndex = getMapElementIndex(desMapIndex, elX, elY);
+	const QPoint &pos = mapEl.pos;
+	int desElIndex = getMapElementIndex(desMapIndex, pos);
 	if (desElIndex != -1) {
 		// Заменяем элемент
 		(*mapsList[desMapIndex].map)[desElIndex] = mapEl;
 	} else {
 		// Добавляем элемент
 		mapsList[desMapIndex].map->push_back(mapEl);
-		if (mapsList.at(desMapIndex).min_x == QINT32_MIN || mapsList.at(desMapIndex).min_x > elX)
-			mapsList[desMapIndex].min_x = elX;
-		if (mapsList.at(desMapIndex).max_x == QINT32_MIN || mapsList.at(desMapIndex).max_x < elX)
-			mapsList[desMapIndex].max_x = elX;
-		if (mapsList.at(desMapIndex).min_y == QINT32_MIN || mapsList.at(desMapIndex).min_y > elY)
-			mapsList[desMapIndex].min_y = elY;
-		if (mapsList.at(desMapIndex).max_y == QINT32_MIN || mapsList.at(desMapIndex).max_y < elY)
-			mapsList[desMapIndex].max_y = elY;
+		mapsList[desMapIndex].rect.addPoint(pos);
 	}
 	// Удаляем элемент из источника
 	removeMapElement(souMapIndex, elementIndex);
@@ -1268,40 +1183,28 @@ void GameMap::moveMapElement(int souMapIndex, int desMapIndex, int elementIndex)
  */
 void GameMap::removeMapElement(int mapIndex, int elementIndex)
 {
-	struct map_element *mapEl = &(*mapsList[mapIndex].map)[elementIndex];
-	int elX = mapEl->x;
-	int elY = mapEl->y;
+	struct MapElement *mapEl = &(*mapsList[mapIndex].map)[elementIndex];
 	// Отмечаем элемент как не используемый
 	mapEl->status = 0;
-	if (mapsList.at(mapIndex).min_x >= elX || mapsList.at(mapIndex).max_x <= elX || mapsList.at(mapIndex).min_y >= elY || mapsList.at(mapIndex).max_y <= elY) {
-		// Пересчитываем границы карты источника
-		QVector<map_element>* mapPtr = mapsList[mapIndex].map;
+	const int x = mapEl->pos.x();
+	const int y = mapEl->pos.y();
+	MapRect mapRect = mapsList.at(mapIndex).rect;
+	if (mapRect.left() == x || mapRect.right() == x || mapRect.top() == y || mapRect.bottom() == y) {
+		// Пересчитываем границы карты источника, т.к. удаляемая точка находится на границе карты
+		QVector<MapElement>* mapPtr = mapsList[mapIndex].map;
 		int cnt = mapPtr->size();
-		int minX = QINT32_MIN;
-		int maxX = QINT32_MIN;
-		int minY = QINT32_MIN;
-		int maxY = QINT32_MIN;
+		mapRect = MapRect();
 		for (int i = 0; i < cnt; i++) {
 			if (mapPtr->at(i).status != 0) {
-				if (minX == QINT32_MIN || mapPtr->at(i).x < minX)
-					minX = mapPtr->at(i).x;
-				if (maxX == QINT32_MIN || mapPtr->at(i).x > maxX)
-					maxX = mapPtr->at(i).x;
-				if (minY == QINT32_MIN || mapPtr->at(i).y < minY)
-					minY = mapPtr->at(i).y;
-				if (maxY == QINT32_MIN || mapPtr->at(i).y > maxY)
-					maxY = mapPtr->at(i).y;
+				mapRect.addPoint(mapPtr->at(i).pos);
 			}
 		}
-		mapsList[mapIndex].min_x = minX;
-		mapsList[mapIndex].max_x = maxX;
-		mapsList[mapIndex].min_y = minY;
-		mapsList[mapIndex].max_y = maxY;
+		mapsList[mapIndex].rect = mapRect;
 	}
 	// Очищаем кэши индекса карт, т.к. вероятно, что наш перемещенный элемент сидит в кэше
 	if (mapIndex == mapCurrIndex) {
-		lastX = QINT32_MIN;
-		lastY = QINT32_MIN;
+		lastPos.setX(QINT32_MIN);
+		lastPos.setY(QINT32_MIN);
 	}
 	// Меняем время доступа
 	mapsList[mapIndex].last_access = QDateTime::currentDateTime();
@@ -1337,7 +1240,7 @@ void GameMap::setMapElementMark(int elementIndex, const QString &title, const QC
 {
 	if (mapCurrArrayPtr) {
 		if (elementIndex >= 0 && elementIndex < mapCurrArrayPtr->size()) {
-			map_element *me = &(*mapCurrArrayPtr)[elementIndex];
+			MapElement *me = &(*mapCurrArrayPtr)[elementIndex];
 			if (me->status == 1 && (!me->mark.enabled || me->mark.title != title || me->mark.color != c)) {
 				me->mark.enabled = true;
 				me->mark.title = title;
@@ -1362,7 +1265,7 @@ void GameMap::removeMapElementMark(int elementIndex)
 {
 	if (mapCurrArrayPtr) {
 		if (elementIndex >= 0 && elementIndex < mapCurrArrayPtr->size()) {
-			map_element *me = &(*mapCurrArrayPtr)[elementIndex];
+			MapElement *me = &(*mapCurrArrayPtr)[elementIndex];
 			if (me->status == 1 && me->mark.enabled) {
 				me->mark.enabled = false;
 				mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
@@ -1388,7 +1291,7 @@ void GameMap::setOtherPersPos(QVector<maps_other_pers>* other_pers_pos)
 	// Очистка карты и старых координат игроков
 	clearOtherPersPos();
 	// Начинаем прорисовку
-	if (other_pers_pos && persPosX != QINT32_MIN && persPosY != QINT32_MIN) {
+	if (other_pers_pos && persPos.x() != QINT32_MIN && persPos.y() != QINT32_MIN) {
 		int cnt = other_pers_pos->size();
 		for (int i = 0; i < cnt; i++) {
 			int x = other_pers_pos->at(i).offset_x;
@@ -1396,13 +1299,13 @@ void GameMap::setOtherPersPos(QVector<maps_other_pers>* other_pers_pos)
 			int cnt2 = otherPers.size();
 			int j;
 			for (j = 0; j < cnt2; j++) {
-				if (otherPers.at(j).x == x && otherPers.at(j).y == y)
+				if (otherPers.at(j).pos.x() == x && otherPers.at(j).pos.y() == y)
 					break;
 			}
 			if (j >= cnt2) {
-				struct other_pers op;
-				op.x = x;
-				op.y = y;
+				OtherPers op;
+				op.pos.setX(x);
+				op.pos.setY(y);
 				otherPers.push_back(op);
 				j = otherPers.size() - 1;
 			}
@@ -1441,55 +1344,27 @@ void GameMap::redrawMap()
 		}
 		drawMapName();
 		// Устанавливаем позицию персонажа
-		setPersPos(persPosX, persPosY);
+		setPersPos(persPos);
 		// --
 		mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 	}
 }
 
-void GameMap::addMapElement(int x, int y)
+/**
+ * Добавляет пустой элемент карты в массив и дает команду на прорисовку
+ * Если такой элемент присутствует, никаких действий не производится
+ */
+void GameMap::addMapElement(const QPoint &pos)
 {
-	/**
-	* Добавляет пустой элемент карты в массив и дает команду на прорисовку
-	* Если такой элемент присутствует, никаких действий не производится
-	**/
 	// Подбираем карту, подходящую под наш элемент
-	selectMap(x, y);
+	selectMap(pos);
 	// Проверяем, есть ли такой элемент в карте
-	int i = getMapElementIndex(-1, x, y);
+	int i = getMapElementIndex(-1, pos);
 	if (i == -1) {
 		// Добавляем элемент
-		struct map_element map_el;
-		map_el.status = 1;
-		map_el.type = GameMap::TypeNormal;
-		map_el.x = x; map_el.y = y;
-		map_el.can_north = 0; map_el.can_south = 0; map_el.can_west = 0; map_el.can_east = 0;
-		map_el.north_type = 0; map_el.south_type = 0; map_el.west_type = 0; map_el.east_type = 0;
-		map_el.past_pers_pos = -1;
-		map_el.enemies_min = -1;
-		map_el.enemies_max = 0;
-		map_el.mark.enabled = false;
-		mapCurrArrayPtr->push_back(map_el);
+		mapCurrArrayPtr->push_back(MapElement(TypeNormal, pos));
 		// Прописываем размеры карты
-		if (mapsList.at(mapCurrIndex).map->size() == 0) {
-			mapsList[mapCurrIndex].min_x = x;
-			mapsList[mapCurrIndex].max_x = x;
-			mapsList[mapCurrIndex].min_y = y;
-			mapsList[mapCurrIndex].max_y = y;
-		} else if (mapsList.at(mapCurrIndex).min_x != QINT32_MIN && mapsList.at(mapCurrIndex).max_x != QINT32_MIN && mapsList.at(mapCurrIndex).min_y != QINT32_MIN && mapsList.at(mapCurrIndex).max_y != QINT32_MIN) {
-			if (mapsList.at(mapCurrIndex).min_x > x) {
-				mapsList[mapCurrIndex].min_x = x;
-			}
-			if (mapsList.at(mapCurrIndex).max_x < x) {
-				mapsList[mapCurrIndex].max_x = x;
-			}
-			if (mapsList.at(mapCurrIndex).min_y > y) {
-				mapsList[mapCurrIndex].min_y = y;
-			}
-			if (mapsList.at(mapCurrIndex).max_y < y) {
-				mapsList[mapCurrIndex].max_y = y;
-			}
-		}
+		mapsList[mapCurrIndex].rect.addPoint(pos);
 		// Отмечаем как модифицированную
 		if (!mapsList.at(mapCurrIndex).modified) {
 			mapsList[mapCurrIndex].modified = true;
@@ -1508,8 +1383,8 @@ void GameMap::drawMapElement(int el_index, bool modif)
 	if (mapCurrArrayPtr->at(el_index).status == 0)
 		return;
 	// Расчитываем координаты сцены
-	int x = mapCurrArrayPtr->at(el_index).x;
-	int y = mapCurrArrayPtr->at(el_index).y;
+	int x = mapCurrArrayPtr->at(el_index).pos.x();
+	int y = mapCurrArrayPtr->at(el_index).pos.y();
 	if (null_element_x == QINT32_MIN) {
 		// Проверяем начальную точку отсчета
 		null_element_x = x;
@@ -1577,7 +1452,7 @@ QString GameMap::makeTooltipForMapElement(int el_index) const
 	// Проверять el_index не будем - предполагается что вызов метода происходит уже после проверки.
 	// mapCurrArrayPtr не проверяем по той же причине
 	QString s_res = QString();
-	const map_element *me = &mapCurrArrayPtr->at(el_index);
+	const MapElement *me = &mapCurrArrayPtr->at(el_index);
 	if (me->mark.enabled && !me->mark.title.isEmpty()) {
 		s_res.append(QString::fromUtf8("Метка: %1").arg(me->mark.title));
 	}
@@ -1615,7 +1490,7 @@ QString GameMap::makeTooltipForMapElement(int el_index) const
  */
 void GameMap::setTooltipForMapElement(int el_index, const QString &tooltip_text)
 {
-	QRectF rect = getSceneCoordinates(mapCurrArrayPtr->at(el_index).x, mapCurrArrayPtr->at(el_index).y);
+	QRectF rect = getSceneCoordinates(mapCurrArrayPtr->at(el_index).pos.x(), mapCurrArrayPtr->at(el_index).pos.y());
 	if (!rect.isNull()) {
 		QList<QGraphicsItem*> gItems = items(rect, Qt::IntersectsItemShape);
 		for (int i = 0; i < gItems.size(); i++) {
@@ -1658,9 +1533,9 @@ void GameMap::drawMapName()
 		if (null_element_x == QINT32_MIN) {
 			return;
 		}
-		int min_x = mapsList.at(mapCurrIndex).min_x;
+		int min_x = mapsList.at(mapCurrIndex).rect.left();
 		qreal x = (min_x - null_element_x) * MAP_ELEMENT_SIZE;
-		qreal y = (null_element_y - mapsList.at(mapCurrIndex).max_y) * MAP_ELEMENT_SIZE;
+		qreal y = (null_element_y - mapsList.at(mapCurrIndex).rect.top()) * MAP_ELEMENT_SIZE;
 		//qreal width_delta = mapNameItem->textWidth() - ((mapsList[mapCurrIndex].max_x - min_x) * MAP_ELEMENT_SIZE);
 		//if (width_delta > 0.0f) { // Ширина текста больше ширины карты
 			// Выравниваем текст по центру
@@ -1717,7 +1592,7 @@ void GameMap::setPersPosColor(const QColor &c)
 			removeItem(persGraphicItem);
 			delete persGraphicItem;
 			persGraphicItem = NULL;
-			setPersPos(persPosX, persPosY);
+			setPersPos(persPos);
 		}
 	}
 }
@@ -1741,24 +1616,25 @@ void GameMap::setUnloadInterval(int minutes)
 	}
 }
 
-void GameMap::setPersPos(int pers_x, int pers_y)
+void GameMap::setPersPos(const QPoint &pos)
 {
 	if (mapCurrIndex == -1) {
 		return;
 	}
-	int pers_index = getMapElementIndex(-1, pers_x, pers_y);
+	int pers_index = getMapElementIndex(-1, pos);
 	if (pers_index == -1) {
 		return;
 	}
 	if (null_element_x == QINT32_MIN) {
 		return;
 	}
+	int pers_x = pos.x();
+	int pers_y = pos.y();
 	if (null_pers_pos_x == QINT32_MIN) {
 		null_pers_pos_x = pers_x;
 		null_pers_pos_y = pers_y;
 	}
-	persPosX = pers_x;
-	persPosY = pers_y;
+	persPos = pos;
 	// Высчитываем координаты положения персонажа
 	qreal ellipseSize = MAP_ELEMENT_SIZE / 4;
 	if (!persGraphicItem) {
@@ -1783,7 +1659,7 @@ void GameMap::setPersPos(int pers_x, int pers_y)
 	persPosIndex = pers_index;
 	// Перерисовываем временные маршруты, если таковые существуют
 	if (oldPersPosIndex != -1) {
-		const map_element *me = &mapCurrArrayPtr->at(oldPersPosIndex);
+		const MapElement *me = &mapCurrArrayPtr->at(oldPersPosIndex);
 		if (me->north_type == 2) {
 			drawMapElementPathNorth(oldPersPosIndex, (me->can_north != 0));
 		}
@@ -1797,7 +1673,7 @@ void GameMap::setPersPos(int pers_x, int pers_y)
 			drawMapElementPathEast(oldPersPosIndex, (me->can_east != 0));
 		}
 	}
-	const map_element *me = &mapCurrArrayPtr->at(pers_index);
+	const MapElement *me = &mapCurrArrayPtr->at(pers_index);
 	if (me->north_type == 2) {
 		drawMapElementPathNorth(pers_index, (me->can_north != 0));
 	}
@@ -1833,24 +1709,24 @@ QGraphicsItem* GameMap::getPersItem() const
 	return persGraphicItem;
 }
 
-int GameMap::getMapElementIndex(int mapIndex, int pers_x, int pers_y)
+/**
+ * Ищет элемент карты с координатами игры в массиве элементов для карты
+ * Если индекс карты -1, то ищет в текущей карте
+ * Если не найдено, то возвращает -1
+ */
+int GameMap::getMapElementIndex(int mapIndex, const QPoint &pos)
 {
-	/**
-	* Ищет элемент карты с координатами игры в массиве элементов для карты
-	* Если индекс карты -1, то ищет в текущей карте
-	* Если не найдено, то возвращает -1
-	**/
 	if (mapIndex == -1) {
 		mapIndex = mapCurrIndex;
 	}
 	// Проверки
 	if (mapIndex < 0 || mapIndex >= mapsList.size() || mapsList.at(mapIndex).status == None)
 		return -1;
-	if (pers_x == QINT32_MIN || pers_y == QINT32_MIN) {
+	if (pos.x() == QINT32_MIN || pos.y() == QINT32_MIN) {
 		return -1;
 	}
 	// Сначала сравним с последним запросом только для текущей карты (для скорости)
-	if (mapIndex == mapCurrIndex && lastX == pers_x && lastY == pers_y) {
+	if (mapIndex == mapCurrIndex && lastPos == pos) {
 		return lastIndex;
 	}
 	// В кэше не нашли, ищем в массиве тупым перебором
@@ -1860,14 +1736,13 @@ int GameMap::getMapElementIndex(int mapIndex, int pers_x, int pers_y)
 			return -1;
 	}
 	// Перебираем все элементы
-	const QVector<map_element>* mapArrayPtr = mapsList.at(mapIndex).map;
+	const QVector<MapElement>* mapArrayPtr = mapsList.at(mapIndex).map;
 	for (int i = 0, cnt = mapArrayPtr->size(); i < cnt; i++) {
-		const map_element *me = &mapArrayPtr->at(i);
-		if (me->status > 0 && me->x == pers_x && me->y == pers_y) {
+		const MapElement *me = &mapArrayPtr->at(i);
+		if (me->status > 0 && me->pos == pos) {
 			if (mapIndex == mapCurrIndex) {
 				// Кэш только для текущей карты
-				lastX = pers_x;
-				lastY = pers_y;
+				lastPos = pos;
 				lastIndex = i;
 			}
 			return i;
@@ -1881,7 +1756,7 @@ void GameMap::setMapElementPaths(int pers_x, int pers_y, int paths)
 	/**
 	* Сохраняет и прорисовывает пути в элементе карты
 	**/
-	const int i = getMapElementIndex(-1, pers_x, pers_y);
+	const int i = getMapElementIndex(-1, QPoint(pers_x, pers_y));
 	if (i != -1) {
 		// Прописываем пути в карту
 		int unsure = paths & 3; // В наличии пути не уверены
@@ -1929,7 +1804,7 @@ void GameMap::setMapElementPaths(int pers_x, int pers_y, int paths)
 		}
 		// Можно прорисовывать карту
 		bool modif_ = false;
-		map_element *me = &(*mapCurrArrayPtr)[i];
+		MapElement *me = &(*mapCurrArrayPtr)[i];
 		if (me->can_north != north) {
 			bool modif = false;
 			if (me->can_north) {
@@ -2014,9 +1889,9 @@ void GameMap::drawMapElementPathNorth(int element_index, bool /*modif*/)
 	/**
 	* Непосредственно прорисовывает путь движения на карте для выбранного элемента (север)
 	**/
-	const map_element *currEl = &mapCurrArrayPtr->at(element_index);
-	qreal x1 = ((qreal)currEl->x - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
-	qreal y1 = ((qreal)null_element_y - (qreal)currEl->y) * (qreal)MAP_ELEMENT_SIZE;
+	const MapElement *currEl = &mapCurrArrayPtr->at(element_index);
+	qreal x1 = ((qreal)currEl->pos.x() - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
+	qreal y1 = ((qreal)null_element_y - (qreal)currEl->pos.y()) * (qreal)MAP_ELEMENT_SIZE;
 	QRect itemRect = QRect(x1+(qreal)MAP_ELEMENT_SIZE/4.0, y1+(qreal)MAP_ELEMENT_SIZE/4.0, (qreal)MAP_ELEMENT_SIZE/2.0, (qreal)MAP_ELEMENT_SIZE/2.0);
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
@@ -2045,9 +1920,9 @@ void GameMap::drawMapElementPathSouth(int element_index, bool /*modif*/)
 	/**
 	* Непосредственно прорисовывает путь движения на карте для выбранного элемента (юг)
 	**/
-	const map_element *currEl = &mapCurrArrayPtr->at(element_index);
-	qreal x1 = ((qreal)currEl->x - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
-	qreal y1 = ((qreal)null_element_y - (qreal)currEl->y) * (qreal)MAP_ELEMENT_SIZE;
+	const MapElement *currEl = &mapCurrArrayPtr->at(element_index);
+	qreal x1 = ((qreal)currEl->pos.x() - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
+	qreal y1 = ((qreal)null_element_y - (qreal)currEl->pos.y()) * (qreal)MAP_ELEMENT_SIZE;
 	QRect itemRect = QRect(x1+(qreal)MAP_ELEMENT_SIZE/4.0, y1+(qreal)MAP_ELEMENT_SIZE/4.0, (qreal)MAP_ELEMENT_SIZE/2.0, (qreal)MAP_ELEMENT_SIZE/2.0);
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
@@ -2076,9 +1951,9 @@ void GameMap::drawMapElementPathWest(int element_index, bool /*modif*/)
 	/**
 	* Непосредственно прорисовывает путь движения на карте для выбранного элемента (запад)
 	**/
-	const map_element *currEl = &mapCurrArrayPtr->at(element_index);
-	qreal x1 = ((qreal)currEl->x - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
-	qreal y1 = ((qreal)null_element_y - (qreal)currEl->y) * (qreal)MAP_ELEMENT_SIZE;
+	const MapElement *currEl = &mapCurrArrayPtr->at(element_index);
+	qreal x1 = ((qreal)currEl->pos.x() - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
+	qreal y1 = ((qreal)null_element_y - (qreal)currEl->pos.y()) * (qreal)MAP_ELEMENT_SIZE;
 	QRect itemRect = QRect(x1+(qreal)MAP_ELEMENT_SIZE/4.0, y1+(qreal)MAP_ELEMENT_SIZE/4.0, (qreal)MAP_ELEMENT_SIZE/2.0, (qreal)MAP_ELEMENT_SIZE/2.0);
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
@@ -2107,9 +1982,9 @@ void GameMap::drawMapElementPathEast(int element_index, bool /*modif*/)
 	/**
 	* Непосредственно прорисовывает путь движения на карте для выбранного элемента (восток)
 	**/
-	const map_element *currEl = &mapCurrArrayPtr->at(element_index);
-	qreal x1 = ((qreal)currEl->x - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
-	qreal y1 = ((qreal)null_element_y - (qreal)currEl->y) * (qreal)MAP_ELEMENT_SIZE;
+	const MapElement *currEl = &mapCurrArrayPtr->at(element_index);
+	qreal x1 = ((qreal)currEl->pos.x() - (qreal)null_element_x) * (qreal)MAP_ELEMENT_SIZE;
+	qreal y1 = ((qreal)null_element_y - (qreal)currEl->pos.y()) * (qreal)MAP_ELEMENT_SIZE;
 	QRect itemRect = QRect(x1+(qreal)MAP_ELEMENT_SIZE/4.0, y1+(qreal)MAP_ELEMENT_SIZE/4.0, (qreal)MAP_ELEMENT_SIZE/2.0, (qreal)MAP_ELEMENT_SIZE/2.0);
 	QList<QGraphicsItem*> gItems = items(itemRect, Qt::IntersectsItemShape);
 	int cnt = gItems.size();
@@ -2165,7 +2040,7 @@ void GameMap::setMapElementEnemies(int x, int y, int count_min, int count_max)
 	if (count_min > count_max) {
 		return;
 	}
-	const int idx = getMapElementIndex(-1, x, y);
+	const int idx = getMapElementIndex(-1, QPoint(x, y));
 	if (idx == -1) {
 		return;
 	}
@@ -2194,7 +2069,7 @@ void GameMap::setMapElementEnemies(int x, int y, int count_min, int count_max)
  */
 void GameMap::setMapElementEnemiesList(int x, int y, const QStringList &enList)
 {
-	int idx = getMapElementIndex(-1, x, y);
+	int idx = getMapElementIndex(-1, QPoint(x, y));
 	if (idx == -1)
 		return;
 	bool modifFlag = false;
@@ -2217,12 +2092,12 @@ void GameMap::setMapElementEnemiesList(int x, int y, const QStringList &enList)
 	mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 }
 
-void GameMap::setMapElementType(int pers_x, int pers_y, int type)
+void GameMap::setMapElementType(int pers_x, int pers_y, MapElementType type)
 {
 	/**
 	* Устанавливает тип элемента карты
 	**/
-	const int i = getMapElementIndex(-1, pers_x, pers_y);
+	const int i = getMapElementIndex(-1, QPoint(pers_x, pers_y));
 	if (i != -1) {
 		if (mapCurrArrayPtr->at(i).type != type) {
 			(*mapCurrArrayPtr)[i].type = type;
@@ -2305,8 +2180,8 @@ bool GameMap::switchMap(int mapIndex)
 			return false;
 	}
 	// Очищаем кэши индекса карт
-	lastX = QINT32_MIN;
-	lastY = QINT32_MIN;
+	lastPos.setX(QINT32_MIN);
+	lastPos.setY(QINT32_MIN);
 	// Прописываем индекс и указатель на текущую карту
 	mapCurrIndex = mapIndex;
 	mapCurrArrayPtr = mapsList[mapIndex].map;
@@ -2352,15 +2227,15 @@ bool GameMap::unloadMap(int mapIndex)
 		return false;
 	// Освобождаем память
 	mapsList[mapIndex].status = HeaderOnly;
-	QVector<map_element>* mapPtr = mapsList[mapIndex].map;
+	QVector<MapElement>* mapPtr = mapsList[mapIndex].map;
 	mapsList[mapIndex].map = NULL;
 	if (mapPtr)
 		delete mapPtr;
 	// Если выгружаемая карта текущая
 	if (mapIndex == mapCurrIndex) {
 		// Очищаем кэши индекса карт
-		lastX = QINT32_MIN;
-		lastY = QINT32_MIN;
+		lastPos.setX(QINT32_MIN);
+		lastPos.setY(QINT32_MIN);
 		// Прописываем индекс и указатель на текущую карту
 		mapCurrIndex = -1;
 		// Перерисовываем карту
@@ -2378,22 +2253,19 @@ bool GameMap::clearMap(int mapIndex)
 	*/
 	if (mapIndex < 0 || mapIndex >= mapsList.size() || mapsList.at(mapIndex).status == None)
 		return false;
-	QVector<map_element>* mapPtr = mapsList[mapIndex].map;
+	QVector<MapElement>* mapPtr = mapsList[mapIndex].map;
 	mapPtr->clear();
 	clearOtherPersPos();
 	if (mapIndex == mapCurrIndex) {
 		// Очищаем кэши индекса карт
-		lastX = QINT32_MIN;
-		lastY = QINT32_MIN;
+		lastPos.setX(QINT32_MIN);
+		lastPos.setY(QINT32_MIN);
 		// Перерисовываем карту
 		redrawMap();
 		// Подгоняем размер сцены
 		setSceneRect(getMapRect());
 	}
-	mapsList[mapIndex].min_x = QINT32_MIN;
-	mapsList[mapIndex].max_x = QINT32_MIN;
-	mapsList[mapIndex].min_y = QINT32_MIN;
-	mapsList[mapIndex].max_y = QINT32_MIN;
+	mapsList[mapIndex].rect = MapRect();
 	if (!mapsList.at(mapIndex).modified) {
 		mapsList[mapIndex].modified = true;
 		modifiedMapsCount++;
@@ -2466,12 +2338,12 @@ void GameMap::drawOtherPersPos(int other_index)
 	**/
 	if (mapCurrIndex == -1)
 		return;
-	if (null_element_x == QINT32_MIN || null_element_y == QINT32_MIN || persPosX == QINT32_MIN || persPosY == QINT32_MIN)
+	if (null_element_x == QINT32_MIN || null_element_y == QINT32_MIN || persPos.x() == QINT32_MIN || persPos.y() == QINT32_MIN)
 		return;
 	if (other_index < 0 || other_index >= otherPers.size())
 		return;
-	int x = persPosX - null_element_x + otherPers.at(other_index).x;
-	int y = null_element_y - persPosY - otherPers.at(other_index).y;
+	int x = persPos.x() - null_element_x + otherPers.at(other_index).pos.x();
+	int y = null_element_y - persPos.y() - otherPers.at(other_index).pos.y();
 	qreal x_ = (qreal)x * (qreal)MAP_ELEMENT_SIZE;
 	qreal y_ = (qreal)y * (qreal)MAP_ELEMENT_SIZE;
 	x_ += (qreal)MAP_ELEMENT_SIZE * 0.3;
@@ -2655,12 +2527,10 @@ void GameMap::doAutoUnload()
 void GameMap::persParamChanged(int paramId, int, int)
 {
 	if (paramId == Pers::ParamCoordinates) {
-		// Добавляем элемент в карту
 		QPoint p = Pers::instance()->getCoordinates();
-		int x = p.x();
-		int y = p.y();
-		addMapElement(x, y);
+		// Добавляем элемент в карту
+		addMapElement(p);
 		// Устанавливаем новую позицию персонажа
-		setPersPos(x, y);
+		setPersPos(p);
 	}
 }
