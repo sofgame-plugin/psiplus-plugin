@@ -2717,16 +2717,10 @@ p, li { white-space: pre-wrap; }
      <item>
       <widget class="QFrame" name="mainInfo">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>1</verstretch>
         </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>150</width>
-         <height>0</height>
-        </size>
        </property>
        <property name="acceptDrops">
         <bool>false</bool>
