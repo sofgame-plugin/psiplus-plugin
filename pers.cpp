@@ -1398,10 +1398,10 @@ void Pers::doWatchEnergyRestTime()
 	}
 }
 
-void Pers::setCoordinates(const QPoint &p)
+void Pers::setMapPosition(const MapPos &p)
 {
-	if (p != coordinates) {
-		coordinates = p;
+	if (p != position) {
+		position = p;
 		emit persParamChanged(ParamCoordinates, TYPE_INTEGER_FULL, 0);
 		if (settingWatchRestHealthEnergy == 1) {
 			// Если производится расчет восстановления энергии, делаем поправку на ход (затраты энергии)

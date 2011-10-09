@@ -1139,25 +1139,25 @@ void SofMainWindow::setTimeout(int value)
 	}
 }
 
-void SofMainWindow::scrollMapNewPosition(int x, int y)
+/**
+ * Прокручивает карту так, что бы была видна часть карты с указанными координатами
+ */
+void SofMainWindow::scrollMapNewPosition(const MapPos &pos)
 {
-	/**
-	* Прокручивает карту так, что бы была видна часть карты с указанными координатами
-	**/
-	QRectF coordinates = GameMap::instance()->getSceneCoordinates(x, y);
+	QRectF coordinates = GameMap::instance()->gameToSceneCoordinates(pos);
 	if (!coordinates.isNull()) {
 		gameMapView->ensureVisible(coordinates, 50, 50);
 	}
 }
 
+/**
+ * Прокручивает карту так, что бы была видна позиция персонажа
+ */
 void SofMainWindow::scrollMapToPersPosition()
 {
-	/**
-	* Прокручивает карту так, что бы была видна позиция персонажа
-	**/
-	QGraphicsItem* persItem = GameMap::instance()->getPersItem();
-	if (persItem) {
-		gameMapView->ensureVisible(persItem, 50, 50);
+	const MapPos &pos = Pers::instance()->getMapPosition();
+	if (pos.isValid()) {
+		scrollMapNewPosition(pos);
 	}
 }
 
@@ -1601,7 +1601,7 @@ void SofMainWindow::mapShowContextMenu(const QPoint &pos)
 	* Обработчик события вызова контекстного меню
 	**/
 	QPointF viewPos = gameMapView->mapToScene(pos);
-	selectedMapElement = GameMap::instance()->getIndexByCoordinate(viewPos.x(), viewPos.y());
+	selectedMapElement = GameMap::instance()->getIndexByCoordinate(viewPos);
 	if (selectedMapElement != -1) {
 		actionMarkMapElement->setEnabled(true);
 		actionMoveMapElement->setEnabled(true);

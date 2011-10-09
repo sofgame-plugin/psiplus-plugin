@@ -27,11 +27,12 @@
 #define GAME_MAP_H
 
 #include <QtCore>
-#include <QGraphicsScene>
 #include <QDomDocument>
 
 #include "common.h"
+#include "mapscene.h"
 #include "maprect.h"
+#include "mappos.h"
 
 QT_BEGIN_NAMESPACE
 	class QGraphicsEllipseItem;
@@ -39,9 +40,7 @@ QT_BEGIN_NAMESPACE
 QT_END_NAMESPACE
 
 
-#define MAP_ELEMENT_SIZE  25
-
-class GameMap: public QGraphicsScene
+class GameMap: public QObject
 {
   Q_OBJECT
 
@@ -89,20 +88,17 @@ class GameMap: public QGraphicsScene
 		int  importMaps(const QString &);
 		bool removeMap(int);
 		bool mergeMaps(int, int);
-		int  getIndexByCoordinate(qreal, qreal);
+		int  getIndexByCoordinate(const QPointF &p);
 		void moveMapElement(int, int, int);
 		void removeMapElement(int, int);
 		QGraphicsScene* getGraphicsScene();
-		QRectF getSceneCoordinates(int pers_x, int pers_y) const;
-		QGraphicsItem* getPersItem() const;
-		void setMapElementPaths(int pers_x, int pers_y, int paths);
-		void setMapElementEnemies(int x, int y, int count_min, int count_max);
-		void setMapElementEnemiesList(int x, int y, const QStringList &enList);
-		void setMapElementType(int pers_x, int pers_y, MapElementType type);
+		void setMapElementPaths(const MapPos &pos, int paths);
+		void setMapElementEnemies(const MapPos &pos, int count_min, int count_max);
+		void setMapElementEnemiesList(const MapPos &pos, const QStringList &enList);
+		void setMapElementType(const MapPos &pos, const MapScene::MapElementFeature &feature);
 		void mapsInfo(struct maps_info* mapsInfoPtr) const;
 		void getMapsList(QVector<maps_list2>* maps_ls) const;
 		bool switchMap(int);
-		QRectF getMapRect() const;
 		bool unloadMap(int);
 		bool clearMap(int);
 		int  renameMap(int, const QString &);
@@ -112,11 +108,12 @@ class GameMap: public QGraphicsScene
 		void setOtherPersPos(QVector<GameMap::maps_other_pers>*);
 		int  getMapsSettingParam(ParamId) const;
 		void setMapsParam(ParamId, int);
-		const QColor &getPersPosColor() const {return persPosColor;};
-		void setPersPosColor(const QColor &);
 		int  getUnloadInterval() const {return autoUnloadInterval;};
 		void setUnloadInterval(int minutes);
 		QDomElement exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const;
+		const QColor &getPersPosColor() const;
+		void setPersPosColor(const QColor &color);
+		QRectF gameToSceneCoordinates(const MapPos &pos) const;
 
 	private:
 		enum MapStatus {
@@ -126,25 +123,25 @@ class GameMap: public QGraphicsScene
 			NewMap
 		};
 		struct MapElement {
-			int            status;
-			MapElementType type;
-			QPoint         pos;
-			int            can_north;
-			int            can_south;
-			int            can_west;
-			int            can_east;
-			int            north_type;
-			int            south_type;
-			int            west_type;
-			int            east_type;
-			int            enemies_min;
-			int            enemies_max;
-			QStringList    enemies_list;
-			MapElementMark mark;
+			int               status;
+			MapScene::MapElementFeature feature;
+			MapPos            pos;
+			int               can_north;
+			int               can_south;
+			int               can_west;
+			int               can_east;
+			int               north_type;
+			int               south_type;
+			int               west_type;
+			int               east_type;
+			int               enemies_min;
+			int               enemies_max;
+			QStringList       enemies_list;
+			MapElementMark    mark;
 			MapElement() {}; // Для добавления в вектор
-			MapElement(MapElementType type_, const QPoint &pos_) :
+			MapElement(const MapPos &pos_, MapScene::MapElementFeature feature_ = MapScene::MapElementFeature()) :
 				status(1),
-				type(type_),
+				feature(feature_),
 				pos(pos_),
 				can_north(0), can_south(0), can_west(0), can_east(0),
 				north_type(0), south_type(0), west_type(0), east_type(0),
@@ -167,54 +164,41 @@ class GameMap: public QGraphicsScene
 			{};
 		};
 		struct OtherPers {
-			QPoint      pos;
+			MapPos      pos;
 			QStringList names;
 		};
 		static GameMap *instace_;
+		MapScene *mapScene_;
 		QString currAccJid;
 		QVector<MapInfo> mapsList;
 		QList<OtherPers> otherPers;
-		int null_element_x;
-		int null_element_y;
-		int null_pers_pos_x;
-		int null_pers_pos_y;
-		QPoint lastPos;
-		QPoint persPos;
+		MapPos lastPos;
+		MapPos persPos;
 		int lastIndex;
 		int persPosIndex;
 		int mapCurrIndex;
 		QVector<GameMap::MapElement>* mapCurrArrayPtr;
-		QGraphicsEllipseItem* persGraphicItem;
 		int modifiedMapsCount;
 		int saveMode;
 		QTimer *saveTimer;
 		int autoSaveInterval;   // В минутах
 		QTimer *unloadTimer;
 		int autoUnloadInterval; // В минутах
-		QColor persPosColor;
 
 	private:
 		GameMap(QObject *parent = 0);
 		~GameMap();
 		bool loadMap(int map_index);
-		void addMapElement(const QPoint &pos);
-		void setPersPos(const QPoint &pos);
+		void addMapElement(const MapPos &pos);
+		void setPersPos(const MapPos &pos);
 		QDomNode makeMapXmlElement(QDomDocument xmlDoc, const MapInfo &map_head) const;
 		bool makeMapFromDomElement(MapInfo &, const QDomElement &);
-		void selectMap(const QPoint &pos);
+		void selectMap(const MapPos &pos);
+		void paintMap(MapScene *scene, int mapIndex);
 		void redrawMap();
-		void drawMapElement(int, bool);
 		QString makeTooltipForMapElement(int) const;
-		void setTooltipForMapElement(int, const QString &);
-		void drawMapName();
-		int  getMapElementIndex(int mapIndex, const QPoint &pos);
-		void drawMapElementPathNorth(int element_index, bool modif);
-		void drawMapElementPathSouth(int element_index, bool modif);
-		void drawMapElementPathWest(int element_index, bool modif);
-		void drawMapElementPathEast(int element_index, bool modif);
-		void setPathPen(int map_index, int path_type, int can_move, QPen* pen);
+		int  getMapElementIndex(int mapIndex, const MapPos &pos);
 		void clearOtherPersPos();
-		void drawOtherPersPos(int);
 		void initSaveTimer();
 		void initUnloadTimer(bool update_interval);
 		void loadMapsSettings(const QDomElement &xml);

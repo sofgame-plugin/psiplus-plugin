@@ -1,5 +1,5 @@
 /*
- * maprect.h - Sof Game Psi plugin
+ * mappos.cpp - Sof Game Psi plugin
  * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,31 +23,42 @@
  *
  */
 
-#ifndef MAPRECT_H
-#define MAPRECT_H
-
-#include <QPoint>
-
 #include "mappos.h"
 
-class MapRect
+MapPos::MapPos() :
+	x_(0), y_(0),
+	valid(false)
 {
-public:
-	MapRect();
-	MapRect(int minX, int maxX, int minY, int maxY);
-	int  left() const {return left_;};
-	int  right() const {return right_;};
-	int  top() const {return top_;};
-	int  bottom() const {return bottom_;};
-	bool isValid() const;
-	void addPoint(const MapPos &point);
-	bool contains(const MapPos &point) const;
+}
 
-private:
-	int left_;
-	int right_;
-	int top_;
-	int bottom_;
-};
+MapPos::MapPos(int posX, int posY)
+{
+	setPos(posX, posY);
+}
 
-#endif // MAPRECT_H
+MapPos::MapPos(const MapPos &pos)
+{
+	valid = pos.valid;
+	if (valid) {
+		x_ = pos.x();
+		y_ = pos.y();
+	}
+}
+
+void MapPos::setPos(int posX, int posY)
+{
+	x_ = posX;
+	y_ = posY;
+	valid = true;
+}
+
+bool MapPos::operator == (const MapPos &pos) const
+{
+	return (valid == pos.valid && x_ == pos.x_ && y_ == pos.y_);
+}
+
+bool MapPos::operator != (const MapPos &pos) const
+{
+	return (valid != pos.valid || x_ != pos.x_ || y_ != pos.y_);
+}
+

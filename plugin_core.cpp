@@ -39,6 +39,8 @@
 #include "settings.h"
 #include "pluginhosts.h"
 
+//#include "maps/mapscene.h"
+
 
 PluginCore *PluginCore::instance_ = NULL;
 
@@ -262,15 +264,13 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	int startStr = 0;
 	bool fNewFight = false;
 	// Проверяем наличие координат // 210:290
-	int persX = QINT32_MIN;
-	int persY = QINT32_MIN;
+	MapPos persPos;
 	Pers *pers = Pers::instance();
 	if (mapCoordinatesExp.indexIn(aMessage[0], 0) != -1) {
 		// Найдены координаты местоположения на карте
 		startStr = 1;
-		persX = mapCoordinatesExp.cap(1).toInt();
-		persY = mapCoordinatesExp.cap(2).toInt();
-		pers->setCoordinates(QPoint(persX, persY));
+		persPos.setPos(mapCoordinatesExp.cap(1).toInt(), mapCoordinatesExp.cap(2).toInt());
+		pers->setMapPosition(persPos);
 	}
 	//--
 	int i = 0;
@@ -897,8 +897,8 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					int enCnt = fight->gameMobEnemyCount();
 					if (enCnt > 0) {
 						GameMap *maps = GameMap::instance();
-						maps->setMapElementEnemies(persX, persY, enCnt, enCnt);
-						maps->setMapElementEnemiesList(persX, persY, fight->mobEnemiesList());
+						maps->setMapElementEnemies(persPos, enCnt, enCnt);
+						maps->setMapElementEnemiesList(persPos, fight->mobEnemiesList());
 					}
 				}
 				Sender *sd = Sender::instance();
@@ -996,7 +996,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	//if (myMessage) {
 		// Выводим сообщение игры на экран
 		int startText = -1;
-		if (persX != QINT32_MIN && persY != QINT32_MIN) { // Есть координаты от GPS
+		if (persPos.isValid()) { // Есть координаты от GPS
 			startText = message.indexOf("\n");
 		}
 		if (startText == -1) {
@@ -1005,12 +1005,12 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			setGameText(message.mid(startText + 1));
 		}
 	//}
-	if (nCmdStatus > 3  && persX != QINT32_MIN && persY != QINT32_MIN) { // Т.е Есть что то кроме нестандартных и посторонних команд и координаты
-		GameMap::instance()->setMapElementPaths(persX, persY, nCmdStatus);
+	if (nCmdStatus > 3  && persPos.isValid()) { // Т.е есть что то кроме нестандартных и посторонних команд и координаты
+		GameMap::instance()->setMapElementPaths(persPos, nCmdStatus);
 		if ((nCmdStatus & 1024) != 0) {
-			GameMap::instance()->setMapElementType(persX, persY, GameMap::TypePortal);
+			GameMap::instance()->setMapElementType(persPos, MapScene::MapElementFeature(MapScene::LocationPortal));
 		} else if ((nCmdStatus & 2048) != 0) {
-			GameMap::instance()->setMapElementType(persX, persY, GameMap::TypeSecret);
+			GameMap::instance()->setMapElementType(persPos, MapScene::MapElementFeature(MapScene::LocationSecret));
 		}
 	}
 	if (fNewFight) {
@@ -1811,7 +1811,16 @@ void PluginCore::mapsCommands(QStringList* args)
 	int cntArgs = args->size() - 1;
 	QString stat_str = QString::fromUtf8("--= Карты =--\n");
 	if (cntArgs == 0) {
-		stat_str.append(QString::fromUtf8("/maps clear <index> - Очистка всего содержимого карты с индексом <index>\n/maps export <index> <exp_file> - Экспорт карты с индексом <index> в файл с именем <exp_file>\n/maps import <imp_file> - Импорт карт из файла\n/maps info - основная информация о картах\n/maps list - список всех карт\n/maps merge <index1> <index2> - Объединение карт\n/maps remove <index> - Удаление карты\n/maps rename <index> <new_name> - Переименование карты\n/maps switch <index> - переключение на карту с указанным индексом\n/maps unload <index>- выгрузка карты из памяти без сохранения изменений\n"));
+		stat_str.append(QString::fromUtf8("/maps clear <index> - Очистка всего содержимого карты с индексом <index>\n"));
+		stat_str.append(QString::fromUtf8("/maps export <index> <exp_file> - Экспорт карты с индексом <index> в файл с именем <exp_file>\n"));
+		stat_str.append(QString::fromUtf8("/maps import <imp_file> - Импорт карт из файла\n"));
+		stat_str.append(QString::fromUtf8("/maps info - основная информация о картах\n"));
+		stat_str.append(QString::fromUtf8("/maps list - список всех карт\n"));
+		stat_str.append(QString::fromUtf8("/maps merge <index1> <index2> - Объединение карт\n"));
+		stat_str.append(QString::fromUtf8("/maps remove <index> - Удаление карты\n"));
+		stat_str.append(QString::fromUtf8("/maps rename <index> <new_name> - Переименование карты\n"));
+		stat_str.append(QString::fromUtf8("/maps switch <index> - переключение на карту с указанным индексом\n"));
+		stat_str.append(QString::fromUtf8("/maps unload <index>- выгрузка карты из памяти без сохранения изменений\n"));
 		setConsoleText(stat_str, true);
 	} else if ((*args)[1] == "clear") {
 		if (cntArgs == 2) {
@@ -1868,12 +1877,21 @@ void PluginCore::mapsCommands(QStringList* args)
 		setConsoleText(stat_str, true);
 		return;
 	} else if ((*args)[1] == "export") {
-		if (cntArgs == 3) {
+		if (cntArgs == 3 || cntArgs == 4) {
 			QStringList maps = (*args)[2].split(",");
-			int type = 1; //0;
-			//if ((*args)[4] == "xml") {
-			//	type = 1;
-			//}
+			int type = 1; // XML по умолчанию
+			if (cntArgs == 4) {
+				// Явно указан тип
+				if ((*args).at(4).toLower() == "png") {
+					// Тип PNG
+					type = 2;
+				}
+			} else {
+				// Попробуем определить тип автоматически по расширению
+				if ((*args).at(3).toLower().endsWith(".png")) {
+					type = 2;
+				}
+			}
 			int nRes = GameMap::instance()->exportMaps(maps, type, (*args)[3]);
 			switch (nRes) {
 				case 0:
@@ -1887,6 +1905,9 @@ void PluginCore::mapsCommands(QStringList* args)
 					break;
 				case 3:
 					stat_str.append(QString::fromUtf8("Ошибка: неудачная запись в файл\n"));
+					break;
+				case 4:
+					stat_str.append(QString::fromUtf8("Может быть выгружена только одна карта\n"));
 					break;
 				default:
 					stat_str.append(QString::fromUtf8("Ошибка: ошибка экспорта\n"));

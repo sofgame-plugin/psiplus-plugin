@@ -1,5 +1,5 @@
 /*
- * maprect.h - Sof Game Psi plugin
+ * mappos.h - Sof Game Psi plugin
  * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,31 +23,30 @@
  *
  */
 
-#ifndef MAPRECT_H
-#define MAPRECT_H
+#ifndef MAPPOS_H
+#define MAPPOS_H
 
 #include <QPoint>
 
-#include "mappos.h"
-
-class MapRect
+class MapPos
 {
 public:
-	MapRect();
-	MapRect(int minX, int maxX, int minY, int maxY);
-	int  left() const {return left_;};
-	int  right() const {return right_;};
-	int  top() const {return top_;};
-	int  bottom() const {return bottom_;};
-	bool isValid() const;
-	void addPoint(const MapPos &point);
-	bool contains(const MapPos &point) const;
+	MapPos();
+	MapPos(int posX, int posY);
+	MapPos(const MapPos &pos);
+	void reset() {valid = false;};
+	bool isValid() const {return valid;};
+	int  x() const {return x_;};
+	int  y() const {return y_;};
+	void setPos(int posX, int posY);
+	bool operator == (const MapPos &pos) const;
+	bool operator != (const MapPos &pos) const;
 
 private:
-	int left_;
-	int right_;
-	int top_;
-	int bottom_;
+	int x_;
+	int y_;
+	bool valid;
+
 };
 
-#endif // MAPRECT_H
+#endif // MAPPOS_H

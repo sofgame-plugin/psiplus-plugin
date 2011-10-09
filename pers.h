@@ -34,6 +34,7 @@
 #include "thingstab/thingsmodel.h"
 #include "thingstab/thingsproxymodel.h"
 #include "settings.h"
+#include "maps/mappos.h"
 
 #define THING_APPEND                 1
 
@@ -100,8 +101,9 @@ public:
 	void removeThingsInterface(int);
 	QSortFilterProxyModel* getThingsModel(int) const;
 	QString getPersStatusString();
-	const QPoint &getCoordinates() const {return coordinates;};
-	void setCoordinates(const QPoint &p);
+	const MapPos &getCoordinates() const {return position;};
+	void setMapPosition(const MapPos &p);
+	const MapPos &getMapPosition() const {return position;};
 	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 private:
@@ -142,7 +144,7 @@ private:
 	QVector<price_item> thingPrice;
 	static Pers *instance_;
 	static QHash<PersStatus, QString> statusStrings;
-	QPoint coordinates;
+	MapPos position;
 	QDateTime lastNegativeHealthUpdate;
 	QDateTime lastNegativeEnergyUpdate;
 	int moneys;

@@ -100,7 +100,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		bool freeEventSlot(int id);
 		bool setEventValue(int id, QString* caption, QString* value);
 		void setTimeout(int value);
-		void scrollMapNewPosition(int x, int y);
+		void scrollMapNewPosition(const MapPos &pos);
 		void scrollMapToPersPosition();
 		void setCurrentHealth(int);
 		void setCurrentEnergy(int);

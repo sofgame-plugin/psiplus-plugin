@@ -54,7 +54,7 @@ bool MapRect::isValid() const
  * Изменяет координаты квадрата так, чтобы точка входила в него
  * Если квадрат не валиден инициирует его координатами точки
  */
-void MapRect::addPoint(const QPoint &point)
+void MapRect::addPoint(const MapPos &point)
 {
 	const int x = point.x();
 	const int y = point.y();
@@ -80,7 +80,7 @@ void MapRect::addPoint(const QPoint &point)
  * Если это так, то возвращается true иначе false
  * Если прямоугольник не валиден, то возвращается false
  */
-bool MapRect::contains(const QPoint &point) const
+bool MapRect::contains(const MapPos &point) const
 {
 	if (!isValid())
 		return false;
