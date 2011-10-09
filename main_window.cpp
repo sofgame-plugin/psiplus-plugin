@@ -1186,11 +1186,10 @@ void SofMainWindow::setCurrentHealth(int health)
 		str1.append(" (" + QString::number((100*health/maxValue)) + "%)");
 	}*/
 	healthLabel->setText(str1);
-	if (health > 0) {
-		healthBar->setValue(health);
-	} else {
-		healthBar->setValue(0);
-	}
+	int he = (health > maxValue) ? maxValue : health;
+	if (he < 0)
+		he = 0;
+	healthBar->setValue(he);
 }
 
 void SofMainWindow::setCurrentEnergy(int energy)
@@ -1218,11 +1217,10 @@ void SofMainWindow::setCurrentEnergy(int energy)
 		str1.append(" (" + QString::number((100*energy/maxValue)) + "%)");
 	}*/
 	energyLabel->setText(str1);
-	if (energy > 0) {
-		energyBar->setValue(energy);
-	} else {
-		energyBar->setValue(0);
-	}
+	int en = (energy > maxValue) ? maxValue : energy;
+	if (en < 0)
+		en = 0;
+	energyBar->setValue(en);
 }
 
 /**
