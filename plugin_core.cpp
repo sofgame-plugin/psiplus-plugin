@@ -829,7 +829,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						}
 					}
 				}
-			} else if (nPersStatus == Pers::StatusSecretGet || nPersStatus == Pers::StatusTake) {
+			} else if (nPersStatus == Pers::StatusSecretGet || nPersStatus == Pers::StatusTake || nPersStatus == Pers::StatusNotKnow) {
 				if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 					// Берем опыт, который дали в тайнике
 					statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
