@@ -963,21 +963,34 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 void SofMainWindow::loadSlotsSettings(const QDomElement &xml)
 {
 	statisticFooterPos.clear();
-	QDomElement eSlot = xml.firstChildElement("slot");
-	while (!eSlot.isNull()) {
-		QString param = eSlot.attribute("param").toLower();
-		if (!param.isEmpty()) {
-			int slotNum = eSlot.attribute("num").toInt();
-			if (slotNum >= 1 && slotNum <= SLOT_ITEMS_COUNT) {
-				for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
-					if (SofMainWindow::statisticXmlStrings.at(i).second == param) {
-						statisticFooterPos[SofMainWindow::statisticXmlStrings.at(i).first] = slotNum;
-						break;
+	if (!xml.isNull()) {
+		QDomElement eSlot = xml.firstChildElement("slot");
+		while (!eSlot.isNull()) {
+			QString param = eSlot.attribute("param").toLower();
+			if (!param.isEmpty()) {
+				int slotNum = eSlot.attribute("num").toInt();
+				if (slotNum >= 1 && slotNum <= SLOT_ITEMS_COUNT) {
+					for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
+						if (SofMainWindow::statisticXmlStrings.at(i).second == param) {
+							statisticFooterPos[SofMainWindow::statisticXmlStrings.at(i).first] = slotNum;
+							break;
+						}
 					}
 				}
 			}
+			eSlot = eSlot.nextSiblingElement("slot");
 		}
-		eSlot = eSlot.nextSiblingElement("slot");
+	} else {
+		// Значения по умолчанию
+		statisticFooterPos[VALUE_LAST_GAME_JID] = 1;
+		statisticFooterPos[VALUE_FIGHTS_COUNT] = 2;
+		statisticFooterPos[VALUE_KILLED_ENEMIES] = 3;
+		statisticFooterPos[VALUE_EXPERIENCE_DROP_COUNT] = 4;
+		statisticFooterPos[VALUE_DAMAGE_MAX_FROM_PERS] = 5;
+		statisticFooterPos[VALUE_DAMAGE_MIN_FROM_PERS] = 6;
+		statisticFooterPos[VALUE_DROP_MONEYS] = 7;
+		statisticFooterPos[VALUE_THINGS_DROP_COUNT] = 8;
+		statisticFooterPos[VALUE_THING_DROP_LAST] = 9;
 	}
 	fullUpdateFooterStatistic();
 	// Меняем элементы настроек слотов
