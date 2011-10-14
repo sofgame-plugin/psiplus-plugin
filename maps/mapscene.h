@@ -74,7 +74,8 @@ private:
 		ElementPathWest,
 		ElementPathEast,
 		ElementMapName,
-		ElementOtherPers
+		ElementOtherPers,
+		ElementPersPos
 	};
 	void init();
 	void removeSceneElement(const QRectF &rect, ElementType type);

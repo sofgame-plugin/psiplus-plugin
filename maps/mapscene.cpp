@@ -246,6 +246,7 @@ void MapScene::drawPersPos(const MapPos &pos)
 			double ellipseSize = MAP_ELEMENT_SIZE / 4;
 			persGraphicItem = addEllipse(x1, y1, ellipseSize, ellipseSize, QPen(Qt::black, 1.0f, Qt::SolidLine), QBrush(persPosColor, Qt::SolidPattern));
 			persGraphicItem->setZValue(ZValuePersPos);
+			persGraphicItem->setData(0, ElementPersPos);
 		}
 		// Перемещаем уже существующий элемент
 		persGraphicItem->setPos(itemRect.x(), itemRect.y());
