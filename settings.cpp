@@ -285,6 +285,7 @@ void Settings::setFightSettings(const QDomElement &xml)
 	if (!specEnemF) {
 		// Нет настроек для особых врагов. Заполняем по умолчанию
 		specificEnemies.append(SpecificEnemy(QString::fromUtf8("Смертокрыл"), true, false));
+		specificEnemies.append(SpecificEnemy(QString::fromUtf8("Ледяной дракон"), true, false));
 	}
 }
 
