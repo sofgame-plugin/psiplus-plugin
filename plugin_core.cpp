@@ -39,9 +39,6 @@
 #include "settings.h"
 #include "pluginhosts.h"
 
-//#include "maps/mapscene.h"
-
-
 PluginCore *PluginCore::instance_ = NULL;
 
 PluginCore *PluginCore::instance()
@@ -120,6 +117,8 @@ PluginCore::PluginCore()
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged()));
 	connect(pers, SIGNAL(thingsChanged()), this, SLOT(persBackpackChanged()));
 	connect(&saveStatusTimer, SIGNAL(timeout()), this, SLOT(saveStatusTimeout()));
+	// Разное
+	coloring = true;
 }
 
 PluginCore::~PluginCore()
@@ -157,7 +156,7 @@ void PluginCore::updateRegExpForPersName()
 	fightDamageFromPersReg3.setPattern("^" + sName + QString::fromUtf8(" .+ нет повреждений$"));
 	fightDropMoneyReg1.setPattern("^" + sName + QString::fromUtf8(" ([-+][0-9]+) дринк$")); // xxxxx +5 дринк;
 	fightDropThingReg1.setPattern("^" + sName + QString::fromUtf8(" \\+(.+)$")); // xxxxx +шкура мат. волка
-
+	persInListOfTheBestReg.setPattern("^ *[0-9]+\\. +" + sName + QString::fromUtf8("(/.+/)?\\[у:[0-9]+\\,з:[0-9]+/[0-9]+\\]")); //99. demon/В/XX/[у:27,з:xxxxx/xxxxxx] Опыт: xxxxxx сейчас в игре
 }
 
 void PluginCore::doShortCut()
@@ -201,9 +200,9 @@ void PluginCore::setAccountStatus(int status)
 	// *** Смена статуса игрового аккаунта *** //  И как это радостное событие отловить, а?
 	// Если аккаунт отключен, то устанавливаем игровым jid-ам статус отключенных
 	if (status == 0) {
-		setConsoleText(QString::fromUtf8("### Аккаунт отключен ###"), false);
+		setConsoleText(GameText(QString::fromUtf8("### Аккаунт отключен ###"), false), 3, false);
 	} else {
-		setConsoleText(QString::fromUtf8("### Аккаунт активен ###"), false);
+		setConsoleText(GameText(QString::fromUtf8("### Аккаунт активен ###"), false), 3, false);
 	}
 	Sender::instance()->setAccountStatus(status);
 }
@@ -220,7 +219,7 @@ void PluginCore::setGameJidStatus(int jid_index, qint32 status)
 			str1.append(QString::fromUtf8("подключен"));
 		}
 		str1.append(" ###");
-		setConsoleText(str1, false);
+		setConsoleText(GameText(str1, false), 3, false);
 	}
 }
 
@@ -242,7 +241,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	++statMessagesCount;
 	valueChanged(VALUE_MESSAGES_COUNT, TYPE_INTEGER_FULL, statMessagesCount);
 	// Распускаем полученное сообщение построчно
-	QStringList aMessage = message.split("\n");
+	GameText gameText(message, false);
 	// Просматриваем данные построчно
 	Pers::PersStatus nPersStatus = Pers::StatusNotKnow;
 	//int nParamLine = -1;
@@ -258,25 +257,22 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	int nTimeout = -1;
 	//bool fFight = false;
 	int nCmdStatus = 0;
-	int nCount = aMessage.count();
-	QStringList oTempStrList;
+	//int nCount = aMessage.count();
 	QString sMessage;
-	int startStr = 0;
 	bool fNewFight = false;
 	// Проверяем наличие координат // 210:290
 	MapPos persPos;
 	Pers *pers = Pers::instance();
-	if (mapCoordinatesExp.indexIn(aMessage[0], 0) != -1) {
+	if (!gameText.isEnd() && mapCoordinatesExp.indexIn(gameText.currentLine(), 0) != -1) {
 		// Найдены координаты местоположения на карте
-		startStr = 1;
 		persPos.setPos(mapCoordinatesExp.cap(1).toInt(), mapCoordinatesExp.cap(2).toInt());
 		pers->setMapPosition(persPos);
+		gameText.removeLine();
 	}
 	//--
-	int i = 0;
-	while (i < nCount) {
-		sMessage = aMessage.at(i).trimmed(); // Убираем пробельные символы в начале и в конце строки
-		if (i == startStr) { // Первая строка в выборке
+	while (!gameText.isEnd()) {
+		sMessage = gameText.currentLine().trimmed(); // Убираем пробельные символы в начале и в конце строки
+		if (gameText.isFirst()) { // Первая строка в выборке
 			if (parPersRegExp.indexIn(sMessage, 0) != -1) { // Проверяем наличие строки с полными параметрами персонажа
 				fName = true; sName = parPersRegExp.cap(1);
 				fLevel = true; nLevel = parPersRegExp.cap(2).toInt();
@@ -303,7 +299,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				QString sSitizenship;
 				int nRating = QINT32_MIN;
 				QString sClan;
-				sMessage = aMessage[++i].trimmed();
+				sMessage = gameText.nextLine().trimmed();
 				if (persInfoMainReg.indexIn(sMessage, 0) != -1) {
 					// Уровень:27, Здоровье:12464/12464, Энергия:11802/11802, Опыт:851081201.
 					// Уровень:25, Здоровье:6051/6051, Энергия:7956/7956, Опыт:186821489, Ост. до след уровня:133178511
@@ -317,25 +313,25 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						nExperienceRemain = persInfoMainReg.cap(8).toLongLong();
 						fExperienceRemain = true;
 					}
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 				}
 				if (persInfoSitizenshipReg.indexIn(sMessage, 0) != -1) {
 					// Гражданство: город "Вольный"
 					sSitizenship = persInfoSitizenshipReg.cap(1).trimmed();
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 				}
 				if (persInfoClanReg.indexIn(sMessage, 0) != -1) {
 					//  Клан: Лига Теней/ЛТ/
 					sClan = persInfoClanReg.cap(1).trimmed();
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 				}
 				if (persInfoRatingReg.indexIn(sMessage, 0) != -1) {
 					// Рейтинг: 5 место.
 					nRating = persInfoRatingReg.cap(1).toInt();
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 				}
 				if (sMessage == QString::fromUtf8("Распределение:")) {
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 					while (persInfoParamsReg.indexIn(sMessage, 0) != -1) {
 						// Сила:55[637]
 						// Ловкость:44[517]
@@ -354,33 +350,33 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 							nIntell2 = persInfoParamsReg.cap(3).toInt();
 							fIntell = true;
 						}
-						sMessage = aMessage[++i].trimmed();
+						sMessage = gameText.nextLine().trimmed();
 					}
 					if (persInfoLossReg.indexIn(sMessage, 0) != -1) {
 						// Суммарный урон экипировки: 3452
 						nLoss = persInfoLossReg.cap(1).toInt();
-						sMessage = aMessage[++i].trimmed();
+						sMessage = gameText.nextLine().trimmed();
 					}
 					if (persInfoProtectReg.indexIn(sMessage, 0) != -1) {
 						// Суммарная защита экипировки: 3361
 						nProtect = persInfoProtectReg.cap(1).toInt();
-						sMessage = aMessage[++i].trimmed();
+						sMessage = gameText.nextLine().trimmed();
 					}
 				}
 				if (sMessage == QString::fromUtf8("Умения:")) {
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 					// простой удар. ур.1; поражение:2; эн.4.
 					// двойной удар. ур.:14;удар:35/55; защ.:16/18; подг.2хода; эн.36.
 					// аура ярости. ур.:7;урон команды:+52;удар:8; защ.:8; подг.4хода; эн.109.
 					// аура защитника. ур.:4;защита команды:+45;удар:7; защ.:7; подг.5хода; эн.104.
 					while (persInfoAbility.indexIn(sMessage, 0) != -1) {
 
-						sMessage = aMessage[++i].trimmed();
+						sMessage = gameText.nextLine().trimmed();
 					}
 					// деньги: 100000 дринк
 					if (moneysCountExp.indexIn(sMessage, 0) != -1) {
 						Pers::instance()->setMoneys(moneysCountExp.cap(1).toInt());
-						sMessage = aMessage[++i].trimmed();
+						sMessage = gameText.nextLine().trimmed();
 					}
 				}
 				// Смотрим экипу
@@ -446,7 +442,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						getEquipFromString(persInfoEquipReg.cap(2).trimmed(), ee);
 					}
 
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 					equipCount++;
 				}
 				if (sMessage == "---") {
@@ -459,29 +455,30 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					Призрачный щит Демона; Призрачные наручи Демона;
 					сила:19; сила:3;
 					*/
-					sMessage = aMessage[++i].trimmed();
+					sMessage = gameText.nextLine().trimmed();
 					if (equipCount != 0 && sMessage != QString::fromUtf8("Кредиты:")) {
 						// Проверяем комплекты
 						while (true) {
 							if (sMessage == "---")
 								break;
 							// Сначала предположительно имя комплекта
-							sMessage = aMessage[++i].trimmed();
+							sMessage = gameText.nextLine().trimmed();
 							// Список вещей в комплекте
 							QStringList equipNameList = sMessage.split(";", QString::SkipEmptyParts, Qt::CaseInsensitive);
 							int cnt = equipNameList.size();
 							if (cnt < 2) {
-								if (i > 1) i--;
+								gameText.prior();
 								break;
 							}
-							sMessage = aMessage[++i].trimmed();
+							sMessage = gameText.nextLine().trimmed();
 							// Список бонусов
 							QStringList equipBonusList = sMessage.split(";", QString::SkipEmptyParts);
 							if (equipBonusList.size() != cnt) {
-								if (i > 2) i -= 2;
+								gameText.prior();
+								gameText.prior();
 								break;
 							}
-							sMessage = aMessage[++i].trimmed();
+							sMessage = gameText.nextLine().trimmed();
 							// Просматриваем экипировку, прописываем бонусы
 							for (int setIndex = 0; setIndex < cnt; setIndex++) {
 								QString equipName = equipNameList[setIndex].trimmed();
@@ -508,7 +505,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 							}
 						}
 					} else {
-						i--;
+						gameText.prior();
 					}
 				}
 				/*
@@ -555,19 +552,19 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					for (int idx = 0; idx < 11; idx++)
 						persInfoPtr->setEquip(idx+1, &equipList[idx]);
 				}
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 				nPersStatus = Pers::StatusPersInform;
 			} else if (sMessage == QString::fromUtf8("Экипировка:")) {
 				// Список вещей персонажа
 				// Деньги
-				sMessage = aMessage[++i].trimmed();
+				sMessage = gameText.nextLine().trimmed();
 				if (moneysCountExp.indexIn(sMessage, 0) != -1) {
 					pers->setMoneys(moneysCountExp.cap(1).toInt());
 				}
-				Pers::instance()->setThingsStart(true);
+				pers->setThingsStart(true);
 				bool fDressed = false;
-				while (i < nCount) {
-					sMessage = aMessage[i].trimmed();
+				while (!gameText.isEnd()) {
+					sMessage = gameText.nextLine().trimmed();
 					if (sMessage == QString::fromUtf8("одеты:")) {
 						fDressed = true;
 					} else if (sMessage == QString::fromUtf8("не одеты:")) {
@@ -576,36 +573,34 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						Thing* fg = new Thing(sMessage);
 						if (fg->isValid()) {
 							fg->setDressed(fDressed);
-							Pers::instance()->setThingElement(THING_APPEND, fg);
+							pers->setThingElement(THING_APPEND, fg);
 						} else {
 							delete fg;
 						}
 					}
-					i++;
 				}
-				Pers::instance()->setThingsEnd();
+				pers->setThingsEnd();
 				nPersStatus = Pers::StatusThingsList;
 			} else if (sMessage.startsWith(QString::fromUtf8("Выбрана вещь: "))) {
 				// Выбрана вещь: кровавый кристалл (вещь)
 
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 				nPersStatus = Pers::StatusThingIsTaken;
 			} else if (sMessage.startsWith(QString::fromUtf8("Дом, милый дом."))) {
 				// "Телепортация" домой
 
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 				nPersStatus = Pers::StatusAtHome;
 			} else if (fightShowReg.indexIn(sMessage, 0) != -1) {
 				// Режим просмотра чужого боя в 05 3
 
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 				nPersStatus = Pers::StatusFightShow;
 			} else if (otherPersPosReg1.indexIn(sMessage, 0) != -1) {
 				// Режим просмотра положения игроков по 05
-				i++;
 				QVector<GameMap::maps_other_pers> aOtherPers;
-				while (i < nCount) {
-					sMessage = aMessage[i].trimmed();
+				while (!gameText.isEnd()) {
+					sMessage = gameText.nextLine().trimmed();
 					if (otherPersPosReg2.indexIn(sMessage, 0) != -1) {
 						struct GameMap::maps_other_pers other_pers;
 						other_pers.name = otherPersPosReg2.cap(1).trimmed();
@@ -618,61 +613,78 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						}
 						aOtherPers.push_back(other_pers);
 					}
-					i++;
 				}
 				GameMap::instance()->setOtherPersPos(&aOtherPers);
 				nPersStatus = Pers::StatusOtherPersPos;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("куплено!")) {
 				nPersStatus = Pers::StatusBuyOk;
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (dealerBuyReg.indexIn(sMessage, 0) != -1) {
 				nPersStatus = Pers::StatusDealerBuy;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Выбери что нужно продать:")) { // Первая строка при продаже торговцу
 				nPersStatus = Pers::StatusDealerSale;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Вы во дворе.")) {
 				nPersStatus = Pers::StatusYard;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Немного повозившись возле станка, Вы искусно наточили свое оружие.")) {
 				nPersStatus = Pers::StatusMasterRoom2;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Немного повозившись возле станка, Вы искусно наточили свое оружие и отполировали всю броню.")) {
 				nPersStatus = Pers::StatusMasterRoom3;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Ваше имя в кубке конторы убийц...")) {
 				nPersStatus = Pers::StatusInKillersCup;
 				if (Settings::instance()->getBoolSetting(Settings::SettingInKillersCupPopup)) {
 					initPopup(QString::fromUtf8("Ваше имя в кубке конторы убийц!"), 60);
 				}
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (killerAttackReg.indexIn(sMessage, 0) != -1) {
 				if (Settings::instance()->getBoolSetting(Settings::SettingKillerAttackPopup)) {
 					initPopup(QString::fromUtf8("На вас совершено нападение! Убийца: ") + killerAttackReg.cap(1), 10);
 				}
 				nPersStatus = Pers::StatusKillerAttack;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Меню справки:")) {
 				nPersStatus = Pers::StatusHelpMenu;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Сильнейшие персонажи.")) {
 				nPersStatus = Pers::StatusTopList;
-				i = nCount; // Блокируем дальнейший анализ
+				if (coloring) {
+					gameText.replace("<big><strong><em>" + Qt::escape(gameText.currentLine()) + "</em></strong></big>", true);
+					gameText.next();
+					bool fOk = false;
+					while (!gameText.isEnd()) {
+						QString str1 = gameText.currentLine();
+						if (!fOk && persInListOfTheBestReg.indexIn(str1, 0) != -1) {
+							gameText.replace("<strong><font color=\"green\">" + Qt::escape(str1) + "</font></strong>", true);
+							fOk = true;
+						} else {
+							if (str1.endsWith(QString::fromUtf8("сейчас в игре"))) {
+								gameText.replace("<font color=\"green\">" + Qt::escape(str1) + "</font>", true);
+							}
+						}
+						gameText.next();
+					}
+				}
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Статистика")) {
 				nPersStatus = Pers::StatusServerStatistic1;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Статистика по странам.")) {
 				nPersStatus = Pers::StatusServerStatistic2;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Ваша недвижимость:")) {
 				nPersStatus = Pers::StatusRealEstate;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Выберите полку:")) {
 				nPersStatus = Pers::StatusWarehouse;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (warehouseShelfReg.indexIn(sMessage, 0) != -1) {
 				nPersStatus = Pers::StatusWarehouseShelf;
-				i = nCount; // Блокируем дальнейший анализ
+				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage.startsWith(QString::fromUtf8("здесь идут сражения"))) {
 				nPersStatus = Pers::StatusFightMultiSelect;
 			} else if (sMessage.startsWith(QString::fromUtf8("новый бой"))) {
@@ -709,19 +721,23 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					}
 				}
 			} else if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
+				if (coloring)
+					gameText.replace(QString::fromUtf8("<strong>Открытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightOpenBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_OPEN);
-				i++;
-				i += parseFightGroups(aMessage, i);
+				gameText.next();
+				parseFightGroups(gameText);
 				nTimeout = fight->timeout();
 				break;
 			} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
+				if (coloring)
+					gameText.replace(QString::fromUtf8("<strong>Закрытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightCloseBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_CLOSE);
-				i++;
-				i += parseFightGroups(aMessage, i);
+				gameText.next();
+				parseFightGroups(gameText);
 				nTimeout = fight->timeout();
 				break;
 			} else {
@@ -731,8 +747,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				// но в данном случае нас интересует резутьтат удара в бою
 				if (fight->isActive() || persStatus == Pers::StatusFightMultiSelect || persStatus == Pers::StatusNotKnow) {
 					// Сейчас статус не известен. На предыдущем ходе были в бою или не известно чего делали.
-					int p_cnt = parseFightStepResult(aMessage, i);
-					if (p_cnt != 0) { // Это был текст с результатами боя
+					if (parseFightStepResult(gameText)) { // Это был текст с результатами боя
 						if (fight->allyCount() == 0) { // Мин. и макс. удары считаем только когда в один в бою
 							int num1 = fight->minDamage();
 							if (statFightDamageMin == -1 || (num1 != -1 && num1 < statFightDamageMin)) {
@@ -745,24 +760,27 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 								statFightDamageMax = num1;
 							}
 						}
-						i += p_cnt;
-						sMessage = aMessage.at(i).trimmed();
+						sMessage = gameText.currentLine().trimmed();
 						if (sMessage.startsWith(QString::fromUtf8("Открытый бой"))) {
+							if (coloring)
+								gameText.replace(QString::fromUtf8("<strong>Открытый бой</strong>") + sMessage.mid(12), true);
 							nPersStatus = Pers::StatusFightOpenBegin;
 							if (!fight->isActive())
 								fight->start();
 							fight->setMode(FIGHT_MODE_OPEN);
-							i++;
-							i += parseFightGroups(aMessage, i);
+							gameText.next();
+							parseFightGroups(gameText);
 							nTimeout = fight->timeout();
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"))) {
+							if (coloring)
+								gameText.replace(QString::fromUtf8("<strong>Закрытый бой</strong>") + sMessage.mid(12), true);
 							nPersStatus = Pers::StatusFightCloseBegin;
 							if (!fight->isActive())
 								fight->start();
 							fight->setMode(FIGHT_MODE_CLOSE);
-							i++;
-							i += parseFightGroups(aMessage, i);
+							gameText.next();
+							parseFightGroups(gameText);
 							nTimeout = fight->timeout();
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Бой завершен!"))) {
@@ -770,9 +788,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 							nPersStatus = Pers::StatusFightFinish;
 							fight->finish();
 							nTimeout = 0;
-							i++;
-							if (i < nCount) {
-								sMessage = aMessage.at(i).trimmed();
+							gameText.next();
+							if (!gameText.isEnd()) {
+								sMessage = gameText.currentLine().trimmed();
 								if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 									// Берем опыт, который дали в конце боя
 									statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
@@ -850,12 +868,15 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 		}
 		if (nPersStatus == Pers::StatusNotKnow) {
 			// Любая строка, статус еще не определен
-			// Бывает, попадает команда в строчку, потому "contains" а не "startsWith"
-			if (sMessage.contains(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
+			if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
+				if (coloring)
+					gameText.replace(QString::fromUtf8("<strong>Открытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightOpenBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_OPEN);
-			} else if (sMessage.contains(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
+			} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
+				if (coloring)
+					gameText.replace(QString::fromUtf8("<strong>Закрытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightCloseBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_CLOSE);
@@ -870,7 +891,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 				nPersStatus = Pers::StatusTakeBefore;
 			}
 		}
-		i++;
+		gameText.next();
 	}
 	// Парсинг закончен, реагируем на результаты
 	if (nPersStatus == Pers::StatusFightOpenBegin || nPersStatus == Pers::StatusFightCloseBegin) {
@@ -910,8 +931,8 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 							initPopup(QString::fromUtf8("Очередь сброшена"), 30);
 						}
 						QString str1 = QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len);
-						setGameText(str1);
-						setConsoleText(str1, false);
+						setGameText(GameText(str1, false), 3);
+						setConsoleText(GameText(str1, false), 3, false);
 					}
 				}
 			}
@@ -995,15 +1016,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 	}
 	//if (myMessage) {
 		// Выводим сообщение игры на экран
-		int startText = -1;
-		if (persPos.isValid()) { // Есть координаты от GPS
-			startText = message.indexOf("\n");
-		}
-		if (startText == -1) {
-			setGameText(message);
-		} else {
-			setGameText(message.mid(startText + 1));
-		}
+		setGameText(gameText, 2);
 	//}
 	if (nCmdStatus > 3  && persPos.isValid()) { // Т.е есть что то кроме нестандартных и посторонних команд и координаты
 		GameMap::instance()->setMapElementPaths(persPos, nCmdStatus);
@@ -1034,9 +1047,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			if (Settings::instance()->getBoolSetting(Settings::SettingResetQueuePopup)) {
 				initPopup(QString::fromUtf8("Очередь сброшена"), 30);
 			}
-			QString str1 = QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len);
-			setGameText(str1);
-			setConsoleText(str1, false);
+			GameText text(QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len), false);
+			setGameText(text, 3);
+			setConsoleText(text, 3, false);
 		}
 	}
 	return myMessage;
@@ -1073,8 +1086,9 @@ void PluginCore::processError(int errorNum)
 	} else {
 		errStr = QString::fromUtf8("#### Неизвестная ошибка ####");
 	}
-	setGameText(errStr);
-	setConsoleText(errStr, false);
+	GameText gameText(errStr, false);
+	setGameText(gameText, 3);
+	setConsoleText(gameText, 3, false);
 }
 
 /**
@@ -1104,17 +1118,17 @@ void PluginCore::valueChanged(int valueId, int valueType, int value)
 	}
 }
 
-void PluginCore::setGameText(QString message)
+void PluginCore::setGameText(const GameText &gameText, int type)
 {
 	if (mainWindow) {
-		mainWindow->setGameText(message, 2);
+		mainWindow->setGameText(gameText.toHtml(), type);
 	}
 }
 
-void PluginCore::setConsoleText(QString message, bool switch_)
+void PluginCore::setConsoleText(const GameText &gameText, int type, bool switch_)
 {
 	if (mainWindow) {
-		mainWindow->setConsoleText(message, 2, switch_);
+		mainWindow->setConsoleText(gameText.toHtml(), type, switch_);
 	}
 }
 
@@ -1536,24 +1550,38 @@ bool PluginCore::sendString(const QString &str)
 		}
 	}
 	if (str1.startsWith("/help") || str1.startsWith("help")) {
-		setConsoleText(str1, true);
-		str1 = "--= help =--\n";
-		str1.append(QString::fromUtf8("/- — Сброс очереди команд\n"));
-		str1.append(QString::fromUtf8("/1... — Позволяет отдавать односимвольные числовые команды в игру без дублирования их клавишей <Enter>.\n  /1+ — Включение режима автоввода.\n  /1- — Отключение режима автоввода.\n  /1 — Состояние режима (вкл или выкл).\n  /1-<числовая_команда> — Отправка длинной команды без отключения режима. Пример: /1-02 — Отправка 02 игре не отключая режимом автоввода.\n"));
-		str1.append(QString::fromUtf8("/aliases — управление алиасами команд\n"));
-		str1.append(QString::fromUtf8("/clear — очистка и сброс различных данных\n"));
-		str1.append(QString::fromUtf8("/help — этот текст помощи\n"));
-		str1.append(QString::fromUtf8("/maps — информация и управление картами\n"));
-		str1.append(QString::fromUtf8("/pers info — информация о текущем персонаже\n/pers info2 — детальная информация о текущем персонаже\n/pers info <nick> — информация о персонаже с ником nick\n/pers info2 <nick> — детальная информация о персонаже с ником nick\n/pers list — список персонажей, для которых доступна информация\n"));
-		str1.append(QString::fromUtf8("/send_delta — показать значение паузы между отправками команд игровому серверу\n/send_delta=n — установить значение паузы между отправками команд игровому серверу в миллисекундах\n"));
-		str1.append(QString::fromUtf8("/server_timeout — показать время ожидания ответа сервера\n/server_timeout=n — установить время ожидания сервера в n сек.\n"));
-		str1.append(QString::fromUtf8("/settings — Управление настройками\n"));
-		str1.append(QString::fromUtf8("/stat — полная статистика\n/stat 1 — общая статистика\n/stat 2 — статистика боев\n/stat 9 — статистика зеркал\n"));
-		str1.append(QString::fromUtf8("/things — вещи, фильтры вещей, цены\n"));
-		str1.append(QString::fromUtf8("/ver — версия плагина\n"));
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
+		GameText text;
+		text.append(QString::fromUtf8("<big><strong><em>--= help =--</em></strong></big>"), true);
+		text.append(QString::fromUtf8("<strong>/-</strong> — Сброс очереди команд"), true);
+		text.append(QString::fromUtf8("<strong>/1...</strong> — Позволяет отдавать односимвольные числовые команды в игру без дублирования их клавишей <Enter>."), true);
+		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1+</strong> — Включение режима автоввода."), true);
+		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1-</strong> — Отключение режима автоввода."), true);
+		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1</strong> — Состояние режима (вкл или выкл)."), true);
+		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1-&lt;числовая_команда&gt;</strong> — Отправка длинной команды без отключения режима. Пример: <strong>/1-02</strong> — Отправка 02 игре не отключая режимом автоввода."), true);
+		text.append(QString::fromUtf8("<strong>/aliases</strong> — управление алиасами команд"), true);
+		text.append(QString::fromUtf8("<strong>/clear</strong> — очистка и сброс различных данных"), true);
+		text.append(QString::fromUtf8("<strong>/help</strong> — этот текст помощи"), true);
+		text.append(QString::fromUtf8("<strong>/maps</strong> — информация и управление картами"), true);
+		text.append(QString::fromUtf8("<strong>/pers info</strong> — информация о текущем персонаже"), true);
+		text.append(QString::fromUtf8("<strong>/pers info2</strong> — детальная информация о текущем персонаже"), true);
+		text.append(QString::fromUtf8("<strong>/pers info &lt;nick&gt;</strong> — информация о персонаже с ником nick"), true);
+		text.append(QString::fromUtf8("<strong>/pers info2 &lt;nick&gt;</strong> — детальная информация о персонаже с ником nick"), true);
+		text.append(QString::fromUtf8("<v>/pers list</strong> — список персонажей, для которых доступна информация"), true);
+		text.append(QString::fromUtf8("<strong>/send_delta</strong> — показать значение паузы между отправками команд игровому серверу"), true);
+		text.append(QString::fromUtf8("<strong>/send_delta=n</strong> — установить значение паузы между отправками команд игровому серверу в миллисекундах"), true);
+		text.append(QString::fromUtf8("<strong>/server_timeout</strong> — показать время ожидания ответа сервера"), true);
+		text.append(QString::fromUtf8("<strong>/server_timeout=n</strong> — установить время ожидания сервера в n сек."), true);
+		text.append(QString::fromUtf8("<strong>/settings</strong> — Управление настройками"), true);
+		text.append(QString::fromUtf8("<strong>/stat</strong> — полная статистика"), true);
+		text.append(QString::fromUtf8("<strong>/stat 1</strong> — общая статистика"), true);
+		text.append(QString::fromUtf8("<strong>/stat 2</strong> — статистика боев"), true);
+		text.append(QString::fromUtf8("<strong>/stat 9</strong> — статистика зеркал"), true);
+		text.append(QString::fromUtf8("<strong>/things</strong> — вещи, фильтры вещей, цены"), true);
+		text.append(QString::fromUtf8("<strong>/ver</strong> — версия плагина"), true);
+		setConsoleText(text, 3, true);
 	} else if (str1 == "/-") {
-		setConsoleText(str1, false);
+		setConsoleText(GameText(str1, false), 1, false);
 		Sender *sender = Sender::instance();
 		int q_len = sender->getGameQueueLength();
 		if (q_len > 0) {
@@ -1562,8 +1590,9 @@ bool PluginCore::sendString(const QString &str)
 		} else {
 			str1 = QString::fromUtf8("### Очередь пуста. ###");
 		}
-		setGameText(str1);
-		setConsoleText(str1, false);
+		GameText text(str1, false);
+		setGameText(text, 3);
+		setConsoleText(text, 3, false);
 	} else if (str1 == "/1+") {
 		if (mainWindow != NULL)
 			mainWindow->setAutoEnterMode(true);
@@ -1573,23 +1602,24 @@ bool PluginCore::sendString(const QString &str)
 				mainWindow->setAutoEnterMode(false);
 		} else {
 			str1 = str1.mid(3);
-			setGameText(str1);
+			setGameText(GameText(str1, true), 1);
 			sendString(str1);
 		}
 	} else if (str1 == "/1") {
-		setConsoleText(str1, false);
-		str1 = QString("Auto enter mode is %1").arg((mainWindow != NULL && mainWindow->getAutoEnterMode()) ? "ON" : "OFF");
-		setGameText(str1);
-		setConsoleText(str1, false);
+		setConsoleText(GameText(str1, false), 1, false);
+		GameText text;
+		text.append(QString("Auto enter mode is <strong>%1</strong>").arg((mainWindow != NULL && mainWindow->getAutoEnterMode()) ? "ON" : "OFF"), true);
+		setGameText(text, 3);
+		setConsoleText(text, 3, false);
 	} else if (str1 == "/stat" || str1.startsWith("/stat ")) {
-		setConsoleText(str1, true);
-		getStatistics(&str1);
+		setConsoleText(GameText(str1, false), 1, true);
+		getStatistics(str1);
 	} else if (str1 == "/send_delta") {
-		setConsoleText(str1, true);
-		str1 = "send_delta = " + QString::number(Sender::instance()->getSendDelta()) + " msec.";
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
+		GameText text("send_delta = <strong>" + QString::number(Sender::instance()->getSendDelta()) + " msec.</strong>", true);
+		setConsoleText(text, 3, true);
 	} else if (str1.startsWith("/send_delta=")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
 		if (str1.length() >= 13) {
 			bool res;
 			int nDelta = str1.mid(12).toInt(&res);
@@ -1597,17 +1627,17 @@ bool PluginCore::sendString(const QString &str)
 			if (res) {
 				Sender *sender = Sender::instance();
 				if (sender->setSendDelta(nDelta)) {
-					str1 = "send_delta set is " + QString::number(sender->getSendDelta()) + " msec.";
+					str1 = "send_delta set is <strong>" + QString::number(sender->getSendDelta()) + " msec.</strong>";
 				}
 			}
-			setConsoleText(str1, true);
+			setConsoleText(GameText(str1, true), 3, true);
 		}
 	} else if (str1 == "/server_timeout") {
-		setConsoleText(str1, true);
-		str1 = "server_timeout = " + QString::number(Sender::instance()->getServerTimeoutDuration()) + " sec.";
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
+		GameText text("server_timeout = <strong>" + QString::number(Sender::instance()->getServerTimeoutDuration()) + " sec.</strong>", true);
+		setConsoleText(text, 3, true);
 	} else if (str1.startsWith("/server_timeout=")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1,false), 1, true);
 		if (str1.length() >= 17) {
 			bool res;
 			int nTimeout = str1.mid(16).toInt(&res);
@@ -1615,50 +1645,50 @@ bool PluginCore::sendString(const QString &str)
 			if (res) {
 				Sender *sender = Sender::instance();
 				if (sender->setServerTimeoutDuration(nTimeout)) {
-					str1 = "server_timeout set is " + QString::number(sender->getServerTimeoutDuration()) + " sec.";
+					str1 = "server_timeout set is <strong>" + QString::number(sender->getServerTimeoutDuration()) + " sec.</strong>";
 				}
 			}
-			setConsoleText(str1, true);
+			setConsoleText(GameText(str1, true), 3, true);
 		}
 	} else if (str1.startsWith("/maps")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
 		QStringList mapsCmd = splitCommandString(str1);
 		mapsCommands(&mapsCmd);
 	} else if (str1.startsWith("/pers")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
 		QStringList persCmd = str1.split(" ");
 		persCommands(&persCmd);
 	} else if (str1.startsWith("/clear")) {
-		setConsoleText(str1, false);
+		setConsoleText(GameText(str1, false), 1, false);
 		QStringList clearCmd = str1.split(" ");
 		clearCommands(&clearCmd);
 	} else if (str1.startsWith("/things")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
 		QStringList thingsCmd = str1.split(" ");
 		thingsCommands(&thingsCmd);
 	} else if (str1.startsWith("/aliases")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
 		QStringList aliasesCmd = splitCommandString(str1);
 		aliasesCommands(aliasesCmd);
 	} else if (str1.startsWith("/settings")) {
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
 		QStringList settingsCmd = str1.split(" ");
 		settingsCommands(settingsCmd);
 	} else if (str1 == "/ver") {
-		setConsoleText(str1, true);
-		setConsoleText(cVer, true);
+		setConsoleText(GameText(str1, false), 1, true);
+		setConsoleText(GameText(cVer, false), 3, true);
 	} else {
-		setConsoleText(str1, true);
-		str1 = QString::fromUtf8("Неизвестная команда. Наберите /help для получения помощи\n");
-		setConsoleText(str1, true);
+		setConsoleText(GameText(str1, false), 1, true);
+		GameText text(QString::fromUtf8("Неизвестная команда. Наберите <strong>/help</strong> для получения помощи"), true);
+		setConsoleText(text, 3, true);
 	}
 	return true;
 }
 
-void PluginCore::getStatistics(QString* commandPtr)
+void PluginCore::getStatistics(const QString &commandPtr)
 {
 	int mode = 0;
-	QStringList args = commandPtr->split(" ");
+	QStringList args = commandPtr.split(" ");
 	if (args.size() == 2) {
 		if (args[1] == "1") {
 			mode = 1;
@@ -1668,137 +1698,127 @@ void PluginCore::getStatistics(QString* commandPtr)
 			mode = 9;
 		}
 	}
-	QString str1;
-	int i;
-	QString stat_str = QString::fromUtf8("--= Статистика =--\n");
+	GameText text;
+	text.append(QString::fromUtf8("<big><strong><em>--= Статистика =--</em></strong></big>"), true);
 	if (mode == 0 || mode == 1) {
-		stat_str.append(QString::fromUtf8("--Общая статистика--\n"));
-		stat_str.append(QString::fromUtf8("Jid игры: "));
-		if (getTextValue(VALUE_LAST_GAME_JID, &str1)) {
-			stat_str.append(str1);
-		} else {
-			stat_str.append(NA_TEXT);
+		text.append(QString::fromUtf8("<strong><em>--Общая статистика--</em></strong>"), true);
+		QString str1;
+		if (!getTextValue(VALUE_LAST_GAME_JID, &str1)) {
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nJid чата: "));
-		if (getTextValue(VALUE_LAST_CHAT_JID, &str1)) {
-			stat_str.append(str1);
-		} else {
-			stat_str.append(NA_TEXT);
+		text.append(QString::fromUtf8("Jid игры: <em>%1</em>").arg(str1), true);
+		if (!getTextValue(VALUE_LAST_CHAT_JID, &str1)) {
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nВсего сообщений: "));
-		if (getIntValue(VALUE_MESSAGES_COUNT, &i)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("Jid чата: <em>%1</em>").arg(str1), true);
+		int num1;
+		if (getIntValue(VALUE_MESSAGES_COUNT, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\n"));
+		text.append(QString::fromUtf8("Всего сообщений: <em>%1</em>").arg(str1), true);
 	}
 	if (mode == 0 || mode == 2) {
-		stat_str.append(QString::fromUtf8("--Статистика боев--\n"));
-		stat_str.append(QString::fromUtf8("Всего боев: "));
-		if (getIntValue(VALUE_FIGHTS_COUNT, &i)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("<strong><em>--Статистика боев--</em></strong>"), true);
+		int num1;
+		QString str1;
+		if (getIntValue(VALUE_FIGHTS_COUNT, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nЛучший удар: "));
-		if (getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &i)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("Всего боев: <em>%1</em>").arg(str1), true);
+		if (getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nХудший удар: "));
-		if (getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &i)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("Лучший удар: <em>%1</em>").arg(str1), true);
+		if (getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nДенег собрано: "));
-		if (getIntValue(VALUE_DROP_MONEYS, &i)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("Худший удар: <em>%1</em>").arg(str1), true);
+		if (getIntValue(VALUE_DROP_MONEYS, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nВещей собрано: "));
-		if (getIntValue(VALUE_THINGS_DROP_COUNT, &i)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("Денег собрано: <em>%1</em>").arg(str1), true);
+		if (getIntValue(VALUE_THINGS_DROP_COUNT, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nПоследняя вещь: "));
-		if (getTextValue(VALUE_THING_DROP_LAST, &str1)) {
-			stat_str.append(str1);
+		text.append(QString::fromUtf8("Вещей собрано: <em>%1</em>").arg(str1), true);
+		if (!getTextValue(VALUE_THING_DROP_LAST, &str1)) {
+			str1 = NA_TEXT;
+		}
+		text.append(QString::fromUtf8("Последняя вещь: <em>%1</em>").arg(str1), true);
+		long long num2;
+		if (getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &num2)) {
+			str1 = numToStr(num2, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nПолученный опыт: "));
-		long long i2;
-		if (getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &i2)) {
-			stat_str.append(numToStr(i, "'"));
+		text.append(QString::fromUtf8("Полученный опыт: <em>%1</em>").arg(str1), true);
+		if (getIntValue(VALUE_KILLED_ENEMIES, &num1)) {
+			str1 = numToStr(num1, "'");
 		} else {
-			stat_str.append(NA_TEXT);
+			str1 = NA_TEXT;
 		}
-		stat_str.append(QString::fromUtf8("\nПовержено врагов: "));
-		if (getIntValue(VALUE_KILLED_ENEMIES, &i)) {
-			stat_str.append(numToStr(i, "'"));
-		} else {
-			stat_str.append(NA_TEXT);
-		}
-		stat_str.append(QString::fromUtf8("\n"));
+		text.append(QString::fromUtf8("Повержено врагов: <em>%1</em>").arg(str1), true);
 	}
 	if (mode == 0 || mode == 9) {
-		stat_str.append(QString::fromUtf8("--Статистика зеркал игры--\n"));
+		text.append(QString::fromUtf8("<strong><em>--Статистика зеркал игры--</em></strong>"), true);
 		Sender *sender = Sender::instance();
 		QStringList game_jids = sender->getGameJids();
-		stat_str.append(QString::fromUtf8("Всего зеркал: "));
-		stat_str.append(QString::number(game_jids.size()));
+		text.append(QString::fromUtf8("Всего зеркал: <em>%1</em>").arg(QString::number(game_jids.size())), true);
 		int jid_index = 0;
 		while (!game_jids.isEmpty()) {
 			QString jid = game_jids.takeFirst();
 			const struct Sender::jid_status* jstat = sender->getGameJidInfo(jid_index);
 			if (jstat != 0) {
-				stat_str.append(QString::fromUtf8("\n-Зеркало: "));
-				stat_str.append(jid);
-				stat_str.append(QString::fromUtf8("\nстатус: "));
+				text.append(QString::fromUtf8("-Зеркало: <em>%1</em>").arg(jid), true);
+				QString str1;
 				int status = jstat->status;
 				if (status == 0) {
-					stat_str.append(QString::fromUtf8("отключено"));
+					str1 = QString::fromUtf8("отключено");
 				} else {
-					stat_str.append(QString::fromUtf8("доступно"));
+					str1 = QString::fromUtf8("доступно");
 				}
-				stat_str.append(QString::fromUtf8("\nпоследняя смена статуса: "));
+				text.append(QString::fromUtf8("&nbsp;&nbsp;статус: <em>%1</em>").arg(str1), true);
 				if (jstat->last_status.isValid()) {
-					stat_str.append(jstat->last_status.toString("dd.MM.yyyy hh:mm:ss.zzz"));
+					str1 = jstat->last_status.toString("dd.MM.yyyy hh:mm:ss.zzz");
 				} else {
-					stat_str.append(NA_TEXT);
+					str1 = NA_TEXT;
 				}
+				text.append(QString::fromUtf8("&nbsp;&nbsp;последняя смена статуса: <em>%1</em>").arg(str1), true);
+
 				if (status != 0) {
-					stat_str.append(QString::fromUtf8("\nпоследняя отправка: "));
 					if (jstat->last_send.isValid()) {
-						stat_str.append(jstat->last_send.toString("dd.MM.yyyy hh:mm:ss.zzz"));
+						str1 = jstat->last_send.toString("dd.MM.yyyy hh:mm:ss.zzz");
 					} else {
-						stat_str.append(NA_TEXT);
+						str1 = NA_TEXT;
 					}
-					stat_str.append(QString::fromUtf8("\nпоследний пинг: "));
+					text.append(QString::fromUtf8("&nbsp;&nbsp;последняя отправка: <em>%1</em>").arg(str1), true);
 					if (jstat->last_send_ping.isValid()) {
-						stat_str.append(jstat->last_send_ping.toString("dd.MM.yyyy hh:mm:ss.zzz"));
+						str1 = jstat->last_send_ping.toString("dd.MM.yyyy hh:mm:ss.zzz");
 					} else {
-						stat_str.append(NA_TEXT);
+						str1 = NA_TEXT;
 					}
-					stat_str.append(QString::fromUtf8("\nколичество пакетов: "));
-					stat_str.append(QString::number(jstat->probe_count));
-					stat_str.append(QString::fromUtf8("\nСредний отклик: "));
-					double inSec = jstat->resp_average / 1000.0;
-					stat_str.append(QString::number(inSec));
-					stat_str.append(QString::fromUtf8(" сек."));
+					text.append(QString::fromUtf8("&nbsp;&nbsp;последний пинг: <em>%1</em>").arg(str1), true);
+					text.append(QString::fromUtf8("&nbsp;&nbsp;количество пакетов: <em>%1</em>").arg(QString::number(jstat->probe_count)), true);
+					double inSec = jstat->resp_average / 1000.0f;
+					text.append(QString::fromUtf8("&nbsp;&nbsp;средний отклик: <em>%1 сек.</em>").arg(QString::number(inSec)), true);
 				}
 			}
 			jid_index++;
 		}
-		stat_str.append(QString::fromUtf8("\n"));
 	}
-
-	setConsoleText(stat_str, true);
+	setConsoleText(text, 3, true);
 }
 
 void PluginCore::mapsCommands(QStringList* args)
@@ -1809,36 +1829,37 @@ void PluginCore::mapsCommands(QStringList* args)
 	if ((*args)[0] != "/maps")
 		return;
 	int cntArgs = args->size() - 1;
-	QString stat_str = QString::fromUtf8("--= Карты =--\n");
+	GameText text;
+	text.append(QString::fromUtf8("<big><strong><em>--= Карты =--</em></strong></big>"), true);
 	if (cntArgs == 0) {
-		stat_str.append(QString::fromUtf8("/maps clear <index> - Очистка всего содержимого карты с индексом <index>\n"));
-		stat_str.append(QString::fromUtf8("/maps export <index> <exp_file> - Экспорт карты с индексом <index> в файл с именем <exp_file>\n"));
-		stat_str.append(QString::fromUtf8("/maps import <imp_file> - Импорт карт из файла\n"));
-		stat_str.append(QString::fromUtf8("/maps info - основная информация о картах\n"));
-		stat_str.append(QString::fromUtf8("/maps list - список всех карт\n"));
-		stat_str.append(QString::fromUtf8("/maps merge <index1> <index2> - Объединение карт\n"));
-		stat_str.append(QString::fromUtf8("/maps remove <index> - Удаление карты\n"));
-		stat_str.append(QString::fromUtf8("/maps rename <index> <new_name> - Переименование карты\n"));
-		stat_str.append(QString::fromUtf8("/maps switch <index> - переключение на карту с указанным индексом\n"));
-		stat_str.append(QString::fromUtf8("/maps unload <index>- выгрузка карты из памяти без сохранения изменений\n"));
-		setConsoleText(stat_str, true);
+		text.append(QString::fromUtf8("<strong>/maps clear &lt;index&gt;</strong> — Очистка всего содержимого карты с индексом &lt;index&gt;"), true);
+		text.append(QString::fromUtf8("<strong>/maps export &lt;index&gt; &lt;exp_file&gt; [xml|png]</strong> — Экспорт карты с индексом &lt;index&gt; в файл с именем &lt;exp_file&gt; и указанным типом xml или png (указывать не обязательно). Тип может быть определен по расширению файла."), true);
+		text.append(QString::fromUtf8("<strong>/maps import &lt;imp_file&gt;</strong> — Импорт карт из файла"), true);
+		text.append(QString::fromUtf8("<strong>/maps info</strong> — основная информация о картах"), true);
+		text.append(QString::fromUtf8("<strong>/maps list</strong> — список всех карт"), true);
+		text.append(QString::fromUtf8("<strong>/maps merge &lt;index1&gt; &lt;index2&gt;</strong> — Объединение карт"), true);
+		text.append(QString::fromUtf8("<strong>/maps remove &lt;index&gt;</strong> — Удаление карты"), true);
+		text.append(QString::fromUtf8("<strong>/maps rename &lt;index&gt; &lt;new_name&gt;</strong> — Переименование карты"), true);
+		text.append(QString::fromUtf8("<strong>/maps switch &lt;index&gt;</strong> — переключение на карту с указанным индексом"), true);
+		text.append(QString::fromUtf8("<strong>/maps unload &lt;index&gt;</strong> — выгрузка карты из памяти без сохранения изменений"), true);
+		setConsoleText(text, 3, true);
 	} else if ((*args)[1] == "clear") {
 		if (cntArgs == 2) {
 			bool fOk;
 			int map1 = (*args)[2].toInt(&fOk);
 			if (fOk) {
 				if (GameMap::instance()->clearMap(map1)) {
-					stat_str.append(QString::fromUtf8("Карта успешно очищена\n"));
+					text.append(QString::fromUtf8("Карта успешно очищена"), false);
 				} else {
-					stat_str.append(QString::fromUtf8("Ошибка: нет такой карты\n"));
+					text.append(QString::fromUtf8("Ошибка: нет такой карты"), false);
 				}
 			} else {
-				stat_str.append(QString::fromUtf8("Ошибка: некорректный индекс карты\n"));
+				text.append(QString::fromUtf8("Ошибка: некорректный индекс карты"), false);
 			}
 		} else {
-			stat_str.append(QString::fromUtf8("Ошибка: неверное количество аргументов\n"));
+			text.append(QString::fromUtf8("Ошибка: неверное количество аргументов"), false);
 		}
-		setConsoleText(stat_str, true);
+		setConsoleText(text, 3, true);
 		return;
 	} else if ((*args)[1] == "rename") {
 		if (cntArgs >= 3) {
@@ -1853,28 +1874,28 @@ void PluginCore::mapsCommands(QStringList* args)
 					int nRes = GameMap::instance()->renameMap(index, sName);
 					switch (nRes) {
 						case 0:
-							stat_str.append(QString::fromUtf8("Карта переименована\n"));
+							text.append(QString::fromUtf8("Карта переименована"), false);
 							break;
 						case 1:
-							stat_str.append(QString::fromUtf8("Ошибка: нет такой карты\n"));
+							text.append(QString::fromUtf8("Ошибка: нет такой карты"), false);
 							break;
 						case 2:
-							stat_str.append(QString::fromUtf8("Ошибка: карта с таким именем уже существует\n"));
+							text.append(QString::fromUtf8("Ошибка: карта с таким именем уже существует"), false);
 							break;
 						default:
-							stat_str.append(QString::fromUtf8("Ошибка\n"));
+							text.append(QString::fromUtf8("Ошибка"), false);
 							break;
 					}
 				} else {
-					stat_str.append(QString::fromUtf8("Ошибка: необходимо указать новое имя карты\n"));
+					text.append(QString::fromUtf8("Ошибка: необходимо указать новое имя карты"), false);
 				}
 			} else {
-				stat_str.append(QString::fromUtf8("Ошибка: необходимо указать индекс карты\n"));
+				text.append(QString::fromUtf8("Ошибка: необходимо указать индекс карты"), false);
 			}
 		} else {
-			stat_str.append(QString::fromUtf8("Ошибка: неверное количество аргументов\n"));
+			text.append(QString::fromUtf8("Ошибка: неверное количество аргументов"), false);
 		}
-		setConsoleText(stat_str, true);
+		setConsoleText(text, 3, true);
 		return;
 	} else if ((*args)[1] == "export") {
 		if (cntArgs == 3 || cntArgs == 4) {
@@ -1895,48 +1916,48 @@ void PluginCore::mapsCommands(QStringList* args)
 			int nRes = GameMap::instance()->exportMaps(maps, type, (*args)[3]);
 			switch (nRes) {
 				case 0:
-					stat_str.append(QString::fromUtf8("Экспорт успешно завершен\n"));
+					text.append(QString::fromUtf8("Экспорт успешно завершен"), false);
 					break;
 				case 1:
-					stat_str.append(QString::fromUtf8("Ошибка: неверные аргументы\n"));
+					text.append(QString::fromUtf8("Ошибка: неверные аргументы"), false);
 					break;
 				case 2:
-					stat_str.append(QString::fromUtf8("Ошибка: нет карт для экспорта\n"));
+					text.append(QString::fromUtf8("Ошибка: нет карт для экспорта"), false);
 					break;
 				case 3:
-					stat_str.append(QString::fromUtf8("Ошибка: неудачная запись в файл\n"));
+					text.append(QString::fromUtf8("Ошибка: неудачная запись в файл"), false);
 					break;
 				case 4:
-					stat_str.append(QString::fromUtf8("Может быть выгружена только одна карта\n"));
+					text.append(QString::fromUtf8("Может быть выгружена только одна карта"), false);
 					break;
 				default:
-					stat_str.append(QString::fromUtf8("Ошибка: ошибка экспорта\n"));
+					text.append(QString::fromUtf8("Ошибка: ошибка экспорта"), false);
 			}
 		} else {
-			stat_str.append(QString::fromUtf8("Ошибка: неверное количество аргументов\n"));
+			text.append(QString::fromUtf8("Ошибка: неверное количество аргументов"), false);
 		}
-		setConsoleText(stat_str, true);
+		setConsoleText(text, 3, true);
 		return;
 	} else if ((*args)[1] == "import") {
 		if (cntArgs == 2) {
 			int nRes = GameMap::instance()->importMaps((*args)[2]);
 			switch (nRes) {
 				case 0:
-					stat_str.append(QString::fromUtf8("Импорт успешно завершен\n"));
+					text.append(QString::fromUtf8("Импорт успешно завершен"), false);
 					break;
 				case 1:
-					stat_str.append(QString::fromUtf8("Ошибка: ошибка чтения XML файла карт\n"));
+					text.append(QString::fromUtf8("Ошибка: ошибка чтения XML файла карт"), false);
 					break;
 				case 2:
-					stat_str.append(QString::fromUtf8("Ошибка: некорректрый формат карт или не совпадает версия\n"));
+					text.append(QString::fromUtf8("Ошибка: некорректрый формат карт или не совпадает версия"), false);
 					break;
 				default:
-					stat_str.append(QString::fromUtf8("Ошибка: ошибка импорта\n"));
+					text.append(QString::fromUtf8("Ошибка: ошибка импорта"), false);
 			}
 		} else {
-			stat_str.append(QString::fromUtf8("Ошибка: неверное количество аргументов\n"));
+			text.append(QString::fromUtf8("Ошибка: неверное количество аргументов"), false);
 		}
-		setConsoleText(stat_str, true);
+		setConsoleText(text, 3, true);
 		return;
 	} else if ((*args)[1] == "merge") {
 		if (cntArgs == 3) {
@@ -1946,20 +1967,20 @@ void PluginCore::mapsCommands(QStringList* args)
 				int map2 = (*args)[3].toInt(&fOk);
 				if (fOk) {
 					if (GameMap::instance()->mergeMaps(map1, map2)) {
-						stat_str.append(QString::fromUtf8("Объединение успешно завершено\n"));
+						text.append(QString::fromUtf8("Объединение успешно завершено"), false);
 					} else {
-						stat_str.append(QString::fromUtf8("Ошибка: ошибка объединения карт\n"));
+						text.append(QString::fromUtf8("Ошибка: ошибка объединения карт"), false);
 					}
 				} else {
-					stat_str.append(QString::fromUtf8("Ошибка: некорректный индекс второй карты\n"));
+					text.append(QString::fromUtf8("Ошибка: некорректный индекс второй карты"), false);
 				}
 			} else {
-				stat_str.append(QString::fromUtf8("Ошибка: некорректный индекс первой карты\n"));
+				text.append(QString::fromUtf8("Ошибка: некорректный индекс первой карты"), false);
 			}
 		} else {
-			stat_str.append(QString::fromUtf8("Ошибка: неверное количество аргументов\n"));
+			text.append(QString::fromUtf8("Ошибка: неверное количество аргументов"), false);
 		}
-		setConsoleText(stat_str, true);
+		setConsoleText(text, 3, true);
 		return;
 	} else if ((*args)[1] == "remove") {
 		if (cntArgs == 2) {
@@ -1967,36 +1988,33 @@ void PluginCore::mapsCommands(QStringList* args)
 			int map1 = (*args)[2].toInt(&fOk);
 			if (fOk) {
 				if (GameMap::instance()->removeMap(map1)) {
-					stat_str.append(QString::fromUtf8("Карта успешно удалена\n"));
+					text.append(QString::fromUtf8("Карта успешно удалена"), false);
 				} else {
-					stat_str.append(QString::fromUtf8("Ошибка: нет такой карты\n"));
+					text.append(QString::fromUtf8("Ошибка: нет такой карты"), false);
 				}
 			} else {
-				stat_str.append(QString::fromUtf8("Ошибка: некорректный индекс карты\n"));
+				text.append(QString::fromUtf8("Ошибка: некорректный индекс карты"), false);
 			}
 		} else {
-			stat_str.append(QString::fromUtf8("Ошибка: неверное количество аргументов\n"));
+			text.append(QString::fromUtf8("Ошибка: неверное количество аргументов"), false);
 		}
-		setConsoleText(stat_str, true);
+		setConsoleText(text, 3, true);
 		return;
 	} else if (cntArgs == 1) {
 		if ((*args)[1] == "info") {
 			struct GameMap::maps_info mapsInf;
 			GameMap::instance()->mapsInfo(&mapsInf);
-			stat_str.append(QString::fromUtf8("Всего найдено карт: "));
-			stat_str.append(QString::number(mapsInf.maps_count));
-			stat_str.append(QString::fromUtf8("\nВсего загружено карт: "));
-			stat_str.append(QString::number(mapsInf.maps_loaded));
-			stat_str.append(QString::fromUtf8("\nТекущая карта: "));
+			text.append(QString::fromUtf8("Всего найдено карт: <em>%1</em>").arg(mapsInf.maps_count), true);
+			text.append(QString::fromUtf8("Всего загружено карт: <em>%1</em>").arg(mapsInf.maps_loaded), true);
+			QString str1;
 			int curMap = mapsInf.curr_map_index;
 			if (curMap != -1) {
-				stat_str.append(QString::number(curMap));
-				stat_str.append(" - " + mapsInf.curr_map_name);
+				str1 = QString::number(curMap) + " - " + mapsInf.curr_map_name;
 			} else {
-				stat_str.append(NA_TEXT);
+				str1 = NA_TEXT;
 			}
-			stat_str.append("\n");
-			setConsoleText(stat_str, true);
+			text.append(QString::fromUtf8("Текущая карта: <em>%1</em>").arg(str1), true);
+			setConsoleText(text, 3, true);
 		} else if ((*args)[1] == "list") {
 			GameMap::maps_info mapsInf;
 			QVector<GameMap::maps_list2> mapsLst;
@@ -2007,14 +2025,21 @@ void PluginCore::mapsCommands(QStringList* args)
 			int cntMaps = mapsLst.size();
 			for (int i = 0; i < cntMaps; i++) {
 				const int idx = mapsLst.at(i).index;
-				stat_str.append(QString("%1 - %2%3%4\n")
+				QString str1 = Qt::escape(QString("%1 - %2%3%4")
 					.arg(idx)
 					.arg((idx == currMap) ? "*" : QString())
 					.arg(mapsLst.at(i).name)
 					.arg((mapsLst.at(i).loaded) ? QString::fromUtf8(" [загружена]") : QString()));
+				if (mapsLst.at(i).loaded) {
+					str1 = "<font color=\"green\">" + str1 + "</font>";
+				}
+				if (idx == currMap) {
+					str1 = "<strong>" + str1 + "</strong>";
+				}
+				text.append(str1, true);
 			}
-			stat_str.append(QString::fromUtf8("Всего карт: ") + QString::number(cntMaps) + "\n");
-			setConsoleText(stat_str, true);
+			text.append(QString::fromUtf8("Всего карт: ") + QString::number(cntMaps), false);
+			setConsoleText(text, 3, true);
 		}
 	} else if (cntArgs == 2) {
 		if ((*args)[1] == "switch") {
@@ -2026,11 +2051,11 @@ void PluginCore::mapsCommands(QStringList* args)
 				}
 			}
 			if (fOk) {
-				stat_str.append("Switched\n");
+				text.append(QString::fromUtf8("Переключено"), false);
 			} else {
-				stat_str.append("Error: map not found\n");
+				text.append(QString::fromUtf8("Ошибка: карта не найдена"), false);
 			}
-			setConsoleText(stat_str, true);
+			setConsoleText(text, 3, true);
 			return;
 		} else if ((*args)[1] == "unload") {
 			bool fOk = false;
@@ -2041,14 +2066,14 @@ void PluginCore::mapsCommands(QStringList* args)
 				}
 			}
 			if (fOk) {
-				stat_str.append("Unloaded.\n");
-				setConsoleText(stat_str, true);
+				text.append(QString::fromUtf8("Выгружено"), false);
+				setConsoleText(text, 3, true);
 			}
 			return;
 		}
 	} else {
-		stat_str.append(QString::fromUtf8("Ошибка: неизвестный параметр\n"));
-		setConsoleText(stat_str, true);
+		text.append(QString::fromUtf8("Ошибка: неизвестный параметр"), false);
+		setConsoleText(text, 3, true);
 	}
 }
 
@@ -2079,9 +2104,9 @@ void PluginCore::persCommands(QStringList* args)
 	int cntArgs = args->size() - 1;
 	QString str1 = QString::fromUtf8("----=== Персонаж ===----");
 	if (cntArgs == 0) {
-		str1.append(QString::fromUtf8("\n/pers list - список имеющихся данных о персонажах"));
-		str1.append(QString::fromUtf8("\n/pers info - краткая информация о собственном персонаже\n/pers info2 - подробная информация о собственном персонаже"));
-		str1.append(QString::fromUtf8("\n/pers info <name> - краткая информация о персонаже <name>\n/pers info2 <name> - подробная информация о персонаже <name>"));
+		str1.append(QString::fromUtf8("\n/pers list — список имеющихся данных о персонажах"));
+		str1.append(QString::fromUtf8("\n/pers info — краткая информация о собственном персонаже\n/pers info2 - подробная информация о собственном персонаже"));
+		str1.append(QString::fromUtf8("\n/pers info <name> — краткая информация о персонаже <name>\n/pers info2 <name> - подробная информация о персонаже <name>"));
 	} else if (cntArgs >= 1 && ((*args)[1] == "info" || (*args)[1] == "info2")) {
 		int inf_ver = 1;
 		if ((*args)[1] == "info2") {
@@ -2648,7 +2673,7 @@ void PluginCore::persCommands(QStringList* args)
 		}
 		str1.append("\n");
 	}
-	setConsoleText(str1, true);
+	setConsoleText(GameText(str1, false), 3, true);
 }
 
 void PluginCore::clearCommands(QStringList* args)
@@ -2659,26 +2684,28 @@ void PluginCore::clearCommands(QStringList* args)
 	if ((*args)[0] != "/clear")
 		return;
 	int argsCount = args->size() - 1;
-	QString str1 = "";
+	GameText text;
 	if (argsCount > 0) {
 		if ((*args)[1] == "text") {
 			if (argsCount == 2) {
 				if ((*args)[2] == "all") {
-					setGameText("");
-					setConsoleText("", false);
+					setGameText(text, 3);
+					setConsoleText(GameText(QString(), false), 3, false);
 					return;
 				}
 				if ((*args)[2] == "game") {
-					setGameText("");
-					setConsoleText(QString::fromUtf8("Выполнено\n"), false);
+					setGameText(text, 3);
+					setConsoleText(GameText(QString::fromUtf8("Выполнено"), false), 3, false);
 					return;
 				}
 				if ((*args)[2] == "console") {
-					setConsoleText("", false);
+					setConsoleText(text, 3, false);
 					return;
 				}
 			}
-			str1.append(QString::fromUtf8("/clear text game - Очистка окна вывода игровых данных\n/clear text console - Очистка окна вывода плагина\n"));
+			text.append(QString::fromUtf8("<strong>/clear text all</strong> — Очистка окон вывода плагина и консоли"), true);
+			text.append(QString::fromUtf8("<strong>/clear text console</strong> — Очистка окна вывода плагина"), true);
+			text.append(QString::fromUtf8("<strong>/clear text game</strong> — Очистка окна вывода игровых данных"), true);
 		} else if ((*args)[1] == "stat") {
 			int level = 0;
 			if (argsCount >= 2) {
@@ -2688,7 +2715,7 @@ void PluginCore::clearCommands(QStringList* args)
 				resetStatistic(VALUE_LAST_GAME_JID);
 				resetStatistic(VALUE_LAST_CHAT_JID);
 				resetStatistic(VALUE_MESSAGES_COUNT);
-				str1.append(QString::fromUtf8("Общая статистика сброшена\n"));
+				text.append(QString::fromUtf8("Общая статистика сброшена"), false);
 			}
 			if (level == 0 || level == 2) {
 				resetStatistic(VALUE_FIGHTS_COUNT);
@@ -2699,14 +2726,16 @@ void PluginCore::clearCommands(QStringList* args)
 				resetStatistic(VALUE_THING_DROP_LAST);
 				resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
 				resetStatistic(VALUE_KILLED_ENEMIES);
-				str1.append(QString::fromUtf8("Статистика боев сброшена\n"));
+				text.append(QString::fromUtf8("Статистика боев сброшена"), false);
 			}
 		}
 	}
-	if (str1.isEmpty()) {
-		str1 = QString::fromUtf8("/clear text - Очистка окна вывода игровых данных\n/clear stat - Сброс всей статистики\n/clear stat n - Сброс статистики группы n\n");
+	if (text.isEmpty()) {
+		text.append(QString::fromUtf8("<strong>/clear text</strong> — Очистка окна вывода игровых данных"), true);
+		text.append(QString::fromUtf8("<strong>/clear stat</strong> — Сброс всей статистики"), true);
+		text.append(QString::fromUtf8("<strong>/clear stat n</strong> — Сброс статистики группы n"), true);
 	}
-	setConsoleText(str1, true);
+	setConsoleText(text, 3, true);
 }
 
 /**
@@ -2717,9 +2746,13 @@ void PluginCore::thingsCommands(QStringList* args)
 	if ((*args)[0] != "/things")
 		return;
 	int argsCount = args->size() - 1;
-	QString str1 = QString::fromUtf8("----=== Вещи ===----\n");
+	GameText text;
+	text.append(QString::fromUtf8("<big><strong><em>----=== Вещи ===----</em></strong></big>"), true);
 	if (argsCount == 0) {
-		str1.append(QString::fromUtf8("/things list или /things list 0 - отображение всех вещей\n/things list n - отображение вещей фильтра n\n/things filters list - отображение фильтров\n/things price list - отображение цен на вещи\n"));
+		text.append(QString::fromUtf8("<strong>/things list</strong> или <strong>/things list 0</strong> — отображение всех вещей"), true);
+		text.append(QString::fromUtf8("<strong>/things list n</strong> — отображение вещей фильтра n"), true);
+		text.append(QString::fromUtf8("<strong>/things filters list</strong> — отображение фильтров"), true);
+		text.append(QString::fromUtf8("<strong>/things price list</strong> — отображение цен на вещи"), true);
 	} else if ((*args)[1] == "list") {
 		int filterNum = 0;
 		bool fOk = true;
@@ -2732,7 +2765,7 @@ void PluginCore::thingsCommands(QStringList* args)
 			if (filterNum <= filtersList.size()) {
 				int iface = Pers::instance()->getThingsInterface();
 				if (filterNum == 0) {
-					str1.append(QString::fromUtf8("--- Все вещи ---\n"));
+					text.append(QString::fromUtf8("<strong><em>--- Все вещи ---</em></strong>"), true);
 				} else {
 					QString sFltrName = "";
 					if (filterNum > 0 && filterNum <= filtersList.size()) {
@@ -2741,64 +2774,64 @@ void PluginCore::thingsCommands(QStringList* args)
 					if (sFltrName.isEmpty()) {
 						sFltrName = NA_TEXT;
 					}
-					str1.append(QString::fromUtf8("--- Вещи из фильтра \"%1\" ---\n").arg(sFltrName));
+					text.append(QString::fromUtf8("<strong><em>--- Вещи из фильтра \"%1\" ---</em></strong>").arg(sFltrName), true);
 					Pers::instance()->setThingsInterfaceFilter(iface, filterNum);
 				}
 				int thingsCnt = 0;
 				while (true) {
 					const Thing* thing = Pers::instance()->getThingByRow(thingsCnt, iface);
-					if (!thing) break;
-					str1.append(thing->toString(Thing::ShowAll));
-					str1.append("\n");
+					if (!thing)
+						break;
+					text.append(thing->toString(Thing::ShowAll), false);
 					thingsCnt++;
 				}
 				if (thingsCnt > 0) {
 					int nCountAll = Pers::instance()->getThingsCount(iface);
 					int nPriceAll = Pers::instance()->getPriceAll(iface);
-					str1.append(QString::fromUtf8("Всего предметов: %1, на сумму: %2 дринк.\n").arg(numToStr(nCountAll, "'")).arg(numToStr(nPriceAll, "'")));
+					text.append(QString::fromUtf8("Всего предметов: %1, на сумму: %2 дринк.").arg(numToStr(nCountAll, "'")).arg(numToStr(nPriceAll, "'")), false);
 					int noPrice = Pers::instance()->getNoPriceCount(iface);
 					if (noPrice > 0) {
-						str1.append(QString::fromUtf8("Предметов без цены: %1.\n").arg(numToStr(noPrice, "'")));
+						text.append(QString::fromUtf8("Предметов без цены: %1.").arg(numToStr(noPrice, "'")), true);
 					}
 				} else {
-					str1.append(QString::fromUtf8("список вещей пуст\n"));
+					text.append(QString::fromUtf8("список вещей пуст"), false);
 				}
 				Pers::instance()->removeThingsInterface(iface);
 			} else {
-				str1.append(QString::fromUtf8("нет такого фильтра. См. /things filters list\n"));
+				text.append(QString::fromUtf8("нет такого фильтра. См. <strong>/things filters list</strong>"), true);
 			}
 		} else {
-			str1.append(QString::fromUtf8("необходимо указать номер фильтра. См. /things filters list\n"));
+			text.append(QString::fromUtf8("необходимо указать номер фильтра. См. <strong>/things filters list</strong>"), true);
 		}
 	} else if ((*args)[1] == "filters") {
-		str1.append(QString::fromUtf8("--- Фильтры вещей ---\n"));
+		text.append(QString::fromUtf8("<strong><em>--- Фильтры вещей ---</em></strong>"), true);
 		if (argsCount == 2 && (*args)[2] == "list") {
 			QList<ThingFilter*> filtersList;
 			Pers::instance()->getThingsFiltersEx(&filtersList);
 			int cntFilters = filtersList.size();
 			if (cntFilters > 0) {
 				for (int i = 0; i < cntFilters; i++) {
-					str1.append(QString::number(i+1) + " - ");
+					QString str1 = QString::number(i+1) + " - ";
 					str1.append(filtersList.at(i)->isActive() ? "[+] " : "[-] ");
-					str1.append(filtersList.at(i)->name() + "\n");
+					str1.append(filtersList.at(i)->name());
+					text.append(str1, false);
 				}
-				str1.append(QString::fromUtf8("Всего фильтров: %1").arg(cntFilters));
+				text.append(QString::fromUtf8("Всего фильтров: %1").arg(cntFilters), true);
 			} else {
-				str1.append(QString::fromUtf8("нет фильтров\n"));
+				text.append(QString::fromUtf8("нет фильтров"), false);
 			}
 		} else {
-			str1.append(QString::fromUtf8("неверный аргумент\n"));
+			text.append(QString::fromUtf8("неверный аргумент"), false);
 		}
 	} else if ((*args)[1] == "price") {
-		str1.append(QString::fromUtf8("--- Цены вещей ---\n"));
+		text.append(QString::fromUtf8("<strong><em>--- Цены вещей ---</em></strong>"), true);
 		if (argsCount == 2 && (*args)[2] == "list") {
 			const QVector<Pers::price_item>* priceListPrt = Pers::instance()->getThingsPrice();
 			int sizePrice = priceListPrt->size();
 			if (sizePrice > 0) {
 				for (int i = 0; i < sizePrice; i++) {
-					str1.append(priceListPrt->at(i).name);
-					int nType = priceListPrt->at(i).type;
-					QString sType = thingTypeToString(nType);
+					QString str1 = priceListPrt->at(i).name;
+					QString sType = thingTypeToString(priceListPrt->at(i).type);
 					if (!sType.isEmpty()) {
 						str1.append("(" + sType + ")");
 					}
@@ -2809,19 +2842,19 @@ void PluginCore::thingsCommands(QStringList* args)
 					} else {
 						str1.append("нет цены");
 					}
-					str1.append(";\n");
+					text.append(str1, false);
 				}
-				str1.append(QString::fromUtf8("Всего позиций: %1").arg(numToStr(sizePrice, "'")));
+				text.append(QString::fromUtf8("Всего позиций: %1").arg(numToStr(sizePrice, "'")), true);
 			} else {
-				str1.append(QString::fromUtf8("нет цен\n"));
+				text.append(QString::fromUtf8("нет цен"), false);
 			}
 		} else {
-			str1.append(QString::fromUtf8("неверный аргумент\n"));
+			text.append(QString::fromUtf8("неверный аргумент"), false);
 		}
 	} else {
-		str1.append(QString::fromUtf8("неверный аргумент\n"));
+		text.append(QString::fromUtf8("неверный аргумент"), false);
 	}
-	setConsoleText(str1, true);
+	setConsoleText(text, 3, true);
 }
 
 /**
@@ -2832,64 +2865,67 @@ void PluginCore::aliasesCommands(const QStringList &args)
 	if (args.at(0) != "/aliases")
 		return;
 	int argsCount = args.size() - 1;
-	QString str1 = QString::fromUtf8("----=== Алиасы ===----\n");
+	GameText text;
+	text.append(QString::fromUtf8("<big><strong><em>----=== Алиасы ===----</em></strong></big>"), true);
 	if (argsCount == 0) {
-		str1.append(QString::fromUtf8("/aliases list — список всех алиасов\n/aliases append <имя> <префикс? yes|no> <command> — Добавление нового алиаса\n/aliases remove <alias_index> — Удаление алиаса по номеру\n"));
+		text.append(QString::fromUtf8("<strong>/aliases list</strong> — список всех алиасов"), true);
+		text.append(QString::fromUtf8("<strong>/aliases append &lt;имя&gt; &lt;префикс? yes|no&gt; &lt;command&gt;</strong> — Добавление нового алиаса"), true);
+		text.append(QString::fromUtf8("<strong>/aliases remove &lt;alias_index&gt;</strong> — Удаление алиаса по номеру"), true);
 	} else if (args.at(1) == "list") {
-		str1.append(QString::fromUtf8("--- Список алиасов ---\n"));
+		text.append(QString::fromUtf8("<strong><em>--- Список алиасов ---</em></strong>"), true);
 		Aliases *pAliases = Aliases::instance();
 		int cnt = pAliases->count();
 		if (cnt != 0) {
-			str1.append(QString::fromUtf8("\n  Имя\tПрефикс\tКоманда\n"));
+			text.append(QString::fromUtf8("&nbsp;&nbsp;Имя&nbsp;&nbsp;Префикс&nbsp;&nbsp;Команда"), true);
 			for (int i = 0; i < cnt; i++) {
-				str1.append(QString::fromUtf8("\n  %1 - %2\t%3\t%4")
+				text.append(QString::fromUtf8("&nbsp;&nbsp;%1 - %2&nbsp;&nbsp;%3&nbsp;&nbsp;%4")
 					.arg(i+1)
-					.arg(pAliases->aliasName(i))
+					.arg(Qt::escape(pAliases->aliasName(i)))
 					.arg(pAliases->aliasPrefix(i) ? QString::fromUtf8("да") : QString::fromUtf8("нет"))
-					.arg(pAliases->aliasCommand(i)));
+					.arg(Qt::escape(pAliases->aliasCommand(i))), true);
 			}
-			str1.append(QString::fromUtf8("\nВсего записей: %1").arg(cnt));
+			text.append(QString::fromUtf8("Всего записей: %1").arg(cnt), false);
 		} else {
-			str1.append(QString::fromUtf8("список пуст\n"));
+			text.append(QString::fromUtf8("список пуст"), false);
 		}
 	} else if (args.at(1) == "append") {
-		str1.append(QString::fromUtf8("--- Добавление алиаса ---\n"));
+		text.append(QString::fromUtf8("<strong><em>--- Добавление алиаса ---</em></strong>"), true);
 		bool res = false;
 		if (argsCount >= 4) {
 			if (args.at(3) == "yes" || args.at(3) == "no") {
 				if (Aliases::instance()->appendAlias(args.at(2), args.at(3) == "yes", args.at(4))) {
-					str1.append(QString::fromUtf8("Добавлено без сохранения\n"));
+					text.append(QString::fromUtf8("Добавлено без сохранения"), false);
 				} else {
-					str1.append(QString::fromUtf8("Ошибка!\n"));
+					text.append(QString::fromUtf8("Ошибка!"), false);
 				}
 				res = true;
 			}
 		}
 		if (!res) {
-			str1.append("/aliases append <text> <yes|no> <text>\n");
+			text.append(QString::fromUtf8("<strong>/aliases append &lt;text&gt; &lt;yes|no&gt; &lt;text&gt;</strong>"), true);
 		}
 	} else if (args.at(1) == "remove") {
-		str1.append(QString::fromUtf8("--- Удаление алиаса ---\n"));
+		text.append(QString::fromUtf8("<strong><em>--- Удаление алиаса ---</em></strong>"), true);
 		bool res = false;
 		if (argsCount == 2) {
 			bool fOk = false;
 			const int idx = args.at(2).toInt(&fOk);
 			if (fOk) {
 				if (Aliases::instance()->removeAlias(idx - 1)) {
-					str1.append(QString::fromUtf8("Удалено без сохранения\n"));
+					text.append(QString::fromUtf8("Удалено без сохранения"), false);
 				} else {
-					str1.append(QString::fromUtf8("Ошибка!\n"));
+					text.append(QString::fromUtf8("Ошибка!"), false);
 				}
 				res = true;
 			}
 		}
 		if (!res) {
-			str1.append("/aliases remove <alias_index>\n");
+			text.append(QString::fromUtf8("<strong>/aliases remove &lt;alias_index&gt;</strong>"), true);
 		}
 	} else {
-		str1.append(QString::fromUtf8("неверный аргумент\n"));
+		text.append(QString::fromUtf8("неверный аргумент"), false);
 	}
-	setConsoleText(str1, true);
+	setConsoleText(text, 3, true);
 }
 
 /**
@@ -2900,17 +2936,18 @@ void PluginCore::settingsCommands(const QStringList &args)
 	if (args.at(0) != "/settings")
 		return;
 	int argsCount = args.size() - 1;
-	QString str1 = QString::fromUtf8("----=== Настройки ===----\n");
+	GameText text;
+	text.append(QString::fromUtf8("<big><strong><em>----=== Настройки ===----</em></strong></big>"), true);
 	if (argsCount == 0) {
-		str1.append(QString::fromUtf8("/settings save — Сохранение настроек плагина\n"));
+		text.append(QString::fromUtf8("<strong>/settings save</strong> — Сохранение настроек плагина"), true);
 	} else if (args.at(1) == "save") {
-		str1.append(QString::fromUtf8("--- Сохранение настроек ---\n"));
+		text.append(QString::fromUtf8("<strong><em>--- Сохранение настроек ---</em></strong>"), true);
 		Settings::instance()->save();
-		str1.append(QString::fromUtf8("Сохранено\n"));
+		text.append(QString::fromUtf8("Сохранено"), false);
 	} else {
-		str1.append(QString::fromUtf8("неверный аргумент\n"));
+		text.append(QString::fromUtf8("неверный аргумент"), false);
 	}
-	setConsoleText(str1, true);
+	setConsoleText(text, 3, true);
 }
 
 /**

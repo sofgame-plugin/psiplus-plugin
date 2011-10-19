@@ -36,6 +36,7 @@
 #include "pers.h"
 #include "pers_info.h"
 #include "main_window.h"
+#include "textparsing/gametext.h"
 
 class PluginCore: public QObject
 {
@@ -102,6 +103,7 @@ class PluginCore: public QObject
 		QRegExp killerAttackReg;
 		QRegExp dealerBuyReg;
 		QRegExp warehouseShelfReg;
+		QRegExp persInListOfTheBestReg;
 		QVector<PersInfo*> persInfoList;
 		bool persStatusChangedFlag;
 		bool persBackpackChangedFlag;
@@ -118,24 +120,25 @@ class PluginCore: public QObject
 		QRegExp fightDamageFromPersReg3;
 		QRegExp fightDropMoneyReg1;
 		QRegExp fightDropThingReg1;
+		bool coloring;
 
 	private:
 		PluginCore();
 		~PluginCore();
 		void valueChanged(int valueId, int valueType, int value);
-		void setGameText(QString);
-		void setConsoleText(QString, bool);
+		void setGameText(const GameText &gameText, int type);
+		void setConsoleText(const GameText &, int type, bool);
 		bool savePersStatus();
 		bool loadPersStatus();
-		void getStatistics(QString* commandPtr);
+		void getStatistics(const QString &commandPtr);
 		void mapsCommands(QStringList*);
 		void persCommands(QStringList*);
 		void clearCommands(QStringList*);
 		void thingsCommands(QStringList*);
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
-		int  parseFightGroups(const QStringList &, int);
-		int  parseFightStepResult(const QStringList &, int);
+		void parseFightGroups(GameText &gameText);
+		bool parseFightStepResult(GameText &gameText);
 		void searchHorseshoe(const QString &);
 
 	public slots:

@@ -25,17 +25,44 @@
 
 #include <QtCore>
 
-#include "fightparse.h"
+//#include "fightparse.h"
 #include "common.h"
 #include "plugin_core.h"
 #include "fight.h"
 #include "settings.h"
 
+#define MAX_BRIGHTNESS 128
+
+QString healthColoring(int currHealth, int maxHealth)
+{
+	int half = maxHealth / 2;
+	int gcol, rcol;
+	if (currHealth > half) {
+		gcol = MAX_BRIGHTNESS;
+		rcol = MAX_BRIGHTNESS - MAX_BRIGHTNESS * (currHealth - half) / (maxHealth - half);
+		if (rcol > MAX_BRIGHTNESS) {
+			rcol = MAX_BRIGHTNESS;
+		} else if (rcol < 0) {
+			rcol = 0;
+		}
+	} else {
+		rcol = MAX_BRIGHTNESS;
+		gcol = MAX_BRIGHTNESS * currHealth / (maxHealth - half);
+		if (gcol > MAX_BRIGHTNESS) {
+			gcol = MAX_BRIGHTNESS;
+		} else if (gcol < 0) {
+			gcol = 0;
+		}
+	}
+	QColor color(rcol, gcol, 0);
+	return color.name();
+}
+
 /**
  * Парсит строки с описанием команды союзников, противников и их ауры
- * Возврат - количество принятых парсингом строк
+ * Возврат - номер следующей строчки, идущей за последней проанализированной
  */
-int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
+void PluginCore::parseFightGroups(GameText &gameText)
 {
 /*
 Открытый бой. (*- закр.)
@@ -45,31 +72,31 @@ int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
 противник:
  3- матерый волк[95/95]. 8- матерый волк[95/95].
  */
-	int n_pos = start_pos;
-	int cnt = strs.size();
-	if (n_pos >= cnt)
-		return 0;
+	if (gameText.isEnd())
+		return;
 	// Строчка с номером хода и таймаутом
-	//n_pos++;
-	if (fightOneTimeoutReg.indexIn(strs.at(n_pos).trimmed(), 0) == -1)
-		return 0;
+	if (fightOneTimeoutReg.indexIn(gameText.currentLine().trimmed(), 0) == -1)
+		return;
 	// Устанавливаем номер хода боя
 	fight->setStep(fightOneTimeoutReg.cap(1).toInt());
 	// Получаем значение таймаута
 	int n_timeout = fightOneTimeoutReg.cap(2).toInt() * 60 + fightOneTimeoutReg.cap(3).toInt();
 	fight->setTimeout(n_timeout);
-	n_pos++;
-	if (n_pos < cnt) {
+	gameText.next();
+	if (!gameText.isEnd()) {
 		Pers *pers = Pers::instance();
-		QString str1 = strs.at(n_pos).trimmed();
+		QString str1 = gameText.currentLine().trimmed();
 		if (str1 == QString::fromUtf8("ваша команда:")) {
+			if (coloring)
+				gameText.replace("<strong>" + str1 + "</strong>", true);
 			// Анализируем нашу команду
-			n_pos++;
-			if (n_pos < cnt) {
-				QStringList tmp_list = strs.at(n_pos).trimmed().split(QString::fromUtf8("Ауры команды:"));
+			gameText.next();
+			if (!gameText.isEnd()) {
+				QStringList tmp_list = gameText.currentLine().trimmed().split(QString::fromUtf8("Ауры команды:"));
 				// Разбор союзников
 				fight->startAddAllyes();
 				int pos = 0;
+				QString colorStr;
 				bool b_my_pers = false;
 				QString str1 = tmp_list.at(0).trimmed();
 				pers->beginSetPersParams();
@@ -97,6 +124,9 @@ int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
 							fight->setGameHumanAlly(s_name, s_country, n_level, n_health_curr, n_health_max);
 						}
 					}
+					if (coloring) {
+						colorStr.append(" <font color=\"" + healthColoring(n_health_curr, n_health_max) + "\">" + Qt::escape(fightElement0Reg.cap(0)) + "</font>.");
+					}
 					pos += fightElement0Reg.matchedLength();
 				}
 				fight->setMyPersInFight(b_my_pers);
@@ -110,18 +140,28 @@ int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
 						fight->setAuraAlly(s_name, s_param, fightElement2Reg.cap(3).toInt());
 						pos += fightElement2Reg.matchedLength();
 					}
+					if (coloring) {
+						colorStr.append(QString::fromUtf8(" Ауры команды: "));
+						colorStr.append("<font color=\"blue\">" + Qt::escape(tmp_list.at(1)) + "</font>");
+					}
 				}
+				if (coloring)
+					gameText.replace(colorStr, true);
 				fight->stopAddAllyes();
 			}
-			n_pos++;
-			if (n_pos < cnt && strs.at(n_pos).startsWith(QString::fromUtf8("противник:"))) {
+			gameText.next();
+			str1 = gameText.currentLine().trimmed();
+			if (!gameText.isEnd() && str1.startsWith(QString::fromUtf8("противник:"))) {
+				if (coloring)
+					gameText.replace("<strong>" + str1 + "</strong>", true);
 				// Строчка наших врагов
-				n_pos++;
-				if (n_pos < cnt) {
-					QStringList tmp_list = strs.at(n_pos).trimmed().split(QString::fromUtf8("Ауры команды:"));
+				gameText.next();
+				if (!gameText.isEnd()) {
+					QStringList tmp_list = gameText.currentLine().trimmed().split(QString::fromUtf8("Ауры команды:"));
 					fight->startAddEnemies();
 					// Разбираем и добавляем противников
 					int pos = 0;
+					QString colorStr;
 					QString str1 = tmp_list.at(0).trimmed();
 					while ((pos = fightElement1Reg.indexIn(str1, pos)) != -1) {
 						int n_index = fightElement1Reg.cap(1).toInt();
@@ -136,6 +176,9 @@ int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
 							QString s_country = fightElement1Reg.cap(4).trimmed();
 							fight->setHumanEnemy(n_index, s_name, s_country, fightElement1Reg.cap(6).toInt(), n_health_curr, n_health_max);
 						}
+						if (coloring) {
+							colorStr.append(" <font color=\"" + healthColoring(n_health_curr, n_health_max) + "\">" + Qt::escape(fightElement1Reg.cap(0)) + "</font>.");
+						}
 						pos += fightElement1Reg.matchedLength();
 					}
 					if (tmp_list.size() > 1) {
@@ -148,29 +191,36 @@ int PluginCore::parseFightGroups(const QStringList &strs, int start_pos)
 							fight->setAuraEnemy(s_name, s_param, fightElement2Reg.cap(3).toInt());
 							pos += fightElement2Reg.matchedLength();
 						}
+						if (coloring) {
+							colorStr.append(QString::fromUtf8(" Ауры команды: "));
+							colorStr.append("<font color=\"blue\">" + Qt::escape(tmp_list.at(1)) + "</font>");
+						}
 					}
+					if (coloring)
+						gameText.replace(colorStr, true);
 					fight->stopAddEnemies();
+					gameText.next();
 				}
 			}
 		} else if (parPersPower1Reg.indexIn(str1, 0) != -1) {
 			// Получаем значение энергии (Это режим выбора умения)
 			fight->setMyPersInFight(true); // Наш персонаж в бою
+			int nEnergyCurr = parPersPower1Reg.cap(1).toInt();
+			int nEnergyMax = parPersPower1Reg.cap(2).toInt();
 			pers->beginSetPersParams();
-			pers->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, parPersPower1Reg.cap(1).toInt());
-			pers->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, parPersPower1Reg.cap(2).toInt());
+			pers->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, nEnergyCurr);
+			pers->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, nEnergyMax);
 			pers->endSetPersParams();
+			if (coloring)
+				gameText.replace("<font color=\"" + healthColoring(nEnergyCurr, nEnergyMax) + "\">" + parPersPower1Reg.cap(0) + "</font>", true);
 			// Следующая строчка - выбор умения. Пока тупо пропускаем.
-			++n_pos;
+			gameText.next();
 		}
 	}
-	n_pos -= start_pos;
-	return n_pos;
 }
 
-int PluginCore::parseFightStepResult(const QStringList &strs, int start_pos)
+bool PluginCore::parseFightStepResult(GameText &gameText)
 {
-	int n_pos = start_pos;
-	int cnt = strs.size();
 	bool f_res = false;
 	// Сначала идут описания атак
 	/*
@@ -184,10 +234,11 @@ xxxxx зацепил волной взрыва шара матерый волк 
 xxxxx*2 атаковали матерый волк/повр:4524
 -----
 	*/
-	while (n_pos < cnt) {
-		QString str = strs.at(n_pos).trimmed();
+	gameText.savePos();
+	while (!gameText.isEnd()) {
+		QString str = gameText.currentLine().trimmed();
 		if (str == "-----") {
-			n_pos++;
+			gameText.next();
 			break;
 		} else if (fightDamageFromPersReg1.indexIn(str, 0) != -1) {
 			f_res = true;
@@ -200,17 +251,19 @@ xxxxx*2 атаковали матерый волк/повр:4524
 		} else if (str.startsWith(QString::fromUtf8("таймауты:"))) {
 			f_res = true;
 		}
-		n_pos++;
+		gameText.next();
 	}
-	if (!f_res)
-		return 0; // Не найдено элементов боя
+	if (!f_res) {
+		gameText.restorePos();
+		return false; // Не найдено элементов боя
+	}
 	// Теперь список выбывших
 	/*
 Выбыли: матерый волк, матерый волк, матерый волк, матерый волк, матерый волк, матерый волк
 -----
 	*/
-	if (n_pos < cnt) {
-		QString str = strs.at(n_pos).trimmed();
+	if (!gameText.isEnd()) {
+		QString str = gameText.currentLine().trimmed();
 		if (str.startsWith(QString::fromUtf8("Выбыли: "))) {
 			QStringList killed_list = str.mid(8).split(",");
 			int k_cnt = killed_list.size();
@@ -233,10 +286,10 @@ xxxxx*2 атаковали матерый волк/повр:4524
 				statisticsChanged();
 			}
 			//--
-			n_pos++;
-			if (n_pos < cnt) {
-				if (strs.at(n_pos).trimmed().trimmed() == "-----") {
-					n_pos++;
+			gameText.next();
+			if (!gameText.isEnd()) {
+				if (gameText.currentLine().trimmed().trimmed() == "-----") {
+					gameText.next();
 				}
 			}
 		}
@@ -246,8 +299,8 @@ xxxxx*2 атаковали матерый волк/повр:4524
 Получено: demon +5 дринк;demon +5 дринк;demon +5 дринк;demon +5 дринк
 -----
 	*/
-	if (n_pos < cnt) {
-		QString str = strs.at(n_pos).trimmed();
+	if (!gameText.isEnd()) {
+		QString str = gameText.currentLine().trimmed();
 		if (str.startsWith(QString::fromUtf8("Получено: "))) {
 			str = str.mid(10);
 			QStringList get_list = str.split(";");
@@ -280,14 +333,13 @@ xxxxx*2 атаковали матерый волк/повр:4524
 					statisticsChanged();
 				}
 			}
-			n_pos++;
-			if (n_pos < cnt) {
-				if (strs.at(n_pos).trimmed().trimmed() == "-----") {
-					n_pos++;
+			gameText.next();
+			if (!gameText.isEnd()) {
+				if (gameText.currentLine().trimmed().trimmed() == "-----") {
+					gameText.next();
 				}
 			}
 		}
 	}
-	n_pos -= start_pos;
-	return n_pos;
+	return true;
 }

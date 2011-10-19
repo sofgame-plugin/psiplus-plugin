@@ -1392,6 +1392,7 @@ void GameMap::addMapElement(const MapPos &pos)
 		// Добавляем элемент
 		MapElement me(pos);
 		mapCurrArrayPtr->push_back(me);
+		i = mapCurrArrayPtr->size() - 1;
 		// Прописываем размеры карты
 		mapsList[mapCurrIndex].rect.addPoint(pos);
 		// Отмечаем как модифицированную

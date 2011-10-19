@@ -31,6 +31,7 @@
 #include "pluginhosts.h"
 
 QStringList thingTypeStrings = (QStringList() << QString::fromUtf8("вещь") << QString::fromUtf8("список") << QString::fromUtf8("снадобье") << QString::fromUtf8("дубины") << QString::fromUtf8("кинжал") << QString::fromUtf8("клинки") << QString::fromUtf8("шлем") << QString::fromUtf8("броня") << QString::fromUtf8("обувь") << QString::fromUtf8("щит") << QString::fromUtf8("штаны") << QString::fromUtf8("амулет") << QString::fromUtf8("браслет") << QString::fromUtf8("наплечники") << QString::fromUtf8("пояс"));
+const QString emptyString;
 
 bool savePluginXml(QDomDocument* xmlDoc, QString filename)
 {

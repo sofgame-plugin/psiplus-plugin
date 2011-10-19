@@ -1,2 +1,4 @@
-HEADERS += $$PWD/fightparse.h
-SOURCES += $$PWD/fightparse.cpp
+HEADERS += $$PWD/fightparse.h \
+    $$PWD/gametext.h
+SOURCES += $$PWD/fightparse.cpp \
+    $$PWD/gametext.cpp

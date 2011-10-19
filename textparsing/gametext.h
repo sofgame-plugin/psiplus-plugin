@@ -1,6 +1,6 @@
 /*
- * utils.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * gametext.h - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,22 +23,37 @@
  *
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef GAMETEXT_H
+#define GAMETEXT_H
 
-#include <QtCore>
-#include <QDomDocument>
+#include <QString>
+#include <QList>
+#include <QPair>
 
-extern const QString emptyString;
-bool savePluginXml(QDomDocument* xmlDoc, QString filename);
-bool saveXmlToFile(QDomDocument* xmlDoc, QString filename);
-bool loadPluginXml(QDomDocument* xmlDoc, QString filename);
-bool loadXmlFromFile(QDomDocument* xmlDoc, QString filename);
-QString getTextFromNode(QDomNode*);
-QString numToStr(qint64, QString);
-QString thingTypeToString(int);
-int thingTypeFromString(QString);
-QString thingTypes();
-QStringList splitCommandString(const QString &str);
+class GameText
+{
+public:
+	GameText();
+	GameText(const QString &text, bool html);
+	bool isEmpty() const {return textArray.isEmpty();};
+	bool isFirst() const {return (pos == 0);};
+	bool isEnd() const;
+	void setEnd() {pos = textArray.size();};
+	const QString &currentLine() const;
+	const QString &nextLine();
+	void prior();
+	void next();
+	void append(const QString &text, bool html);
+	void removeLine();
+	void replace(const QString &text, bool html);
+	void savePos() {savedPos = pos;};
+	void restorePos() {pos = savedPos;};
+	QString toHtml() const;
 
-#endif
+private:
+	QList< QPair<bool, QString> > textArray;
+	int pos;
+	int savedPos;
+};
+
+#endif // GAMETEXT_H

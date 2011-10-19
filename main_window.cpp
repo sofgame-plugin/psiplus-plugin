@@ -37,6 +37,7 @@
 #include "sender.h"
 #include "settings.h"
 #include "pluginhosts.h"
+#include "subclasses/textview.h"
 
 QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
 				<< (QPair<int, QString>) {VALUE_LAST_GAME_JID, "last-game-jid"}
@@ -279,7 +280,6 @@ void SofMainWindow::init()
 	persNameFont_label->setFont(f.toString());
 	f = serverTextLabel->font();
 	gameTextFont_label->setFont(f.toString());
-	console_textedit->setFont(f.toString());
 	// Получаем основные настройки окна
 	getAllDataFromCore();
 	// Размеры сплиттера
@@ -637,8 +637,8 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 100;
 	}
 	maxTextBlocksCount->setValue(newIntValue);
-	serverTextLabel->setMaximumBlockCount(newIntValue);
-	console_textedit->setMaximumBlockCount(newIntValue);
+	serverTextLabel->document()->setMaximumBlockCount(newIntValue);
+	console_textedit->document()->setMaximumBlockCount(newIntValue);
 	// Режим сохранения карт
 	mapsParamSaveMode->setCurrentIndex(GameMap::instance()->getMapsSettingParam(GameMap::AutoSaveMode));
 	// Длительность регена для отображения Popup-а
@@ -774,26 +774,22 @@ void SofMainWindow::changePersStatus()
 	persStatusLabel->setText(Pers::instance()->getPersStatusString());
 }
 
-void SofMainWindow::setGameText(QString gameText, int type)
+void SofMainWindow::setGameText(const QString &gameText, int type)
 {
 	/**
 	* gameText - строка для отображения, если gameText == 0, то очищаем
-	* type - 1: исходящее, 2: входящее
+	* type - 1: исходящее, 2: входящее, 3 - информационное
 	**/
-	if (gameText.isEmpty()) {
-		serverTextLabel->clear();
-	}
 	if (gameText.isEmpty()) {
 		serverTextLabel->clear();
 	}
 	// Значение 32 тупо взято из аналогичного кода psi+
 	bool do_scroll = (serverTextLabel->verticalScrollBar()->maximum() - serverTextLabel->verticalScrollBar()->value() <= 32);
-	//serverTextLabel->moveCursor(QTextCursor::End);
-	serverTextLabel->appendPlainText(QString::fromUtf8("") + (type == 1 ? "^" : "v") + " ***** [" + QTime::currentTime().toString("hh:mm:ss") + "] ***** " + (type == 1 ? "^" : "v"));
 	if (!gameText.isEmpty()) {
-		serverTextLabel->appendPlainText(gameText);
+		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
+		serverTextLabel->appendText("<span>" + gameText + "</span>", type_);
 	} else {
-		serverTextLabel->appendPlainText(QString::fromUtf8("--- очищено ---"));
+		serverTextLabel->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
 	if (type == 1) {
 		text_tabWidget->setCurrentIndex(0);
@@ -805,23 +801,21 @@ void SofMainWindow::setGameText(QString gameText, int type)
 
 /**
  * text - строка для отображения, если text == "", то очищаем
- * type - 1: исходящее, 2: входящее
+ * type - 1: исходящее, 2: входящее, 3 - информационное
  * switch_ - переключать или нет на консоль
  */
-void SofMainWindow::setConsoleText(QString text, int type, bool switch_)
+void SofMainWindow::setConsoleText(const QString &text, int type, bool switch_)
 {
 	if (text.isEmpty()) {
 		console_textedit->clear();
 	}
-	//console_textedit->moveCursor(QTextCursor::End);
-	console_textedit->appendPlainText(QString::fromUtf8("") + (type == 1 ? "^" : "v") + " ***** [" + QTime::currentTime().toString("hh:mm:ss") + "] ***** " + (type == 1 ? "^" : "v"));
 	if (!text.isEmpty()) {
-		console_textedit->appendPlainText(text);
+		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
+		console_textedit->appendText("<span>" + text + "</span>", type_);
 	} else {
-		console_textedit->appendPlainText(QString::fromUtf8("--- очищено ---"));
+		console_textedit->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
 	console_textedit->verticalScrollBar()->setValue(console_textedit->verticalScrollBar()->maximum());
-	//console_textedit->moveCursor(QTextCursor::End);
 	if (switch_) {
 		text_tabWidget->setCurrentIndex(1);
 	}
@@ -842,7 +836,7 @@ QDomElement SofMainWindow::exportAppearanceSettings(QDomDocument &xmlDoc) const
 	eAppearance.appendChild(eServerTextAppe);
 	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
 	eServerTextAppe.appendChild(eServerTextFontAppe);
-	eServerTextFontAppe.setAttribute("value", serverTextLabel->font().toString());
+	eServerTextFontAppe.setAttribute("value", serverTextLabel->document()->defaultFont().toString());
 	QDomElement eThingsTable = thingsTable->saveSettingsToXml(xmlDoc);
 	eAppearance.appendChild(eThingsTable);
 	if (settingWindowSizePos == 1) {
@@ -1488,8 +1482,8 @@ void SofMainWindow::applySettings()
 	} else if (textBlocksCount > 0 && textBlocksCount < 100) {
 		textBlocksCount = 100;
 	}
-	serverTextLabel->setMaximumBlockCount(textBlocksCount);
-	console_textedit->setMaximumBlockCount(textBlocksCount);
+	serverTextLabel->document()->setMaximumBlockCount(textBlocksCount);
+	console_textedit->document()->setMaximumBlockCount(textBlocksCount);
 	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
 	// Режим сохранения карт
 	GameMap *maps = GameMap::instance();
@@ -1817,7 +1811,7 @@ void SofMainWindow::thingParamToConsole()
 	const Thing *thg = Pers::instance()->getThingByRow(row, thingsIface);
 	if (thg) {
 		if (thg->isValid()) {
-			setConsoleText(thg->toString(Thing::ShowAll), 2, true);
+			setConsoleText(thg->toString(Thing::ShowAll), 3, true);
 		}
 	}
 }
