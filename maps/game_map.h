@@ -167,15 +167,20 @@ class GameMap: public QObject
 			MapPos      pos;
 			QStringList names;
 		};
+		struct MapCache {
+			MapPos      lastPos;
+			int         lastIndex;
+			int         persPosIndex;
+			MapCache() : lastIndex(-1), persPosIndex(-1) {};
+		};
+
 		static GameMap *instace_;
 		MapScene *mapScene_;
 		QString currAccJid;
 		QVector<MapInfo> mapsList;
 		QList<OtherPers> otherPers;
-		MapPos lastPos;
+		MapCache mapCache;
 		MapPos persPos;
-		int lastIndex;
-		int persPosIndex;
 		int mapCurrIndex;
 		QVector<GameMap::MapElement>* mapCurrArrayPtr;
 		int modifiedMapsCount;

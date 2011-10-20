@@ -36,8 +36,6 @@
 #include "pers.h"
 
 GameMap::GameMap(QObject *parent) : QObject(parent),
-	lastIndex(-1),
-	persPosIndex(-1),
 	mapCurrIndex(-1),
 	mapCurrArrayPtr(NULL),
 	modifiedMapsCount(false),
@@ -92,9 +90,7 @@ void GameMap::init(const QString &acc_jid)
 	currAccJid = acc_jid;
 	// Инициализация переменных
 	persPos.reset();
-	lastPos.reset();
-	lastIndex = -1;
-	persPosIndex = -1;
+	mapCache = MapCache();
 	mapCurrIndex = -1;
 	mapCurrArrayPtr = NULL;
 	otherPers.clear();
@@ -594,7 +590,7 @@ bool GameMap::removeMap(int map_index)
 		// Если выгружаемая карта текущая
 		if (map_index == mapCurrIndex) {
 			// Очищаем кэши индекса карт
-			lastPos.reset();
+			mapCache = MapCache();
 			// Прописываем индекс и указатель на текущую карту
 			mapCurrIndex = -1;
 			// Перерисовываем карту
@@ -1215,7 +1211,7 @@ void GameMap::removeMapElement(int mapIndex, int elementIndex)
 	}
 	// Очищаем кэши индекса карт, т.к. вероятно, что наш перемещенный элемент сидит в кэше
 	if (mapIndex == mapCurrIndex) {
-		lastPos.reset();
+		mapCache = MapCache();
 	}
 	// Меняем время доступа
 	mapsList[mapIndex].last_access = QDateTime::currentDateTime();
@@ -1484,8 +1480,8 @@ void GameMap::setPersPos(const MapPos &pos)
 	}
 	persPos = pos;
 	mapScene_->drawPersPos(pos);
-	int oldPersPosIndex = persPosIndex;
-	persPosIndex = pers_index;
+	int oldPersPosIndex = mapCache.persPosIndex;
+	mapCache.persPosIndex = pers_index;
 	// Перерисовываем временные маршруты, если таковые существуют
 	if (oldPersPosIndex != -1) {
 		const MapElement *me = &mapCurrArrayPtr->at(oldPersPosIndex);
@@ -1533,8 +1529,8 @@ int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos)
 	if (!pos.isValid())
 		return -1;
 	// Сначала сравним с последним запросом только для текущей карты (для скорости)
-	if (mapIndex == mapCurrIndex && lastPos == pos) {
-		return lastIndex;
+	if (mapIndex == mapCurrIndex && mapCache.lastPos == pos) {
+		return mapCache.lastIndex;
 	}
 	// В кэше не нашли, ищем в массиве тупым перебором
 	// Подгружаем карту, если необходимо
@@ -1549,8 +1545,8 @@ int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos)
 		if (me->status > 0 && me->pos == pos) {
 			if (mapIndex == mapCurrIndex) {
 				// Кэш только для текущей карты
-				lastPos = pos;
-				lastIndex = i;
+				mapCache.lastPos = pos;
+				mapCache.lastIndex = i;
 			}
 			return i;
 		}
@@ -1826,7 +1822,7 @@ bool GameMap::switchMap(int mapIndex)
 			return false;
 	}
 	// Очищаем кэши индекса карт
-	lastPos.reset();
+	mapCache = MapCache();
 	// Прописываем индекс и указатель на текущую карту
 	mapCurrIndex = mapIndex;
 	mapCurrArrayPtr = mapsList[mapIndex].map;
@@ -1859,7 +1855,7 @@ bool GameMap::unloadMap(int mapIndex)
 	// Если выгружаемая карта текущая
 	if (mapIndex == mapCurrIndex) {
 		// Очищаем кэши индекса карт
-		lastPos.reset();
+		mapCache = MapCache();
 		// Прописываем индекс и указатель на текущую карту
 		mapCurrIndex = -1;
 		// Перерисовываем карту
@@ -1882,7 +1878,7 @@ bool GameMap::clearMap(int mapIndex)
 	clearOtherPersPos();
 	if (mapIndex == mapCurrIndex) {
 		// Очищаем кэши индекса карт
-		lastPos.reset();
+		mapCache = MapCache();
 		// Перерисовываем карту
 		redrawMap();
 		// Подгоняем размер сцены
