@@ -39,6 +39,8 @@
 #include "settings.h"
 #include "pluginhosts.h"
 
+Q_DECLARE_METATYPE(Settings::SettingKey)
+
 PluginCore *PluginCore::instance_ = NULL;
 
 PluginCore *PluginCore::instance()
@@ -109,6 +111,9 @@ PluginCore::PluginCore()
 	fightElement2Reg.setMinimal(true);
 	parPersPower1Reg.setPattern(QString::fromUtf8("^Энергия:(-?[0-9]{1,6})/([0-9]{1,6})$"));
 	// Соединения
+	Settings *settings = Settings::instance();
+	qRegisterMetaType<Settings::SettingKey>("Settings::SettingKey");
+	connect(settings, SIGNAL(settingChanged(Settings::SettingKey)), this, SLOT(updateSetting(Settings::SettingKey)));
 	Sender *sender = Sender::instance();
 	connect(sender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
 	connect(sender, SIGNAL(gameTextReceived(const QString, const QString)), this, SLOT(textParsing(const QString, const QString)));
@@ -176,6 +181,7 @@ void PluginCore::changeAccountJid(const QString newJid)
 	Settings *settings = Settings::instance();
 	// Загрузить новые настройки
 	settings->init(newJid);
+	updateSetting(Settings::SettingGameTextColoring);
 	// Установка нового режима управления зеркалами игры
 	Sender::instance()->setGameMirrorsMode(settings->getIntSetting(Settings::SettingMirrorSwitchMode));
 	// Сбрасываем объект персонажа
@@ -3017,5 +3023,12 @@ void PluginCore::saveStatusTimeout()
 {
 	if (persStatusChangedFlag || persBackpackChangedFlag || statisticChangedFlag) {
 		savePersStatus();
+	}
+}
+
+void PluginCore::updateSetting(Settings::SettingKey key)
+{
+	if (key == Settings::SettingGameTextColoring) {
+		coloring = Settings::instance()->getBoolSetting(key);
 	}
 }

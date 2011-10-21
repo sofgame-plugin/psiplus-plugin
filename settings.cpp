@@ -58,6 +58,7 @@ Settings::Settings(QObject *parent) :
 	defaultsListInt[SettingFightAutoClose] = 0;
 	defaultsListBool[SettingThingDropPopup] = true;
 	defaultsListInt[SettingRegenDurationForPopup] = 0;
+	defaultsListBool[SettingGameTextColoring] = false;
 }
 
 Settings::~Settings()
@@ -235,6 +236,8 @@ void Settings::setMainSettings(const QDomElement &xml)
 			settingsListBool[SettingResetQueuePopup] = (eChild.attribute("value").toLower() == "true");
 		} else if (tagName == "server-text-max-blocks-count") {
 			settingsListInt[SettingServerTextBlocksCount] = eChild.attribute("value").toInt();
+		} else if (tagName == "game-text-coloring") {
+			settingsListBool[SettingGameTextColoring] = (eChild.attribute("value").toLower() == "true");
 		}
 		eChild = eChild.nextSiblingElement();
 	}
@@ -378,6 +381,9 @@ bool Settings::save()
 		eServerTextBlocksCount.setAttribute("value", tbCount);
 		eMain.appendChild(eServerTextBlocksCount);
 	}
+	QDomElement eGameTextColoring = xmlDoc.createElement("game-text-coloring");
+	eGameTextColoring.setAttribute("value", getBoolSetting(SettingGameTextColoring) ? "true" : "false");
+	eMain.appendChild(eGameTextColoring);
 	QDomElement eFight = xmlDoc.createElement("fight");
 	eNewAccount.appendChild(eFight);
 	int fTimer = getIntSetting(SettingFightTimerMode);

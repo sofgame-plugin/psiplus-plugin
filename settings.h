@@ -53,7 +53,8 @@ public:
 		SettingFightSelectAction,
 		SettingFightAutoClose,
 		SettingThingDropPopup,
-		SettingRegenDurationForPopup
+		SettingRegenDurationForPopup,
+		SettingGameTextColoring
 	};
 	struct SpecificEnemy {
 		QString name;
@@ -114,7 +115,7 @@ private:
 	void setFightSettings(const QDomElement &);
 
 signals:
-	void settingChanged(SettingKey);
+	void settingChanged(Settings::SettingKey);
 
 };
 

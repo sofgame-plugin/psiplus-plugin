@@ -151,6 +151,9 @@ class PluginCore: public QObject
 		void statisticsChanged();
 		void saveStatusTimeout();
 
+	private slots:
+		void updateSetting(Settings::SettingKey);
+
 };
 
 #endif

@@ -2555,7 +2555,7 @@ p, li { white-space: pre-wrap; }
                    <string>Текст игры</string>
                   </property>
                   <layout class="QGridLayout" name="gridLayout_11">
-                   <item row="0" column="0">
+                   <item row="1" column="0">
                     <layout class="QHBoxLayout" name="horizontalLayout_23">
                      <item>
                       <widget class="QLabel" name="label_9">
@@ -2588,6 +2588,13 @@ p, li { white-space: pre-wrap; }
                       </widget>
                      </item>
                     </layout>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QCheckBox" name="gameTextColoring">
+                     <property name="text">
+                      <string>Раскраска текста игры</string>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </widget>

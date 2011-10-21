@@ -639,6 +639,8 @@ void SofMainWindow::getAllDataFromCore() {
 	maxTextBlocksCount->setValue(newIntValue);
 	serverTextLabel->document()->setMaximumBlockCount(newIntValue);
 	console_textedit->document()->setMaximumBlockCount(newIntValue);
+	// Расцветка текста игры
+	gameTextColoring->setChecked(settings->getBoolSetting(Settings::SettingGameTextColoring));
 	// Режим сохранения карт
 	mapsParamSaveMode->setCurrentIndex(GameMap::instance()->getMapsSettingParam(GameMap::AutoSaveMode));
 	// Длительность регена для отображения Popup-а
@@ -1485,6 +1487,8 @@ void SofMainWindow::applySettings()
 	serverTextLabel->document()->setMaximumBlockCount(textBlocksCount);
 	console_textedit->document()->setMaximumBlockCount(textBlocksCount);
 	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
+	// Расцветка текста игры
+	settings->setBoolSetting(Settings::SettingGameTextColoring, gameTextColoring->isChecked());
 	// Режим сохранения карт
 	GameMap *maps = GameMap::instance();
 	maps->setMapsParam(GameMap::AutoSaveMode, mapsParamSaveMode->currentIndex());
