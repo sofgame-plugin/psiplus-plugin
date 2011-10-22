@@ -940,9 +940,9 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 						if (settings->getBoolSetting(Settings::SettingResetQueuePopup)) {
 							initPopup(QString::fromUtf8("Очередь сброшена"), 30);
 						}
-						QString str1 = QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len);
-						setGameText(GameText(str1, false), 3);
-						setConsoleText(GameText(str1, false), 3, false);
+						GameText text(QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len), false);
+						setGameText(text, 3);
+						setConsoleText(text, 3, false);
 					}
 				}
 			}
@@ -1559,7 +1559,7 @@ bool PluginCore::sendString(const QString &str)
 			return true;
 		}
 	}
-	if (str1.startsWith("/help") || str1.startsWith("help")) {
+	if (str1.startsWith("/help")) {
 		setConsoleText(GameText(str1, false), 1, true);
 		GameText text;
 		text.append(QString::fromUtf8("<big><strong><em>--= help =--</em></strong></big>"), true);
@@ -1664,19 +1664,19 @@ bool PluginCore::sendString(const QString &str)
 	} else if (str1.startsWith("/maps")) {
 		setConsoleText(GameText(str1, false), 1, true);
 		QStringList mapsCmd = splitCommandString(str1);
-		mapsCommands(&mapsCmd);
+		mapsCommands(mapsCmd);
 	} else if (str1.startsWith("/pers")) {
 		setConsoleText(GameText(str1, false), 1, true);
 		QStringList persCmd = str1.split(" ");
-		persCommands(&persCmd);
+		persCommands(persCmd);
 	} else if (str1.startsWith("/clear")) {
 		setConsoleText(GameText(str1, false), 1, false);
 		QStringList clearCmd = str1.split(" ");
-		clearCommands(&clearCmd);
+		clearCommands(clearCmd);
 	} else if (str1.startsWith("/things")) {
 		setConsoleText(GameText(str1, false), 1, true);
 		QStringList thingsCmd = str1.split(" ");
-		thingsCommands(&thingsCmd);
+		thingsCommands(thingsCmd);
 	} else if (str1.startsWith("/aliases")) {
 		setConsoleText(GameText(str1, false), 1, true);
 		QStringList aliasesCmd = splitCommandString(str1);
@@ -1832,14 +1832,14 @@ void PluginCore::getStatistics(const QString &commandPtr)
 	setConsoleText(text, 3, true);
 }
 
-void PluginCore::mapsCommands(QStringList* args)
+void PluginCore::mapsCommands(const QStringList &args)
 {
 	/**
 	* Отображение данных по картам
 	**/
-	if ((*args)[0] != "/maps")
+	if (args.at(0) != "/maps")
 		return;
-	int cntArgs = args->size() - 1;
+	int cntArgs = args.size() - 1;
 	GameText text;
 	text.append(QString::fromUtf8("<big><strong><em>--= Карты =--</em></strong></big>"), true);
 	if (cntArgs == 0) {
@@ -1854,10 +1854,10 @@ void PluginCore::mapsCommands(QStringList* args)
 		text.append(QString::fromUtf8("<strong>/maps switch &lt;index&gt;</strong> — переключение на карту с указанным индексом"), true);
 		text.append(QString::fromUtf8("<strong>/maps unload &lt;index&gt;</strong> — выгрузка карты из памяти без сохранения изменений"), true);
 		setConsoleText(text, 3, true);
-	} else if ((*args)[1] == "clear") {
+	} else if (args.at(1) == "clear") {
 		if (cntArgs == 2) {
 			bool fOk;
-			int map1 = (*args)[2].toInt(&fOk);
+			int map1 = args.at(2).toInt(&fOk);
 			if (fOk) {
 				if (GameMap::instance()->clearMap(map1)) {
 					text.append(QString::fromUtf8("Карта успешно очищена"), false);
@@ -1872,9 +1872,9 @@ void PluginCore::mapsCommands(QStringList* args)
 		}
 		setConsoleText(text, 3, true);
 		return;
-	} else if ((*args)[1] == "rename") {
+	} else if (args.at(1) == "rename") {
 		if (cntArgs >= 3) {
-			QStringList aName = *args;
+			QStringList aName = args;
 			aName.removeAt(0);
 			aName.removeAt(0);
 			bool fOk = false;
@@ -1908,23 +1908,23 @@ void PluginCore::mapsCommands(QStringList* args)
 		}
 		setConsoleText(text, 3, true);
 		return;
-	} else if ((*args)[1] == "export") {
+	} else if (args.at(1) == "export") {
 		if (cntArgs == 3 || cntArgs == 4) {
-			QStringList maps = (*args)[2].split(",");
+			QStringList maps = args.at(2).split(",");
 			int type = 1; // XML по умолчанию
 			if (cntArgs == 4) {
 				// Явно указан тип
-				if ((*args).at(4).toLower() == "png") {
+				if (args.at(4).toLower() == "png") {
 					// Тип PNG
 					type = 2;
 				}
 			} else {
 				// Попробуем определить тип автоматически по расширению
-				if ((*args).at(3).toLower().endsWith(".png")) {
+				if (args.at(3).toLower().endsWith(".png")) {
 					type = 2;
 				}
 			}
-			int nRes = GameMap::instance()->exportMaps(maps, type, (*args)[3]);
+			int nRes = GameMap::instance()->exportMaps(maps, type, args.at(3));
 			switch (nRes) {
 				case 0:
 					text.append(QString::fromUtf8("Экспорт успешно завершен"), false);
@@ -1949,9 +1949,9 @@ void PluginCore::mapsCommands(QStringList* args)
 		}
 		setConsoleText(text, 3, true);
 		return;
-	} else if ((*args)[1] == "import") {
+	} else if (args.at(1) == "import") {
 		if (cntArgs == 2) {
-			int nRes = GameMap::instance()->importMaps((*args)[2]);
+			int nRes = GameMap::instance()->importMaps(args.at(2));
 			switch (nRes) {
 				case 0:
 					text.append(QString::fromUtf8("Импорт успешно завершен"), false);
@@ -1970,12 +1970,12 @@ void PluginCore::mapsCommands(QStringList* args)
 		}
 		setConsoleText(text, 3, true);
 		return;
-	} else if ((*args)[1] == "merge") {
+	} else if (args.at(1) == "merge") {
 		if (cntArgs == 3) {
 			bool fOk;
-			int map1 = (*args)[2].toInt(&fOk);
+			int map1 = args.at(2).toInt(&fOk);
 			if (fOk) {
-				int map2 = (*args)[3].toInt(&fOk);
+				int map2 = args.at(3).toInt(&fOk);
 				if (fOk) {
 					if (GameMap::instance()->mergeMaps(map1, map2)) {
 						text.append(QString::fromUtf8("Объединение успешно завершено"), false);
@@ -1993,10 +1993,10 @@ void PluginCore::mapsCommands(QStringList* args)
 		}
 		setConsoleText(text, 3, true);
 		return;
-	} else if ((*args)[1] == "remove") {
+	} else if (args.at(1) == "remove") {
 		if (cntArgs == 2) {
 			bool fOk;
-			int map1 = (*args)[2].toInt(&fOk);
+			int map1 = args.at(2).toInt(&fOk);
 			if (fOk) {
 				if (GameMap::instance()->removeMap(map1)) {
 					text.append(QString::fromUtf8("Карта успешно удалена"), false);
@@ -2012,7 +2012,7 @@ void PluginCore::mapsCommands(QStringList* args)
 		setConsoleText(text, 3, true);
 		return;
 	} else if (cntArgs == 1) {
-		if ((*args)[1] == "info") {
+		if (args.at(1) == "info") {
 			struct GameMap::maps_info mapsInf;
 			GameMap::instance()->mapsInfo(&mapsInf);
 			text.append(QString::fromUtf8("Всего найдено карт: <em>%1</em>").arg(mapsInf.maps_count), true);
@@ -2026,7 +2026,7 @@ void PluginCore::mapsCommands(QStringList* args)
 			}
 			text.append(QString::fromUtf8("Текущая карта: <em>%1</em>").arg(str1), true);
 			setConsoleText(text, 3, true);
-		} else if ((*args)[1] == "list") {
+		} else if (args.at(1) == "list") {
 			GameMap::maps_info mapsInf;
 			QVector<GameMap::maps_list2> mapsLst;
 			GameMap *maps = GameMap::instance();
@@ -2053,9 +2053,9 @@ void PluginCore::mapsCommands(QStringList* args)
 			setConsoleText(text, 3, true);
 		}
 	} else if (cntArgs == 2) {
-		if ((*args)[1] == "switch") {
+		if (args.at(1) == "switch") {
 			bool fOk = false;
-			int mapIndex = (*args)[2].toInt(&fOk);
+			int mapIndex = args.at(2).toInt(&fOk);
 			if (fOk) {
 				if (!GameMap::instance()->switchMap(mapIndex)) {
 					fOk = false;
@@ -2068,9 +2068,9 @@ void PluginCore::mapsCommands(QStringList* args)
 			}
 			setConsoleText(text, 3, true);
 			return;
-		} else if ((*args)[1] == "unload") {
+		} else if (args.at(1) == "unload") {
 			bool fOk = false;
-			int mapIndex = (*args)[2].toInt(&fOk);
+			int mapIndex = args.at(2).toInt(&fOk);
 			if (fOk) {
 				if (!GameMap::instance()->unloadMap(mapIndex)) {
 					fOk = false;
@@ -2088,7 +2088,7 @@ void PluginCore::mapsCommands(QStringList* args)
 	}
 }
 
-PersInfo* PluginCore::getPersInfo(QString pers_name)
+PersInfo* PluginCore::getPersInfo(const QString &pers_name)
 {
 	/**
 	* Возвращает указатель на объект PersInfo
@@ -2105,22 +2105,22 @@ PersInfo* PluginCore::getPersInfo(QString pers_name)
 	return 0;
 }
 
-void PluginCore::persCommands(QStringList* args)
+void PluginCore::persCommands(const QStringList &args)
 {
 	/**
 	* Отображение данных о персонаже
 	**/
-	if ((*args)[0] != "/pers")
+	if (args.at(0) != "/pers")
 		return;
-	int cntArgs = args->size() - 1;
+	int cntArgs = args.size() - 1;
 	QString str1 = QString::fromUtf8("----=== Персонаж ===----");
 	if (cntArgs == 0) {
 		str1.append(QString::fromUtf8("\n/pers list — список имеющихся данных о персонажах"));
 		str1.append(QString::fromUtf8("\n/pers info — краткая информация о собственном персонаже\n/pers info2 - подробная информация о собственном персонаже"));
 		str1.append(QString::fromUtf8("\n/pers info <name> — краткая информация о персонаже <name>\n/pers info2 <name> - подробная информация о персонаже <name>"));
-	} else if (cntArgs >= 1 && ((*args)[1] == "info" || (*args)[1] == "info2")) {
+	} else if (cntArgs >= 1 && (args.at(1) == "info" || args.at(1) == "info2")) {
 		int inf_ver = 1;
-		if ((*args)[1] == "info2") {
+		if (args.at(1) == "info2") {
 			inf_ver = 2;
 		}
 		str1.append(QString::fromUtf8("\n---- Общая информация ----"));
@@ -2131,7 +2131,7 @@ void PluginCore::persCommands(QStringList* args)
 				sPersName = Pers::instance()->name();
 			} else {
 				// Персонаж указан в аргументе
-				sPersName = (*args)[2];
+				sPersName = args.at(2);
 			}
 			PersInfo* persInfo = getPersInfo(sPersName.toLower());
 			if (persInfo) {
@@ -2671,7 +2671,7 @@ void PluginCore::persCommands(QStringList* args)
 		} else {
 			str1.append(QString::fromUtf8("\nНеверное количество аргументов.\n"));
 		}
-	} else if (cntArgs == 1 && (*args)[1] == "list") {
+	} else if (cntArgs == 1 && args.at(1) == "list") {
 		str1.append(QString::fromUtf8("\n--- Данные о персонажах ---"));
 		int persCnt = persInfoList.size();
 		if (persCnt > 0) {
@@ -2687,29 +2687,29 @@ void PluginCore::persCommands(QStringList* args)
 	setConsoleText(GameText(str1, false), 3, true);
 }
 
-void PluginCore::clearCommands(QStringList* args)
+void PluginCore::clearCommands(const QStringList &args)
 {
 	/**
 	* Обработка команд уровня clear
 	**/
-	if ((*args)[0] != "/clear")
+	if (args.at(0) != "/clear")
 		return;
-	int argsCount = args->size() - 1;
+	int argsCount = args.size() - 1;
 	GameText text;
 	if (argsCount > 0) {
-		if ((*args)[1] == "text") {
+		if (args.at(1) == "text") {
 			if (argsCount == 2) {
-				if ((*args)[2] == "all") {
+				if (args.at(2) == "all") {
 					setGameText(text, 3);
 					setConsoleText(GameText(QString(), false), 3, false);
 					return;
 				}
-				if ((*args)[2] == "game") {
+				if (args.at(2) == "game") {
 					setGameText(text, 3);
 					setConsoleText(GameText(QString::fromUtf8("Выполнено"), false), 3, false);
 					return;
 				}
-				if ((*args)[2] == "console") {
+				if (args.at(2) == "console") {
 					setConsoleText(text, 3, false);
 					return;
 				}
@@ -2717,10 +2717,10 @@ void PluginCore::clearCommands(QStringList* args)
 			text.append(QString::fromUtf8("<strong>/clear text all</strong> — Очистка окон вывода плагина и консоли"), true);
 			text.append(QString::fromUtf8("<strong>/clear text console</strong> — Очистка окна вывода плагина"), true);
 			text.append(QString::fromUtf8("<strong>/clear text game</strong> — Очистка окна вывода игровых данных"), true);
-		} else if ((*args)[1] == "stat") {
+		} else if (args.at(1) == "stat") {
 			int level = 0;
 			if (argsCount >= 2) {
-				level = (*args)[2].toInt();
+				level = args.at(2).toInt();
 			}
 			if (level == 0 || level == 1) {
 				resetStatistic(VALUE_LAST_GAME_JID);
@@ -2752,11 +2752,11 @@ void PluginCore::clearCommands(QStringList* args)
 /**
  * Обработка команд уровня things
  */
-void PluginCore::thingsCommands(QStringList* args)
+void PluginCore::thingsCommands(const QStringList &args)
 {
-	if ((*args)[0] != "/things")
+	if (args.at(0) != "/things")
 		return;
-	int argsCount = args->size() - 1;
+	int argsCount = args.size() - 1;
 	GameText text;
 	text.append(QString::fromUtf8("<big><strong><em>----=== Вещи ===----</em></strong></big>"), true);
 	if (argsCount == 0) {
@@ -2764,11 +2764,11 @@ void PluginCore::thingsCommands(QStringList* args)
 		text.append(QString::fromUtf8("<strong>/things list n</strong> — отображение вещей фильтра n"), true);
 		text.append(QString::fromUtf8("<strong>/things filters list</strong> — отображение фильтров"), true);
 		text.append(QString::fromUtf8("<strong>/things price list</strong> — отображение цен на вещи"), true);
-	} else if ((*args)[1] == "list") {
+	} else if (args.at(1) == "list") {
 		int filterNum = 0;
 		bool fOk = true;
 		if (argsCount == 2) {
-			filterNum = (*args)[2].toInt(&fOk);
+			filterNum = args.at(2).toInt(&fOk);
 		}
 		if (fOk && filterNum >= 0) {
 			QList<ThingFilter*> filtersList;
@@ -2814,9 +2814,9 @@ void PluginCore::thingsCommands(QStringList* args)
 		} else {
 			text.append(QString::fromUtf8("необходимо указать номер фильтра. См. <strong>/things filters list</strong>"), true);
 		}
-	} else if ((*args)[1] == "filters") {
+	} else if (args.at(1) == "filters") {
 		text.append(QString::fromUtf8("<strong><em>--- Фильтры вещей ---</em></strong>"), true);
-		if (argsCount == 2 && (*args)[2] == "list") {
+		if (argsCount == 2 && args.at(2) == "list") {
 			QList<ThingFilter*> filtersList;
 			Pers::instance()->getThingsFiltersEx(&filtersList);
 			int cntFilters = filtersList.size();
@@ -2834,9 +2834,9 @@ void PluginCore::thingsCommands(QStringList* args)
 		} else {
 			text.append(QString::fromUtf8("неверный аргумент"), false);
 		}
-	} else if ((*args)[1] == "price") {
+	} else if (args.at(1) == "price") {
 		text.append(QString::fromUtf8("<strong><em>--- Цены вещей ---</em></strong>"), true);
-		if (argsCount == 2 && (*args)[2] == "list") {
+		if (argsCount == 2 && args.at(2) == "list") {
 			const QVector<Pers::price_item>* priceListPrt = Pers::instance()->getThingsPrice();
 			int sizePrice = priceListPrt->size();
 			if (sizePrice > 0) {

@@ -55,7 +55,7 @@ class PluginCore: public QObject
 		void resetStatistic(int valueId);
 		bool sendCommandToCore(qint32 commandId);
 		bool sendString(const QString &str);
-		PersInfo* getPersInfo(QString);
+		PersInfo* getPersInfo(const QString &);
 		void initPopup(const QString &, int);
 
 	private:
@@ -131,10 +131,10 @@ class PluginCore: public QObject
 		bool savePersStatus();
 		bool loadPersStatus();
 		void getStatistics(const QString &commandPtr);
-		void mapsCommands(QStringList*);
-		void persCommands(QStringList*);
-		void clearCommands(QStringList*);
-		void thingsCommands(QStringList*);
+		void mapsCommands(const QStringList &args);
+		void persCommands(const QStringList &args);
+		void clearCommands(const QStringList &args);
+		void thingsCommands(const QStringList &args);
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
 		void parseFightGroups(GameText &gameText);
