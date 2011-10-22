@@ -59,6 +59,7 @@ Settings::Settings(QObject *parent) :
 	defaultsListBool[SettingThingDropPopup] = true;
 	defaultsListInt[SettingRegenDurationForPopup] = 0;
 	defaultsListBool[SettingGameTextColoring] = false;
+	defaultsListInt[SettingServerTimeout] = 20;
 }
 
 Settings::~Settings()
@@ -238,6 +239,8 @@ void Settings::setMainSettings(const QDomElement &xml)
 			settingsListInt[SettingServerTextBlocksCount] = eChild.attribute("value").toInt();
 		} else if (tagName == "game-text-coloring") {
 			settingsListBool[SettingGameTextColoring] = (eChild.attribute("value").toLower() == "true");
+		} else if (tagName == "server-timeout") {
+			settingsListInt[SettingServerTimeout] = eChild.attribute("value").toInt();
 		}
 		eChild = eChild.nextSiblingElement();
 	}
@@ -384,6 +387,9 @@ bool Settings::save()
 	QDomElement eGameTextColoring = xmlDoc.createElement("game-text-coloring");
 	eGameTextColoring.setAttribute("value", getBoolSetting(SettingGameTextColoring) ? "true" : "false");
 	eMain.appendChild(eGameTextColoring);
+	QDomElement eServerTimeout = xmlDoc.createElement("server-timeout");
+	eServerTimeout.setAttribute("value", getIntSetting(SettingServerTimeout));
+	eMain.appendChild(eServerTimeout);
 	QDomElement eFight = xmlDoc.createElement("fight");
 	eNewAccount.appendChild(eFight);
 	int fTimer = getIntSetting(SettingFightTimerMode);

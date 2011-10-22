@@ -54,7 +54,8 @@ public:
 		SettingFightAutoClose,
 		SettingThingDropPopup,
 		SettingRegenDurationForPopup,
-		SettingGameTextColoring
+		SettingGameTextColoring,
+		SettingServerTimeout
 	};
 	struct SpecificEnemy {
 		QString name;

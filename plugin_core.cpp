@@ -182,8 +182,12 @@ void PluginCore::changeAccountJid(const QString newJid)
 	// Загрузить новые настройки
 	settings->init(newJid);
 	updateSetting(Settings::SettingGameTextColoring);
-	// Установка нового режима управления зеркалами игры
-	Sender::instance()->setGameMirrorsMode(settings->getIntSetting(Settings::SettingMirrorSwitchMode));
+	// Настройки модуля отправки
+	Sender *sender = Sender::instance();
+	sender->setGameMirrorsMode(settings->getIntSetting(Settings::SettingMirrorSwitchMode));
+	if (!sender->setServerTimeoutDuration(settings->getIntSetting(Settings::SettingServerTimeout))) {
+		settings->setIntSetting(Settings::SettingServerTimeout, sender->getServerTimeoutDuration());
+	}
 	// Сбрасываем объект персонажа
 	Pers *pers = Pers::instance();
 	pers->init();
@@ -1652,6 +1656,7 @@ bool PluginCore::sendString(const QString &str)
 				Sender *sender = Sender::instance();
 				if (sender->setServerTimeoutDuration(nTimeout)) {
 					str1 = "server_timeout set is <strong>" + QString::number(sender->getServerTimeoutDuration()) + " sec.</strong>";
+					Settings::instance()->setIntSetting(Settings::SettingServerTimeout, nTimeout);
 				}
 			}
 			setConsoleText(GameText(str1, true), 3, true);
