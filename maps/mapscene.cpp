@@ -25,11 +25,12 @@
 
 #include "mapscene.h"
 
-#define ZValueLocation  3.0
-#define ZValueMark      7.0
-#define ZValueOtherPers 8.0
-#define ZValuePersPos   9.0
-#define ZValueMapName   10.0
+#define ZValueLocation      3.0
+#define ZValueMark          7.0
+#define ZValueOtherPersLine 8.0
+#define ZValueOtherPersText 8.5
+#define ZValuePersPos       9.0
+#define ZValueMapName       10.0
 
 MapScene::MapScene(QObject *parent) :
 	QGraphicsScene(parent)
@@ -352,7 +353,7 @@ void MapScene::drawOtherPersPos(const MapPos &pos, const QStringList &list)
 		double y2 = y1 + itemRect.height() * 0.5f;
 		// Создаем элемент положения персонажа
 		QGraphicsLineItem *lineItem = addLine(x1, y1, x1, y2, QPen(Qt::green, 2.0f, Qt::SolidLine));
-		lineItem->setZValue(ZValueOtherPers);
+		lineItem->setZValue(ZValueOtherPersLine);
 		lineItem->setData(0, ElementOtherPers);
 		// Отображаем надпись над маркером
 		QFont font;
@@ -361,7 +362,7 @@ void MapScene::drawOtherPersPos(const MapPos &pos, const QStringList &list)
 		font.setPixelSize(itemRect.height() / 2.0f);
 		QGraphicsTextItem *textItem = addText(list.join("\n"), font);
 		textItem->setOpacity(0.7f);
-		textItem->setZValue(ZValueOtherPers);
+		textItem->setZValue(ZValueOtherPersText);
 		textItem->setData(0, ElementOtherPers);
 		textItem->setDefaultTextColor(QColor(32, 128, 32, 255));
 		// Устанавливаем положение надписи
