@@ -92,3 +92,22 @@ bool MapRect::contains(const MapPos &point) const
 		return false;
 	return true;
 }
+
+/**
+ * Возвращает расстояние от точки до края карты в том случае если точка не внутри карты.
+ * Если точка внутри прямоугольника возвращается 0 или -1 если прямоугольник невалидный
+ * Расстояние возвращается целым, в выраженное клетках карты
+ */
+int MapRect::distance(const MapPos &point) const
+{
+	if (!isValid())
+		return -1;
+	if (contains(point))
+		return 0;
+	const int x = point.x();
+	const int y = point.y();
+	int dest = qMax(left_ - x, x - right_);
+	dest = qMax(dest, y - top_);
+	dest = qMax(dest, bottom_ - y);
+	return dest;
+}

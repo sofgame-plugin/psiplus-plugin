@@ -42,6 +42,7 @@ public:
 	bool isValid() const;
 	void addPoint(const MapPos &point);
 	bool contains(const MapPos &point) const;
+	int  distance(const MapPos &point) const;
 
 private:
 	int left_;

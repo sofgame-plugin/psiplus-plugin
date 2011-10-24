@@ -1068,6 +1068,7 @@ void GameMap::selectMap(const MapPos &pos)
 	// Сканируем имеющиеся карты
 	int mapDefIndex = -1;
 	int mapNearIndex = -1;
+	int mapNearDist = 0;
 	int mapGoodIndex = -1;
 	int mapsCnt = mapsList.size();
 	for (int i = 0; i < mapsCnt; i++) {
@@ -1075,18 +1076,17 @@ void GameMap::selectMap(const MapPos &pos)
 		if (mh->status != None) {
 			if (mapDefIndex == -1 && mh->name == "default") {
 				mapDefIndex = i;
+				continue;
 			}
 			MapRect mapRect = mh->rect;
-			if (mapRect.contains(pos)) {
+			int dist = mapRect.distance(pos);
+			if (dist == 0) {
 				mapGoodIndex = i;
 				break;
-			}
-			if (mapRect.isValid()) {
-				mapRect = MapRect(mapRect.left() - 10, mapRect.right() + 10, mapRect.bottom() - 10, mapRect.top() + 10);
-				if (mapRect.contains(pos)) {
-					if (mapNearIndex == -1) {
-						mapNearIndex = i;
-					}
+			} else if (dist > 0 && dist <= 10) {
+				if (mapNearIndex == -1 || mapNearDist > dist) {
+					mapNearIndex = i;
+					mapNearDist = dist;
 				}
 			}
 		}
