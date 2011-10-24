@@ -48,6 +48,8 @@ private:
 	void setLogIcons();
 	void changeEvent(QEvent *e);
 	QString convertToPlainText(const QTextDocument *doc) const;
+	bool atBottom() const;
+	void scrollToBottom();
 
 private slots:
 	void reloadResources();

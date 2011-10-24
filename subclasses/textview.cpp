@@ -27,6 +27,7 @@
 #include <QTime>
 #include <QIcon>
 #include <QPixmap>
+#include <QScrollBar>
 
 #include "textview.h"
 #include "pluginhosts.h"
@@ -63,8 +64,12 @@ QMimeData *TextView::createMimeDataFromSelection() const
 
 void TextView::appendText(const QString &text, TextType type)
 {
-	// Формируем строку с временем и типом сообщения
+	bool doScrollToBottom = atBottom();
+	// prevent scrolling back to selected text when
+	// restoring selection
+	int scrollbarValue = verticalScrollBar()->value();
 
+	// Формируем строку с временем и типом сообщения
 	QTextCursor cursor = textCursor();
 	// Сохраняем выделение
 	int startSelection = -1;
@@ -95,6 +100,12 @@ void TextView::appendText(const QString &text, TextType type)
 		cursor.setPosition(endSelection, QTextCursor::KeepAnchor);
 	}
 	setTextCursor(cursor);
+
+	if (doScrollToBottom || type == LocalText)
+		scrollToBottom();
+	else
+		verticalScrollBar()->setValue(scrollbarValue);
+
 }
 
 QString TextView::logTimeString(TextType type)
@@ -142,4 +153,22 @@ QString TextView::convertToPlainText(const QTextDocument *doc) const
 	QString text = doc->toPlainText();
 	text.replace(obrepl, QString());
 	return text;
+}
+
+/**
+ * This function returns true if vertical scroll bar is
+ * at its maximum position.
+ */
+bool TextView::atBottom() const
+{
+	// '32' is 32 pixels margin, which was used in the old code
+	return (verticalScrollBar()->maximum() - verticalScrollBar()->value()) <= 32;
+}
+
+/**
+ * Scrolls the vertical scroll bar to its maximum position i.e. to the bottom.
+ */
+void TextView::scrollToBottom()
+{
+	verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 }

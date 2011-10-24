@@ -342,6 +342,12 @@
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
                    </property>
+                   <property name="undoRedoEnabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="textInteractionFlags">
+                    <set>Qt::TextSelectableByMouse</set>
+                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -364,6 +370,12 @@
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="undoRedoEnabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="textInteractionFlags">
+                    <set>Qt::TextSelectableByMouse</set>
                    </property>
                   </widget>
                  </item>

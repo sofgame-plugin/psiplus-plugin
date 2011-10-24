@@ -785,8 +785,6 @@ void SofMainWindow::setGameText(const QString &gameText, int type)
 	if (gameText.isEmpty()) {
 		serverTextLabel->clear();
 	}
-	// Значение 32 тупо взято из аналогичного кода psi+
-	bool do_scroll = (serverTextLabel->verticalScrollBar()->maximum() - serverTextLabel->verticalScrollBar()->value() <= 32);
 	if (!gameText.isEmpty()) {
 		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
 		serverTextLabel->appendText("<span>" + gameText + "</span>", type_);
@@ -795,9 +793,6 @@ void SofMainWindow::setGameText(const QString &gameText, int type)
 	}
 	if (type == 1) {
 		text_tabWidget->setCurrentIndex(0);
-	}
-	if (do_scroll || type == 1) {
-		serverTextLabel->verticalScrollBar()->setValue(serverTextLabel->verticalScrollBar()->maximum());
 	}
 }
 
