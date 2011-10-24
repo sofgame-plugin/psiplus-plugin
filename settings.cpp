@@ -52,7 +52,7 @@ Settings::Settings(QObject *parent) :
 	defaultsListBool[SettingShowQueryLength] = false;
 	defaultsListBool[SettingResetQueueForUnknowStatus] = true;
 	defaultsListBool[SettingResetQueuePopup] = false;
-	defaultsListInt[SettingServerTextBlocksCount] = 1000;
+	defaultsListInt[SettingServerTextBlocksCount] = 10000;
 	defaultsListInt[SettingFightTimerMode] = 1;
 	defaultsListInt[SettingFightSelectAction] = 0;
 	defaultsListInt[SettingFightAutoClose] = 0;

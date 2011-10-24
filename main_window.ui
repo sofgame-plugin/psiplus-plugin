@@ -2567,12 +2567,12 @@ p, li { white-space: pre-wrap; }
                    <string>Текст игры</string>
                   </property>
                   <layout class="QGridLayout" name="gridLayout_11">
-                   <item row="1" column="0">
+                   <item row="2" column="0">
                     <layout class="QHBoxLayout" name="horizontalLayout_23">
                      <item>
                       <widget class="QLabel" name="label_9">
                        <property name="text">
-                        <string>Макс. кол-во строк текста игры:</string>
+                        <string>Макс. кол-во блоков текста:</string>
                        </property>
                       </widget>
                      </item>
@@ -2601,10 +2601,24 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
-                   <item row="0" column="0">
+                   <item row="1" column="0">
                     <widget class="QCheckBox" name="gameTextColoring">
                      <property name="text">
-                      <string>Раскраска текста игры</string>
+                      <string>Раскраска текста игры </string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_15">
+                     <property name="text">
+                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;ВНИМАНИЕ!&lt;/span&gt; При включении раскраски игры рекомендуется ограничить кол-во блоков текста в опции ниже. Например поставив 10000 блоков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
