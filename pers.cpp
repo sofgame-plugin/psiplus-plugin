@@ -1344,18 +1344,15 @@ QString Pers::getPersStatusString()
 
 void Pers::doWatchRestTime()
 {
-	if (persStatus == StatusStand) {
-		QString str1 = "0";
-		PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
+	if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
+		Sender::instance()->sendString("0");
 	}
 }
 
 void Pers::doWatchHealthRestTime()
 {
 	if (settingWatchRestHealthEnergy == 1 && watchHealthSpeedDelta == 0) {
-		if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
-			PluginCore::instance()->sendString("0");
-		}
+		doWatchRestTime();
 	} else if (settingWatchRestHealthEnergy == 1) {
 		if (watchHealthSpeedDelta > 0) { // Имеются результаты замеров
 			int timeDelta = watchHealthStartTime2.elapsed();
@@ -1378,9 +1375,7 @@ void Pers::doWatchEnergyRestTime()
 	if (settingWatchRestHealthEnergy != 1)
 		return;
 	if (watchEnergySpeedDelta == 0) {
-		if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
-			PluginCore::instance()->sendString("0");
-		}
+		doWatchRestTime();
 	} else {
 		int timeDelta = watchEnergyStartTime2.elapsed();
 		if (persEnergyCurr == QINT32_MIN || persEnergyMax == QINT32_MIN || persEnergyCurr >= persEnergyMax) {
