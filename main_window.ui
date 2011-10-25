@@ -3062,9 +3062,6 @@ p, li { white-space: pre-wrap; }
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -3074,9 +3071,6 @@ p, li { white-space: pre-wrap; }
      <layout class="QHBoxLayout" name="horizontalLayout_51">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_25">
-        <property name="spacing">
-         <number>4</number>
-        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_17">
           <property name="spacing">
@@ -3109,10 +3103,23 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_46">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_28">
+         <layout class="QHBoxLayout" name="horizontalLayout_26">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -3143,10 +3150,23 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_47">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_26">
+         <layout class="QHBoxLayout" name="horizontalLayout_28">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -3176,6 +3196,19 @@ p, li { white-space: pre-wrap; }
              <enum>Qt::PlainText</enum>
             </property>
            </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_48">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </item>

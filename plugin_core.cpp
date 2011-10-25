@@ -1577,7 +1577,7 @@ bool PluginCore::sendString(const QString &str)
 		text.append(QString::fromUtf8("<strong>/pers info2</strong> — детальная информация о текущем персонаже"), true);
 		text.append(QString::fromUtf8("<strong>/pers info &lt;nick&gt;</strong> — информация о персонаже с ником nick"), true);
 		text.append(QString::fromUtf8("<strong>/pers info2 &lt;nick&gt;</strong> — детальная информация о персонаже с ником nick"), true);
-		text.append(QString::fromUtf8("<v>/pers list</strong> — список персонажей, для которых доступна информация"), true);
+		text.append(QString::fromUtf8("<strong>/pers list</strong> — список персонажей, для которых доступна информация"), true);
 		text.append(QString::fromUtf8("<strong>/send_delta</strong> — показать значение паузы между отправками команд игровому серверу"), true);
 		text.append(QString::fromUtf8("<strong>/send_delta=n</strong> — установить значение паузы между отправками команд игровому серверу в миллисекундах"), true);
 		text.append(QString::fromUtf8("<strong>/server_timeout</strong> — показать время ожидания ответа сервера"), true);
