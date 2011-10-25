@@ -1553,7 +1553,9 @@ bool PluginCore::sendString(const QString &str)
 		if (!new_cmd.isEmpty()) {
 			str1 = new_cmd;
 		}
-		if (new_cmd.isEmpty() || !str1.startsWith("/")) {
+		if (!str1.startsWith("/")) {
+			// Отсылаем строку окну плагина
+			setGameText(GameText(str1, false), 1);
 			// Отсылаем строку серверу
 			Sender::instance()->sendString(str1);
 			return true;
@@ -1611,9 +1613,7 @@ bool PluginCore::sendString(const QString &str)
 			if (mainWindow != NULL)
 				mainWindow->setAutoEnterMode(false);
 		} else {
-			str1 = str1.mid(3);
-			setGameText(GameText(str1, true), 1);
-			sendString(str1);
+			sendString(str1.mid(3));
 		}
 	} else if (str1 == "/1") {
 		setConsoleText(GameText(str1, false), 1, false);

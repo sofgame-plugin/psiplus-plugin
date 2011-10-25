@@ -1522,8 +1522,7 @@ void SofMainWindow::userCommandChanged()
 	if (strLen == 1) {
 		if (sText != "/") {
 			if (sText >= "0" && sText <= "9") {
-				setGameText(sText, 1);
-				userCommandLine->setText("");
+				userCommandLine->setText(QString());
 				PluginCore::instance()->sendString(sText);
 			}
 		}
@@ -1535,9 +1534,6 @@ void SofMainWindow::userCommandReturnPressed()
 	QString sText = userCommandLine->toPlainText().trimmed();
 	if (!sText.isEmpty()) {
 		userCommandLine->appendMessageHistory(sText);
-		if (!sText.startsWith("/")) {
-			setGameText(sText, 1);
-		}
 		PluginCore::instance()->sendString(sText);
 	}
 	userCommandLine->setText(QString());
