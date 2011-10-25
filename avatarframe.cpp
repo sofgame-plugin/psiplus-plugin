@@ -107,7 +107,7 @@ void AvatarFrameView::loadAvatar()
 			if (avaSize.height() > viewSize.height() || avaSize.width() > viewSize.width()) {
 				newAva = newAva.scaled(viewSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 			}
-			if (newAva.save(AvatarFrameView::avatarFilePath(), "PNG", 100)) {
+			if (newAva.save(AvatarFrameView::avatarFilePath(), "PNG", -1)) {
 				updateAvatar();
 				return;
 			}
