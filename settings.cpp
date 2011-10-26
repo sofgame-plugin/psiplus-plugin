@@ -60,6 +60,7 @@ Settings::Settings(QObject *parent) :
 	defaultsListInt[SettingRegenDurationForPopup] = 0;
 	defaultsListBool[SettingGameTextColoring] = false;
 	defaultsListInt[SettingServerTimeout] = 20;
+	defaultsListBool[SettingPersPosInCenter] = false;
 }
 
 Settings::~Settings()
@@ -241,6 +242,8 @@ void Settings::setMainSettings(const QDomElement &xml)
 			settingsListBool[SettingGameTextColoring] = (eChild.attribute("value").toLower() == "true");
 		} else if (tagName == "server-timeout") {
 			settingsListInt[SettingServerTimeout] = eChild.attribute("value").toInt();
+		} else if (tagName == "pers-pos-in-center") {
+			settingsListBool[SettingPersPosInCenter] = (eChild.attribute("value").toLower() == "true");
 		}
 		eChild = eChild.nextSiblingElement();
 	}
@@ -390,6 +393,9 @@ bool Settings::save()
 	QDomElement eServerTimeout = xmlDoc.createElement("server-timeout");
 	eServerTimeout.setAttribute("value", getIntSetting(SettingServerTimeout));
 	eMain.appendChild(eServerTimeout);
+	QDomElement ePersPos = xmlDoc.createElement("pers-pos-in-center");
+	ePersPos.setAttribute("value", getBoolSetting(SettingPersPosInCenter) ? "true" : "false");
+	eMain.appendChild(ePersPos);
 	QDomElement eFight = xmlDoc.createElement("fight");
 	eNewAccount.appendChild(eFight);
 	int fTimer = getIntSetting(SettingFightTimerMode);

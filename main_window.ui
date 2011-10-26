@@ -2711,6 +2711,13 @@ p, li { white-space: pre-wrap; }
                      </item>
                     </layout>
                    </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkbox_PersPosInCenter">
+                     <property name="text">
+                      <string>Позиция персонажа в центре карты (по возможности)</string>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
                  </widget>
                 </item>

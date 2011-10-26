@@ -522,6 +522,8 @@ void SofMainWindow::getAllDataFromCore() {
 	btnPersPosColor->setColor(maps->getPersPosColor());
 	// Автовыгрузка карт
 	mapsUnloadInterval->setValue(maps->getUnloadInterval());
+	// Позиция персонажа в центре карты
+	checkbox_PersPosInCenter->setChecked(settings->getBoolSetting(Settings::SettingPersPosInCenter));
 	// *** Основные данные ***
 	Pers *pers = Pers::instance();
 	changePersStatus();
@@ -1150,7 +1152,11 @@ void SofMainWindow::scrollMapNewPosition(const MapPos &pos)
 {
 	QRectF coordinates = GameMap::instance()->gameToSceneCoordinates(pos);
 	if (!coordinates.isNull()) {
-		gameMapView->ensureVisible(coordinates, 50, 50);
+		if (Settings::instance()->getBoolSetting(Settings::SettingPersPosInCenter)) { // TODO Откэшировать!
+			gameMapView->centerOn(coordinates.center());
+		} else {
+			gameMapView->ensureVisible(coordinates, 50, 50);
+		}
 	}
 }
 
@@ -1494,6 +1500,8 @@ void SofMainWindow::applySettings()
 	// Длительность регена для отображения popup-а
 	i = (restPopup->isChecked()) ? restDurationPopup->value() : 0;
 	settings->setIntSetting(Settings::SettingRegenDurationForPopup, i);
+	// Позиция персонажа в центре карты
+	settings->setBoolSetting(Settings::SettingPersPosInCenter, checkbox_PersPosInCenter->isChecked());
 	// Особые враги
 	specificEnemiesTable->save();
 }

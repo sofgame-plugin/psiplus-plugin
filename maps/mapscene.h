@@ -32,7 +32,7 @@
 
 #include "maps/mappos.h"
 
-#define MAP_ELEMENT_SIZE  25
+#define MAP_ELEMENT_SIZE  25.0f
 
 
 class MapScene : public QGraphicsScene
@@ -61,7 +61,7 @@ public:
 	void removePersPosElements();
 	void setTooltip(const MapPos &pos, const QString &tooltipStr);
 	void drawMapName(const QString &name);
-	QRectF getMapSceneRect(double margin) const;
+	QRectF getMapSceneRect(qreal margin) const;
 
 protected:
 
