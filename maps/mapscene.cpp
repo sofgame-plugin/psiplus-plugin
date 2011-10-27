@@ -23,6 +23,8 @@
  *
  */
 
+#include <QtCore>
+
 #include "mapscene.h"
 
 #define ZValueParth         0.0
@@ -156,10 +158,9 @@ void MapScene::drawMapElement(const MapPos &pos, const MapElementFeature &featur
 			brush.setColor(Qt::gray);
 		}
 	}
-	qreal ellipseSize = itemRect.width() / 2.0f;
-	qreal x1 = ellipseSize / 2.0f;
-	qreal y1 = x1;
-	QGraphicsEllipseItem *gItem = addEllipse(x1, y1, ellipseSize, ellipseSize, QPen(Qt::black, 1.0f, Qt::SolidLine), brush);
+	qreal ellipseSize = qFloor(itemRect.width() * 0.5f);
+	qreal margin = qFloor((itemRect.width() - ellipseSize) / 2.0f);
+	QGraphicsEllipseItem *gItem = addEllipse(margin, margin, ellipseSize, ellipseSize, QPen(Qt::black, 1.0f, Qt::SolidLine), brush);
 	gItem->setZValue(ZValueLocation);
 	gItem->setData(0, ElementLocation);
 	gItem->setPos(itemRect.x(), itemRect.y());
@@ -229,7 +230,6 @@ void MapScene::setPersPosColor(const QColor &color)
 		persPosColor = color;
 		if (persGraphicItem != NULL) {
 			persGraphicItem->setBrush(QBrush(color, Qt::SolidPattern));
-			//persGraphicItem->update();
 		}
 	}
 }
@@ -242,9 +242,9 @@ void MapScene::drawPersPos(const MapPos &pos)
 	if (itemRect.isValid()) {
 		if (persGraphicItem == NULL) {
 			// Создаем новый элемент положения персонажа
-			qreal x1 = itemRect.width() * 3.0f / 8.0f;
-			qreal y1 = itemRect.height() * 3.0f / 8.0f;
-			qreal ellipseSize = itemRect.width() / 4.0f;
+			qreal ellipseSize = qFloor(itemRect.width() / 4.0f);
+			qreal x1 = qFloor((itemRect.width() - ellipseSize) / 2.0f);
+			qreal y1 = qFloor((itemRect.height() - ellipseSize) / 2.0f);
 			persGraphicItem = addEllipse(x1, y1, ellipseSize, ellipseSize, QPen(Qt::black, 1.0f, Qt::SolidLine), QBrush(persPosColor, Qt::SolidPattern));
 			persGraphicItem->setZValue(ZValuePersPos);
 			persGraphicItem->setData(0, ElementPersPos);
