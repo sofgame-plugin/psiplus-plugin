@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>637</width>
-    <height>612</height>
+    <width>661</width>
+    <height>721</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -332,7 +332,7 @@
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_31">
                  <item>
-                  <widget class="QPlainTextEdit" name="serverTextLabel">
+                  <widget class="TextView" name="serverTextLabel">
                    <property name="cursor" stdset="0">
                     <cursorShape>ArrowCursor</cursorShape>
                    </property>
@@ -342,8 +342,11 @@
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
                    </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
+                   <property name="undoRedoEnabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="textInteractionFlags">
+                    <set>Qt::TextSelectableByMouse</set>
                    </property>
                   </widget>
                  </item>
@@ -355,7 +358,7 @@
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_32">
                  <item>
-                  <widget class="QPlainTextEdit" name="console_textedit">
+                  <widget class="TextView" name="console_textedit">
                    <property name="cursor" stdset="0">
                     <cursorShape>ArrowCursor</cursorShape>
                    </property>
@@ -368,11 +371,11 @@
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
+                   <property name="undoRedoEnabled">
+                    <bool>false</bool>
                    </property>
-                   <property name="plainText">
-                    <string/>
+                   <property name="textInteractionFlags">
+                    <set>Qt::TextSelectableByMouse</set>
                    </property>
                   </widget>
                  </item>
@@ -433,10 +436,6 @@
                  </property>
                  <property name="text">
                   <string/>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="sofgameplugin.qrc">
-                   <normaloff>:/icons/action_button_send.png</normaloff>:/icons/action_button_send.png</iconset>
                  </property>
                  <property name="checked">
                   <bool>false</bool>
@@ -523,7 +522,7 @@
           <widget class="QWidget" name="page_4">
            <layout class="QVBoxLayout" name="verticalLayout_10">
             <item>
-             <widget class="FingsView" name="fingsTable">
+             <widget class="ThingsView" name="thingsTable">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -542,7 +541,7 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="fingsSummaryLayout">
+             <layout class="QHBoxLayout" name="thingsSummaryLayout">
               <item>
                <widget class="QLabel" name="label_39">
                 <property name="text">
@@ -551,7 +550,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="labelFingsCountAll">
+               <widget class="QLabel" name="labelThingsCountAll">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -565,7 +564,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="labelFingsPriceAll">
+               <widget class="QLabel" name="labelThingsPriceAll">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -573,6 +572,37 @@
               </item>
               <item>
                <spacer name="horizontalSpacer_18">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="moneyCountLayout">
+              <item>
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>Всего дринков:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelMoneysCount">
+                <property name="text">
+                 <string>n/a</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_45">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -855,7 +885,7 @@
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_15">
                    <item>
-                    <widget class="QLabel" name="fingsCountCaption_label">
+                    <widget class="QLabel" name="fightsCountCaption_label">
                      <property name="text">
                       <string>Всего боев:</string>
                      </property>
@@ -864,7 +894,7 @@
                    <item>
                     <widget class="QLabel" name="damageMaxFromPersCaption_label">
                      <property name="text">
-                      <string>Лудший удар:</string>
+                      <string>Лучший удар:</string>
                      </property>
                     </widget>
                    </item>
@@ -883,14 +913,14 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingsDropCountCaption_label">
+                    <widget class="QLabel" name="thingsDropCountCaption_label">
                      <property name="text">
                       <string>Вещей собрано:</string>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingDropLastCaption_label">
+                    <widget class="QLabel" name="thingDropLastCaption_label">
                      <property name="text">
                       <string>Последняя вещь:</string>
                      </property>
@@ -915,7 +945,7 @@
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_16">
                    <item>
-                    <widget class="QLabel" name="fingsCountValue_label">
+                    <widget class="QLabel" name="fightsCountValue_label">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -967,7 +997,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingsDropCountValue_label">
+                    <widget class="QLabel" name="thingsDropCountValue_label">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -980,7 +1010,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="fingDropLastValue_label">
+                    <widget class="QLabel" name="thingDropLastValue_label">
                      <property name="font">
                       <font>
                        <weight>75</weight>
@@ -1647,6 +1677,43 @@
                     </item>
                    </widget>
                   </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_10">
+                    <property name="toolTip">
+                     <string>Если регенерация будет длиться не менее указанного количества секунд, то по окончанию регенерации появится сообшение.</string>
+                    </property>
+                    <property name="text">
+                     <string> * длительность регена:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QSpinBox" name="restDurationPopup">
+                    <property name="suffix">
+                     <string> сек.</string>
+                    </property>
+                    <property name="minimum">
+                     <number>20</number>
+                    </property>
+                    <property name="maximum">
+                     <number>1000000</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_11">
+                    <property name="text">
+                     <string>Сообщать о восстановлении:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QCheckBox" name="restPopup">
+                    <property name="text">
+                     <string>Всплыв. сообщение</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item>
@@ -1749,7 +1816,7 @@
                <attribute name="title">
                 <string>Бой</string>
                </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_26">
+               <layout class="QVBoxLayout" name="verticalLayout_34">
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_43">
                   <item>
@@ -1875,10 +1942,54 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="checkbox_FingDropPopup">
+                 <widget class="QCheckBox" name="checkbox_ThingDropPopup">
                   <property name="text">
                    <string>Всплывающее сообщение при дропе вещей</string>
                   </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QGroupBox" name="groupBox_12">
+                  <property name="title">
+                   <string>Особые противники</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_26">
+                   <item>
+                    <widget class="QLabel" name="label_12">
+                     <property name="text">
+                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Противники, находящиеся в этом списке не будут отмечаться на картах и при их появлении будет сбрасываться очередь, если установить соответствующие опции.&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ВНИМАНИЕ!&lt;/span&gt; Регистр в имени противника имеет значение!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="SpecificEnemiesView" name="specificEnemiesTable">
+                     <property name="contextMenuPolicy">
+                      <enum>Qt::CustomContextMenu</enum>
+                     </property>
+                     <property name="selectionMode">
+                      <enum>QAbstractItemView::SingleSelection</enum>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_13">
+                     <property name="text">
+                      <string>* Список можно редактировать непосредственно в таблице, а так же воспользовавшись контекстным меню.</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </widget>
                 </item>
                 <item>
@@ -1896,13 +2007,13 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="settFingsTab">
+              <widget class="QWidget" name="settThingsTab">
                <attribute name="title">
                 <string>Вещи</string>
                </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_27">
                 <item>
-                 <widget class="QCheckBox" name="checkbox_ShowFingsParams">
+                 <widget class="QCheckBox" name="checkbox_ShowThingsParams">
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
@@ -1922,7 +2033,7 @@
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
                      </property>
-                     <widget class="FingFiltersView" name="fingFiltersTable">
+                     <widget class="ThingFiltersView" name="thingFiltersTable">
                       <property name="selectionMode">
                        <enum>QAbstractItemView::SingleSelection</enum>
                       </property>
@@ -1930,7 +2041,7 @@
                        <enum>QAbstractItemView::SelectRows</enum>
                       </property>
                      </widget>
-                     <widget class="FingRulesView" name="fingRulesTable">
+                     <widget class="ThingRulesView" name="thingRulesTable">
                       <property name="selectionMode">
                        <enum>QAbstractItemView::SingleSelection</enum>
                       </property>
@@ -2456,12 +2567,12 @@
                    <string>Текст игры</string>
                   </property>
                   <layout class="QGridLayout" name="gridLayout_11">
-                   <item row="0" column="0">
+                   <item row="2" column="0">
                     <layout class="QHBoxLayout" name="horizontalLayout_23">
                      <item>
                       <widget class="QLabel" name="label_9">
                        <property name="text">
-                        <string>Макс. кол-во строк текста игры:</string>
+                        <string>Макс. кол-во блоков текста:</string>
                        </property>
                       </widget>
                      </item>
@@ -2489,6 +2600,27 @@
                       </widget>
                      </item>
                     </layout>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QCheckBox" name="gameTextColoring">
+                     <property name="text">
+                      <string>Раскраска текста игры </string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_15">
+                     <property name="text">
+                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;ВНИМАНИЕ!&lt;/span&gt; При включении раскраски игры рекомендуется ограничить кол-во блоков текста в опции ниже. Например поставив 10000 блоков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </widget>
@@ -2579,6 +2711,13 @@
                      </item>
                     </layout>
                    </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkbox_PersPosInCenter">
+                     <property name="text">
+                      <string>Позиция персонажа в центре карты (по возможности)</string>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
                  </widget>
                 </item>
@@ -2609,16 +2748,10 @@
      <item>
       <widget class="QFrame" name="mainInfo">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>1</verstretch>
         </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>150</width>
-         <height>0</height>
-        </size>
        </property>
        <property name="acceptDrops">
         <bool>false</bool>
@@ -2643,12 +2776,18 @@
          <number>2</number>
         </property>
         <item>
-         <widget class="QGraphicsView" name="persPhoto">
+         <widget class="AvatarFrameView" name="avatarFrame">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>146</width>
+            <height>146</height>
+           </size>
           </property>
           <property name="maximumSize">
            <size>
@@ -2658,6 +2797,15 @@
           </property>
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+          </property>
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -2921,9 +3069,6 @@ p, li { white-space: pre-wrap; }
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -2933,9 +3078,6 @@ p, li { white-space: pre-wrap; }
      <layout class="QHBoxLayout" name="horizontalLayout_51">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_25">
-        <property name="spacing">
-         <number>4</number>
-        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_17">
           <property name="spacing">
@@ -2968,10 +3110,23 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_46">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_28">
+         <layout class="QHBoxLayout" name="horizontalLayout_26">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -3002,10 +3157,23 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
+          <item>
+           <spacer name="horizontalSpacer_47">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_26">
+         <layout class="QHBoxLayout" name="horizontalLayout_28">
           <property name="spacing">
            <number>2</number>
           </property>
@@ -3035,6 +3203,19 @@ p, li { white-space: pre-wrap; }
              <enum>Qt::PlainText</enum>
             </property>
            </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_48">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </item>
@@ -3516,17 +3697,17 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FingsView</class>
+   <class>ThingsView</class>
    <extends>QTableView</extends>
    <header>thingstab/thingsview.h</header>
   </customwidget>
   <customwidget>
-   <class>FingRulesView</class>
+   <class>ThingRulesView</class>
    <extends>QTableView</extends>
    <header>thingftab/thingfview.h</header>
   </customwidget>
   <customwidget>
-   <class>FingFiltersView</class>
+   <class>ThingFiltersView</class>
    <extends>QTableView</extends>
    <header>thingftab/thingfview.h</header>
   </customwidget>
@@ -3544,6 +3725,21 @@ p, li { white-space: pre-wrap; }
    <class>ColorButton</class>
    <extends>QToolButton</extends>
    <header>subclasses/colorbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AvatarFrameView</class>
+   <extends>QGraphicsView</extends>
+   <header>avatarframe.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SpecificEnemiesView</class>
+   <extends>QTableView</extends>
+   <header>specificenemiesview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TextView</class>
+   <extends>QTextEdit</extends>
+   <header>subclasses/textview.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -3571,10 +3767,10 @@ p, li { white-space: pre-wrap; }
   <tabstop>fightTimerCombo</tabstop>
   <tabstop>fightSelectAction</tabstop>
   <tabstop>setAutoCloseFight</tabstop>
-  <tabstop>checkbox_FingDropPopup</tabstop>
-  <tabstop>checkbox_ShowFingsParams</tabstop>
-  <tabstop>fingFiltersTable</tabstop>
-  <tabstop>fingRulesTable</tabstop>
+  <tabstop>checkbox_ThingDropPopup</tabstop>
+  <tabstop>checkbox_ShowThingsParams</tabstop>
+  <tabstop>thingFiltersTable</tabstop>
+  <tabstop>thingRulesTable</tabstop>
   <tabstop>slot1Combo</tabstop>
   <tabstop>slot2Combo</tabstop>
   <tabstop>slot3Combo</tabstop>
@@ -3599,10 +3795,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>checkbox_ResetQueuePopup</tabstop>
   <tabstop>mapsParamSaveMode</tabstop>
   <tabstop>mapsUnloadInterval</tabstop>
-  <tabstop>fingsTable</tabstop>
+  <tabstop>thingsTable</tabstop>
  </tabstops>
- <resources>
-  <include location="sofgameplugin.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

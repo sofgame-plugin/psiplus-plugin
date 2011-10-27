@@ -1,5 +1,5 @@
 /*
-* FingFilterEditDialog.h - Sof Game Psi plugin
+ * thingfilterdlg.h - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,17 +23,17 @@
  *
  */
 
-#ifndef FINGFILTEREDIT_H
-#define FINGFILTEREDIT_H
+#ifndef THINGFILTEREDIT_H
+#define THINGFILTEREDIT_H
 
 #include "ui_thingfilterdlg.h"
 
-class FingFilterEditDialog : public QDialog, public Ui::FingFilterEdit
+class ThingFilterEditDialog : public QDialog, public Ui::ThingFilterEdit
 {
 	Q_OBJECT
 public:
-	FingFilterEditDialog(QWidget* parent, bool*, QString*);
-	~FingFilterEditDialog();
+	ThingFilterEditDialog(QWidget* parent, bool*, QString*);
+	~ThingFilterEditDialog();
 
 protected:
 	bool* activePtr;
@@ -44,4 +44,4 @@ protected slots:
 
 };
 
-#endif // FINGFILTEREDIT_H
+#endif // THINGFILTEREDIT_H

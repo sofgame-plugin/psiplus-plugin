@@ -29,8 +29,6 @@
 #include "common.h"
 #include "utils.h"
 
-//QStringList fingTypeStrings = (QStringList() << QString::fromUtf8("дубины") << QString::fromUtf8("кинжал") << QString::fromUtf8("клинки") << QString::fromUtf8("шлем") << QString::fromUtf8("броня") << QString::fromUtf8("обувь") << QString::fromUtf8("щит") << QString::fromUtf8("штаны") << QString::fromUtf8("амулет") << QString::fromUtf8("браслет") << QString::fromUtf8("снадобье") << QString::fromUtf8("вещь") << QString::fromUtf8("список") << QString::fromUtf8("наплечники") << QString::fromUtf8("пояс"));
-
 
 PersInfo::PersInfo()
 {
@@ -687,13 +685,13 @@ void resetEquip(struct equip_element* equipEl)
 QRegExp equipElementReg(QString::fromUtf8("^(.+)\\((\\w+)\\)(.+)\\{(.+)\\}(И:([0-9]+)ур\\.)?$"));
 QRegExp equipParamElementReg(QString::fromUtf8("^(\\w+):([0-9.]+)(\\*\\w+)?$"));
 
-bool getEquipFromString(QString fingStr, struct equip_element* equipElementPtr)
+bool getEquipFromString(const QString &thingStr, struct equip_element* equipElementPtr)
 {
 	/**
 	* Разбирает строку экипировки в структуру
 	**/
 	// Обруч ярости Демона(амулет)сила:1.8*ур;ловк:4.2*ур;инт:1.8*ур;урон:10.5*ур;защ:6.2*ур;{Треб:Ур13Сил39}И:8ур.
-	if (equipElementReg.indexIn(fingStr, 0) == -1)
+	if (equipElementReg.indexIn(thingStr, 0) == -1)
 		return false;
 	struct equip_element equipEl;
 	resetEquip(&equipEl);

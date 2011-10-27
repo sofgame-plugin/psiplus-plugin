@@ -1,5 +1,5 @@
 /*
- * fingfview.h - Sof Game Psi plugin
+ * thingfview.h - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,26 +23,26 @@
  *
  */
 
-#ifndef FINGFVIEW_H
-#define FINGFVIEW_H
+#ifndef THINGFVIEW_H
+#define THINGFVIEW_H
 
 #include <QTableView>
 
 #include "thingfmodel.h"
-#include "../pers.h"
+#include "pers.h"
 
-class FingFiltersView : public QTableView
+class ThingFiltersView : public QTableView
 {
 	Q_OBJECT
 
 	public:
-		//FingFiltersView( QWidget*, QList<FingFilter*>*);
-		FingFiltersView(QWidget*);
-		void init(QList<FingFilter*>*);
-		QList<FingFilter*> getFilters();
+		//ThingFiltersView( QWidget*, QList<FingFilter*>*);
+		ThingFiltersView(QWidget*);
+		void init(QList<ThingFilter*>*);
+		QList<ThingFilter*> getFilters() const;
 
 	protected:
-		FingFiltersModel* fingFiltersTableModel;
+		ThingFiltersModel* thingFiltersTableModel;
 		void contextMenuEvent(QContextMenuEvent* e);
 		void keyPressEvent(QKeyEvent* e);
 
@@ -54,24 +54,24 @@ class FingFiltersView : public QTableView
 
 };
 
-#endif // FINGFVIEW_H
+#endif // THINGFVIEW_H
 
 //*********************************************************************************************
 
-#ifndef FINGFVIEW2_H
-#define FINGFVIEW2_H
+#ifndef THINGFVIEW2_H
+#define THINGFVIEW2_H
 
 #include <QTableView>
 
-class FingRulesView : public QTableView
+class ThingRulesView : public QTableView
 {
 	Q_OBJECT
 	public:
-		FingRulesView( QWidget*);
-		void init(QList<FingFilter*>*);
+		ThingRulesView( QWidget*);
+		void init(QList<ThingFilter*>*);
 
 	protected:
-		FingRulesModel* fingRulesTableModel;
+		ThingRulesModel* thingRulesTableModel;
 		void contextMenuEvent( QContextMenuEvent * e );
 		void keyPressEvent( QKeyEvent * e );
 
@@ -83,4 +83,4 @@ class FingRulesView : public QTableView
 
 };
 
-#endif // FINGFVIEW2_H
+#endif // THINGFVIEW2_H

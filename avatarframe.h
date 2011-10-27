@@ -1,6 +1,6 @@
 /*
- * thingruledlg.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * avatarframe.h - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,29 +23,34 @@
  *
  */
 
-#ifndef THINGRULEEDIT_H
-#define THINGRULEEDIT_H
+#ifndef AVATARFRAME_H
+#define AVATARFRAME_H
 
-#include "ui_thingruledlg.h"
-#include "pers.h"
+#include <QGraphicsView>
+#include <QGraphicsScene>
 
-class ThingRuleEditDialog : public QDialog, public Ui::ThingRuleEdit
+class AvatarFrameView : public QGraphicsView
 {
-	Q_OBJECT
+Q_OBJECT
 public:
-	ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex*);
-	~ThingRuleEditDialog();
+	AvatarFrameView(QWidget *parent = 0);
+	static QString avatarFilePath();
+	bool updateAvatar();
+	void showPluginInfo();
 
-protected:
-	struct ThingFilter::thing_rule_ex* savedRulePtr;
-	QList<ThingFilter::ParamRole> paramRoles;
-	QList<ThingFilter::OperandRole> operandRoles;
-	QList<ThingFilter::ActionRole> actionRoles;
+private:
+	QGraphicsScene *scene_;
+	QGraphicsPixmapItem *avatarItem;
+	QGraphicsTextItem *pluginInfoItem;
 
-protected slots:
-	void paramChanged(int);
-	void okBtnClick();
+private:
+	void clear();
+	void loadAvatar();
+	void clearAvatar();
+
+private slots:
+	void showContextMenu();
 
 };
 
-#endif // THINGRULEEDIT_H
+#endif // AVATARFRAME_H

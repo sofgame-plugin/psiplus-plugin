@@ -1,5 +1,5 @@
 /*
- * fingfmodel.cpp - Sof Game Psi plugin
+ * thingfmodel.cpp - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 #include "thingfmodel.h"
 
-FingFiltersModel::FingFiltersModel(QObject* parent, QList<FingFilter*>* flp)
+ThingFiltersModel::ThingFiltersModel(QObject* parent, QList<ThingFilter*>* flp)
 {
 	Q_UNUSED(parent)
 	filtersListPtr = flp;
@@ -37,46 +37,45 @@ FingFiltersModel::FingFiltersModel(QObject* parent, QList<FingFilter*>* flp)
 	connect(Pers::instance(), SIGNAL(filtersChanged()), this, SLOT(filtersChanged()));
 }
 
-FingFiltersModel::~FingFiltersModel()
+ThingFiltersModel::~ThingFiltersModel()
 {
 }
 
-void FingFiltersModel::reloadFilters()
+void ThingFiltersModel::reloadFilters()
 {
 	// Очищаем старые
 	while (!filtersListPtr->isEmpty())
 		delete filtersListPtr->takeFirst();
 	// Грузим новые
-	QList<FingFilter*> ffl;
-	Pers::instance()->getFingsFiltersEx(&ffl);
+	QList<ThingFilter*> ffl;
+	Pers::instance()->getThingsFiltersEx(&ffl);
 	while (!ffl.isEmpty()) {
-		FingFilter* ff = new FingFilter(*ffl.takeFirst());
+		ThingFilter* ff = new ThingFilter(*ffl.takeFirst());
 		filtersListPtr->push_back(ff);
 	}
 	reset();
 }
 
-FingFilter* FingFiltersModel::getFilterByRow(int row)
+ThingFilter* ThingFiltersModel::getFilterByRow(int row) const
 {
 	if (row < 0 || row >= filtersListPtr->size())
 		return NULL;
 	return filtersListPtr->at(row);
 }
 
-int FingFiltersModel::rowCount(const QModelIndex &parent) const
+int ThingFiltersModel::rowCount(const QModelIndex &parent) const
 {
 	if (parent.isValid())
 		return 0;
 	return filtersListPtr->size();
 }
 
-int FingFiltersModel::columnCount(const QModelIndex & parent) const
+int ThingFiltersModel::columnCount(const QModelIndex &/*parent*/) const
 {
-	Q_UNUSED(parent)
 	return columnNames.size();
 }
 
-QVariant FingFiltersModel::data(const QModelIndex &index, int role) const
+QVariant ThingFiltersModel::data(const QModelIndex &index, int role) const
 {
 	Role columnRole = roles[index.column()];
 	if (role == Qt::TextAlignmentRole) {
@@ -89,7 +88,7 @@ QVariant FingFiltersModel::data(const QModelIndex &index, int role) const
 	} else if (role == Qt::DisplayRole) {
 		int row = index.row();
 		if (row >= 0 && row < filtersListPtr->size()) {
-			FingFilter* filterPtr = filtersListPtr->at(row);
+			ThingFilter* filterPtr = filtersListPtr->at(row);
 			if (filterPtr) {
 				switch (columnRole) {
 					case StatusRole:
@@ -109,7 +108,7 @@ QVariant FingFiltersModel::data(const QModelIndex &index, int role) const
 		int row = index.row();
 		if (row >= 0 && row < filtersListPtr->size()) {
 			if (columnRole == StatusRole) {
-				FingFilter* filterPtr = filtersListPtr->at(row);
+				ThingFilter* filterPtr = filtersListPtr->at(row);
 				if (filterPtr) {
 					return filterPtr->isActive();
 				} else {
@@ -121,7 +120,7 @@ QVariant FingFiltersModel::data(const QModelIndex &index, int role) const
 	return QVariant();
 }
 
-QVariant FingFiltersModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant ThingFiltersModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole) {
 		if (section >= 0 && section < columnNames.size()) {
@@ -133,9 +132,8 @@ QVariant FingFiltersModel::headerData(int section, Qt::Orientation orientation, 
 	return QVariant();
 }
 
-bool FingFiltersModel::insertRows(int row, int count, const QModelIndex& parent)
+bool ThingFiltersModel::insertRows(int row, int count, const QModelIndex &/*parent*/)
 {
-	Q_UNUSED(parent);
 	if (row < 0 || count <= 0)
 		return false;
 	int cnt = filtersListPtr->size();
@@ -152,16 +150,15 @@ bool FingFiltersModel::insertRows(int row, int count, const QModelIndex& parent)
 	return true;
 }
 
-bool FingFiltersModel::setData(const QModelIndex & idx, const QVariant & value, int role)
+bool ThingFiltersModel::setData(const QModelIndex &idx, const QVariant &value, int /*role*/)
 {
-	Q_UNUSED(role)
 	int row = idx.row();
 	int col = idx.column();
 	if (row < 0 || row >= filtersListPtr->size() || col < 0 || col >= columnNames.size())
 		return false;
-	FingFilter* ff = filtersListPtr->at(row);
+	ThingFilter* ff = filtersListPtr->at(row);
 	if (!ff) {
-		ff = new FingFilter();
+		ff = new ThingFilter();
 		filtersListPtr->replace(row, ff);
 	}
 	Role rowRole = roles.at(col);
@@ -179,7 +176,7 @@ bool FingFiltersModel::setData(const QModelIndex & idx, const QVariant & value, 
 	return true;
 }
 
-bool FingFiltersModel::swapRows(int row1, int row2)
+bool ThingFiltersModel::swapRows(int row1, int row2)
 {
 	int cnt = filtersListPtr->size();
 	if (row1 < 0 || row2 < 0 || row1 >= cnt || row2 >= cnt || row1 == row2)
@@ -194,9 +191,8 @@ bool FingFiltersModel::swapRows(int row1, int row2)
 	return true;
 }
 
-bool FingFiltersModel::removeRows(int row, int count, const QModelIndex& parent)
+bool ThingFiltersModel::removeRows(int row, int count, const QModelIndex &/*parent*/)
 {
-	Q_UNUSED(parent);
 	if (count > 0) {
 		int cntFltrs = filtersListPtr->size();
 		if (row >= 0 && row < cntFltrs) {
@@ -205,7 +201,7 @@ bool FingFiltersModel::removeRows(int row, int count, const QModelIndex& parent)
 				endRow = cntFltrs - 1;
 			beginRemoveRows(QModelIndex(), row, endRow);
 			while (row < filtersListPtr->size()) {
-				FingFilter* ff = filtersListPtr->takeAt(row);
+				ThingFilter* ff = filtersListPtr->takeAt(row);
 				if (ff)
 					delete ff;
 				endRow--;
@@ -219,44 +215,42 @@ bool FingFiltersModel::removeRows(int row, int count, const QModelIndex& parent)
 	return false;
 }
 
-void FingFiltersModel::clear()
+void ThingFiltersModel::clear()
 {
 	filtersListPtr->clear();
 }
 
-Qt::ItemFlags FingFiltersModel::flags(const QModelIndex & index) const
+Qt::ItemFlags ThingFiltersModel::flags(const QModelIndex &/*index*/) const
 {
-	Q_UNUSED(index)
-
 	Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 	return flags;
 }
 
-void FingFiltersModel::filtersChanged()
+void ThingFiltersModel::filtersChanged()
 {
 	reloadFilters();
 }
 
 //****************************************************************************************************************
 
-FingRulesModel::FingRulesModel(QObject* parent, QList<FingFilter*>* flp)
+ThingRulesModel::ThingRulesModel(QObject* /*parent*/, QList<ThingFilter*>* flp)
 {
-	Q_UNUSED(parent)
 	filtersListPtr = flp;
 	currFilterIndex = -1;
 	columnNames << QString::fromUtf8("Параметр") << QString::fromUtf8("Операнд") << QString::fromUtf8("Значение") << QString::fromUtf8("Действие");
 	roles << FieldRole << OperandRole << ValueRole << ActionRole;
 }
 
-void FingRulesModel::reloadRules(int filterIndex)
+void ThingRulesModel::reloadRules(int filterIndex)
 {
 	currFilterIndex = filterIndex;
 	reset();
 }
 
-const struct FingFilter::fing_rule_ex* FingRulesModel::getRule(int row) {
+const struct ThingFilter::thing_rule_ex* ThingRulesModel::getRule(int row) const
+{
 	if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-		FingFilter* ff = filtersListPtr->at(currFilterIndex);
+		ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 		if (ff) {
 			return ff->getRule(row);
 		}
@@ -264,12 +258,12 @@ const struct FingFilter::fing_rule_ex* FingRulesModel::getRule(int row) {
 	return 0;
 }
 
-int FingRulesModel::rowCount(const QModelIndex &parent) const
+int ThingRulesModel::rowCount(const QModelIndex &parent) const
 {
 	if (parent.isValid())
 		return 0;
 	if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-		FingFilter* ff = filtersListPtr->at(currFilterIndex);
+		ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 		if (ff) {
 			int cnt = ff->rulesCount();
 			return cnt;
@@ -278,13 +272,12 @@ int FingRulesModel::rowCount(const QModelIndex &parent) const
 	return 0;
 }
 
-int FingRulesModel::columnCount(const QModelIndex & parent) const
+int ThingRulesModel::columnCount(const QModelIndex &/*parent*/) const
 {
-	Q_UNUSED(parent)
 	return columnNames.size();
 }
 
-QVariant FingRulesModel::data(const QModelIndex &index, int role) const
+QVariant ThingRulesModel::data(const QModelIndex &index, int role) const
 {
 	Role columnRole = roles[index.column()];
 	if (role == Qt::TextAlignmentRole) {
@@ -297,70 +290,70 @@ QVariant FingRulesModel::data(const QModelIndex &index, int role) const
 	} else if (role == Qt::DisplayRole) {
 		int row = index.row();
 		if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-			FingFilter* ff = filtersListPtr->at(currFilterIndex);
+			ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 			if (ff) {
 				if (row >= 0 && row < ff->rulesCount()) {
-					const struct FingFilter::fing_rule_ex* rule = ff->getRule(row);
+					const struct ThingFilter::thing_rule_ex* rule = ff->getRule(row);
 					if (rule) {
 						QString str1;
-						FingFilter::ParamRole nParam;
-						FingFilter::OperandRole nOper;
-						FingFilter::ActionRole nAction;
+						ThingFilter::ParamRole nParam;
+						ThingFilter::OperandRole nOper;
+						ThingFilter::ActionRole nAction;
 						switch (columnRole) {
-							case FieldRole:
-								nParam = rule->param;
-								if (nParam == FingFilter::NameRole) {
-									return QString::fromUtf8("Имя вещи");
-								} else if (nParam == FingFilter::TypeRole) {
-									return QString::fromUtf8("Тип вещи");
-								} else if (nParam == FingFilter::NamedRole) {
-									return QString::fromUtf8("Уровень именной");
-								} else if (nParam == FingFilter::DressedRole) {
-									return QString::fromUtf8("Одета");
-								} else if (nParam == FingFilter::PriceRole) {
-									return QString::fromUtf8("Цена вещи");
-								} else if (nParam == FingFilter::CountRole) {
-									return QString::fromUtf8("Количество");
-								} else {
-									return QString::fromUtf8("?");
-								}
-							case OperandRole:
-								nOper = rule->operand;
-								if (rule->param == FingFilter::DressedRole)
-									return "";
+						case FieldRole:
+							nParam = rule->param;
+							if (nParam == ThingFilter::NameRole) {
+								return QString::fromUtf8("Имя вещи");
+							} else if (nParam == ThingFilter::TypeRole) {
+								return QString::fromUtf8("Тип вещи");
+							} else if (nParam == ThingFilter::NamedRole) {
+								return QString::fromUtf8("Уровень именной");
+							} else if (nParam == ThingFilter::DressedRole) {
+								return QString::fromUtf8("Одета");
+							} else if (nParam == ThingFilter::PriceRole) {
+								return QString::fromUtf8("Цена вещи");
+							} else if (nParam == ThingFilter::CountRole) {
+								return QString::fromUtf8("Количество");
+							} else {
+								return QString::fromUtf8("?");
+							}
+						case OperandRole:
+							nOper = rule->operand;
+							if (rule->param == ThingFilter::DressedRole)
+								return "";
+							if (rule->negative) {
+								str1 = QString::fromUtf8("не ");
+							} else {
+								str1 = "";
+							}
+							if (nOper == ThingFilter::EqualRole) {
+								str1.append(QString::fromUtf8("равно"));
+							} else if (nOper == ThingFilter::ContainsRole) {
+								str1.append(QString::fromUtf8("содержит"));
+							} else if (nOper == ThingFilter::AboveRole) {
+								str1.append(QString::fromUtf8("больше"));
+							} else if (nOper == ThingFilter::LowRole) {
+								str1.append(QString::fromUtf8("меньше"));
+							}
+							return str1;
+						case ValueRole:
+							if (rule->param == ThingFilter::DressedRole) {
 								if (rule->negative) {
-									str1 = QString::fromUtf8("не ");
+									return QString::fromUtf8("нет");
 								} else {
-									str1 = "";
+									return QString::fromUtf8("да");
 								}
-								if (nOper == FingFilter::EqualRole) {
-									str1.append(QString::fromUtf8("равно"));
-								} else if (nOper == FingFilter::ContainsRole) {
-									str1.append(QString::fromUtf8("содержит"));
-								} else if (nOper == FingFilter::AboveRole) {
-									str1.append(QString::fromUtf8("больше"));
-								} else if (nOper == FingFilter::LowRole) {
-									str1.append(QString::fromUtf8("меньше"));
-								}
-								return str1;
-							case ValueRole:
-								if (rule->param == FingFilter::DressedRole) {
-									if (rule->negative) {
-										return QString::fromUtf8("нет");
-									} else {
-										return QString::fromUtf8("да");
-									}
-								}
-								return rule->value;
-							case ActionRole:
-								nAction = rule->action;
-								if (nAction == FingFilter::YesRole) {
-									return QString::fromUtf8("отображать");
-								} else if (nAction == FingFilter::NoRole) {
-									return QString::fromUtf8("не отображать");
-								} else if (nAction == FingFilter::NextRole) {
-									return QString::fromUtf8("следующее");
-								}
+							}
+							return rule->value;
+						case ActionRole:
+							nAction = rule->action;
+							if (nAction == ThingFilter::YesRole) {
+								return QString::fromUtf8("отображать");
+							} else if (nAction == ThingFilter::NoRole) {
+								return QString::fromUtf8("не отображать");
+							} else if (nAction == ThingFilter::NextRole) {
+								return QString::fromUtf8("следующее");
+							}
 						}
 					}
 				}
@@ -370,7 +363,7 @@ QVariant FingRulesModel::data(const QModelIndex &index, int role) const
 	return QVariant();
 }
 
-QVariant FingRulesModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant ThingRulesModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole) {
 		if (section >= 0 && section < columnNames.size()) {
@@ -382,10 +375,10 @@ QVariant FingRulesModel::headerData(int section, Qt::Orientation orientation, in
 	return QVariant();
 }
 
-bool FingRulesModel::appendRule(FingFilter::ParamRole param, bool negative, FingFilter::OperandRole operand, QString value, FingFilter::ActionRole action) {
+bool ThingRulesModel::appendRule(ThingFilter::ParamRole param, bool negative, ThingFilter::OperandRole operand, const QString &value, ThingFilter::ActionRole action) {
 	bool res = false;
 	if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-		FingFilter* ff = filtersListPtr->at(currFilterIndex);
+		ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 		if (ff) {
 			int row = ff->rulesCount();
 			beginInsertRows(QModelIndex(), row, row);
@@ -396,9 +389,9 @@ bool FingRulesModel::appendRule(FingFilter::ParamRole param, bool negative, Fing
 	return res;
 }
 
-bool FingRulesModel::modifyRule(int ruleIndex, const struct FingFilter::fing_rule_ex* rule) {
+bool ThingRulesModel::modifyRule(int ruleIndex, const struct ThingFilter::thing_rule_ex* rule) {
 	if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-		FingFilter* ff = filtersListPtr->at(currFilterIndex);
+		ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 		if (ff) {
 			ff->modifyRule(ruleIndex, rule);
 			emit dataChanged(index(ruleIndex, 0), index(ruleIndex, columnNames.size()));
@@ -408,19 +401,15 @@ bool FingRulesModel::modifyRule(int ruleIndex, const struct FingFilter::fing_rul
 	return false;
 }
 
-bool FingRulesModel::setData(const QModelIndex & index, const QVariant & value, int role)
+bool ThingRulesModel::setData(const QModelIndex &/*index*/, const QVariant &/*value*/, int /*role*/)
 {
-	Q_UNUSED(index)
-	Q_UNUSED(value)
-	Q_UNUSED(role)
-
 	return false;
 }
 
-bool FingRulesModel::upRow(int row)
+bool ThingRulesModel::upRow(int row)
 {
 	if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-		FingFilter* ff = filtersListPtr->at(currFilterIndex);
+		ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 		if (ff) {
 			if (ff->moveRuleUp(row)) {
 				emit dataChanged(index(row -1, 0), index(row, rowCount()));
@@ -431,10 +420,10 @@ bool FingRulesModel::upRow(int row)
 	return false;
 }
 
-bool FingRulesModel::downRow(int row)
+bool ThingRulesModel::downRow(int row)
 {
 	if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-		FingFilter* ff = filtersListPtr->at(currFilterIndex);
+		ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 		if (ff) {
 			if (ff->moveRuleDown(row)) {
 				emit dataChanged(index(row, 0), index(row + 1, rowCount()));
@@ -445,12 +434,11 @@ bool FingRulesModel::downRow(int row)
 	return false;
 }
 
-bool FingRulesModel::removeRows(int row, int count, const QModelIndex& parent)
+bool ThingRulesModel::removeRows(int row, int count, const QModelIndex &/*parent*/)
 {
-	Q_UNUSED(parent);
 	if (count > 0) {
 		if (currFilterIndex >= 0 && currFilterIndex < filtersListPtr->size()) {
-			FingFilter* ff = filtersListPtr->at(currFilterIndex);
+			ThingFilter* ff = filtersListPtr->at(currFilterIndex);
 			if (ff) {
 				int rulesCnt = ff->rulesCount();
 				if (row >= 0 && row < rulesCnt) {
@@ -473,10 +461,8 @@ bool FingRulesModel::removeRows(int row, int count, const QModelIndex& parent)
 	return false;
 }
 
-Qt::ItemFlags FingRulesModel::flags(const QModelIndex & index) const
+Qt::ItemFlags ThingRulesModel::flags(const QModelIndex & /*index*/) const
 {
-	Q_UNUSED(index)
-
 	Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 	return flags;
 }

@@ -31,14 +31,12 @@
 #include <QDateTime>
 #include <QtDebug>
 
-#include "popupaccessinghost.h"
-#include "optionaccessinghost.h"
-
-#define cVer "0.2.1"
+#define cVer "0.2.2"
 
 #include "pers.h"
 #include "pers_info.h"
 #include "main_window.h"
+#include "textparsing/gametext.h"
 
 class PluginCore: public QObject
 {
@@ -57,7 +55,8 @@ class PluginCore: public QObject
 		void resetStatistic(int valueId);
 		bool sendCommandToCore(qint32 commandId);
 		bool sendString(const QString &str);
-		PersInfo* getPersInfo(QString);
+		PersInfo* getPersInfo(const QString &);
+		void initPopup(const QString &, int);
 
 	private:
 		static PluginCore *instance_;
@@ -71,22 +70,23 @@ class PluginCore: public QObject
 		int statFightsCount;
 		int statFightDamageMin;
 		int statFightDamageMax;
-		int statFingsDropCount;
-		QString statFingDropLast;
+		int statThingsDropCount;
+		QString statThingDropLast;
 		long long statExperienceDropCount;
 		int statKilledEnemies;
 
 		QRegExp mapCoordinatesExp;
 		QRegExp parPersRegExp;
+		QRegExp moneysCountExp;
 		QRegExp fightDropMoneyReg2;
-		QRegExp secretDropFingReg;
+		QRegExp secretDropThingReg;
 		QRegExp experienceDropReg;
 		QRegExp experienceDropReg2;
 		QRegExp secretBeforeReg;
 		QRegExp secretBeforeReg2;
 		QRegExp takeBeforeReg;
 		QRegExp commandStrReg;
-		QRegExp fingElementReg;
+		QRegExp thingElementReg;
 		QRegExp persInfoReg;
 		QRegExp persInfoMainReg;
 		QRegExp persInfoSitizenshipReg;
@@ -103,6 +103,7 @@ class PluginCore: public QObject
 		QRegExp killerAttackReg;
 		QRegExp dealerBuyReg;
 		QRegExp warehouseShelfReg;
+		QRegExp persInListOfTheBestReg;
 		QVector<PersInfo*> persInfoList;
 		bool persStatusChangedFlag;
 		bool persBackpackChangedFlag;
@@ -119,29 +120,26 @@ class PluginCore: public QObject
 		QRegExp fightDamageFromPersReg3;
 		QRegExp fightDropMoneyReg1;
 		QRegExp fightDropThingReg1;
+		bool coloring;
 
 	private:
 		PluginCore();
 		~PluginCore();
 		void valueChanged(int valueId, int valueType, int value);
-		void setGameText(QString);
-		void setConsoleText(QString, bool);
+		void setGameText(const GameText &gameText, int type);
+		void setConsoleText(const GameText &, int type, bool);
 		bool savePersStatus();
 		bool loadPersStatus();
-		void getStatistics(QString* commandPtr);
-		void mapsCommands(QStringList*);
-		void persCommands(QStringList*);
-		void clearCommands(QStringList*);
-		void fingsCommands(QStringList*);
+		void getStatistics(const QString &commandPtr);
+		void mapsCommands(const QStringList &args);
+		void persCommands(const QStringList &args);
+		void clearCommands(const QStringList &args);
+		void thingsCommands(const QStringList &args);
 		void aliasesCommands(const QStringList &);
 		void settingsCommands(const QStringList &);
-		void initPopup(QString, QString, int);
-		int  parseFinghtGroups(const QStringList &, int);
-		int  parseFinghtStepResult(const QStringList &, int);
+		void parseFightGroups(GameText &gameText);
+		bool parseFightStepResult(GameText &gameText);
 		void searchHorseshoe(const QString &);
-
-	protected:
-
 
 	public slots:
 		void changeAccountJid(const QString);
@@ -153,9 +151,9 @@ class PluginCore: public QObject
 		void statisticsChanged();
 		void saveStatusTimeout();
 
-};
+	private slots:
+		void updateSetting(Settings::SettingKey);
 
-extern PopupAccessingHost *myPopupHost;
-extern OptionAccessingHost* psiOptions;
+};
 
 #endif

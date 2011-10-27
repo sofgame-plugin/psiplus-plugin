@@ -46,15 +46,16 @@ Pers::Pers(QObject *parent):
 	persEnergyMax(QINT32_MIN), persEnergyMax_(QINT32_MIN), setPersEnergyMaxFlag(false),
 	persEnergyCurr(QINT32_MIN), persEnergyCurr_(QINT32_MIN), setPersEnergyCurrFlag(false),
 	setPersLevelFlag(false),
-	loadingFings(false),
-	fingChanged(false),
-	fingsPos(0), fingsSize(0),
+	loadingThings(false),
+	thingChanged(false),
+	thingsPos(0), thingsSize(0),
 	settingWatchRestHealthEnergy(-1),
 	watchHealthStartValue(QINT32_MIN), watchHealthStartValue2(QINT32_MIN),
 	watchHealthSpeed(0.0f), watchHealthSpeedDelta(0),
 	watchEnergyStartValue(QINT32_MIN), watchEnergyStartValue2(QINT32_MIN),
 	watchEnergySpeed(0.0f), watchEnergySpeedDelta(0),
-	watchRestTimer(NULL), watchHealthRestTimer(NULL), watchEnergyRestTimer(NULL)
+	watchRestTimer(NULL), watchHealthRestTimer(NULL), watchEnergyRestTimer(NULL),
+	moneys(QINT32_MIN)
 {
 	/**
 	* Конструктор
@@ -92,8 +93,8 @@ Pers::~Pers()
 			delete fm;
 	}
 	// --
-	while (!fingFiltersEx.isEmpty())
-		delete fingFiltersEx.takeFirst();
+	while (!thingFiltersEx.isEmpty())
+		delete thingFiltersEx.takeFirst();
 	if (things) {
 		delete things;
 	}
@@ -127,15 +128,15 @@ void Pers::init()
 			delete fm;
 	}
 	// --
-	while (!fingFiltersEx.isEmpty())
-		delete fingFiltersEx.takeFirst();
+	while (!thingFiltersEx.isEmpty())
+		delete thingFiltersEx.takeFirst();
 	persStatus = StatusNotKnow;
 	persHealthCurr = QINT32_MIN;
 	persHealthMax = QINT32_MIN;
 	persEnergyCurr = QINT32_MIN;
 	persEnergyMax = QINT32_MIN;
 	things->clear();
-	fingPrice.clear();
+	thingPrice.clear();
 	if (watchRestTimer) {
 		watchRestTimer->stop();
 		delete watchRestTimer;
@@ -182,34 +183,46 @@ const QString & Pers::name() const
 	return pers_name;
 }
 
-void Pers::setFingsStart(bool /*clear*/)
+void Pers::setMoneys(int moneys_)
+{
+	if (moneys != moneys_) {
+		moneys = moneys_;
+		if (moneys != QINT32_MIN) {
+			emit persParamChanged(ParamMoneysCount, TYPE_INTEGER_FULL, moneys);
+		} else {
+			emit persParamChanged(ParamMoneysCount, TYPE_NA, 0);
+		}
+	}
+}
+
+void Pers::setThingsStart(bool /*clear*/)
 {
 	/**
 	* Старт загрузки списка вещей
 	**/
-	loadingFings = true;
-	fingChanged = false;
-	fingsPos = 0;
-	fingsSize = things->rowCount();
+	loadingThings = true;
+	thingChanged = false;
+	thingsPos = 0;
+	thingsSize = things->rowCount();
 }
 
-void Pers::setFingsEnd()
+void Pers::setThingsEnd()
 {
-	loadingFings = false;
-	if (fingsPos < fingsSize) {
+	loadingThings = false;
+	if (thingsPos < thingsSize) {
 		// Остались еще старые записи
-		if (fingsPos == 0) {
+		if (thingsPos == 0) {
 			things->clear();
 		} else {
-			if (fingsPos < fingsSize) {
-				things->removeRows(fingsPos, fingsSize - fingsPos);
+			if (thingsPos < thingsSize) {
+				things->removeRows(thingsPos, thingsSize - thingsPos);
 			}
 		}
-		fingChanged = true;
-		fingsSize = fingsPos;
+		thingChanged = true;
+		thingsSize = thingsPos;
 	}
-	if (fingChanged) {
-		emit fingsChanged();
+	if (thingChanged) {
+		emit thingsChanged();
 	}
 }
 
@@ -217,45 +230,45 @@ void Pers::setFingsEnd()
  * Обновляет сведения о вещи в массиве вещей.
  * Если вещь изменилась, то выставляется соотв. флаг
  */
-void Pers::setFingElement(int mode, Thing* thing)
+void Pers::setThingElement(int mode, Thing* thing)
 {
-	if (loadingFings) {
-		if (mode == FING_APPEND) {
-			if (fingsPos < fingsSize) {
-				if (!fingChanged) {
-					const Thing* old_thing = things->getThingByRow(fingsPos);
+	if (loadingThings) {
+		if (mode == THING_APPEND) {
+			if (thingsPos < thingsSize) {
+				if (!thingChanged) {
+					const Thing* old_thing = things->getThingByRow(thingsPos);
 					if (old_thing) {
 						if (!thing->isEqual(old_thing)) {
-							fingChanged = true;
+							thingChanged = true;
 						}
 					} else {
-						fingChanged = true;
+						thingChanged = true;
 					}
 				}
-				if (fingChanged) {
-					things->setThing(thing, fingsPos);
+				if (thingChanged) {
+					things->setThing(thing, thingsPos);
 				}
 			} else {
 				things->insertThing(thing, things->rowCount());
-				things->setThing(thing, fingsPos);
-				fingChanged = true;
-				fingsSize++;
+				things->setThing(thing, thingsPos);
+				thingChanged = true;
+				thingsSize++;
 			}
-			//if (fingChanged) {
+			//if (thingChanged) {
 				// Ищем цену в прайсе
-				int priceCnt = fingPrice.size();
+				int priceCnt = thingPrice.size();
 				int nType = thing->type();
 				QString sName = thing->name().toLower();
 				for (int j = 0; j < priceCnt; j++) {
-					if (fingPrice[j].type == nType) {
-						if (fingPrice[j].name.toLower() == sName) {
-							thing->setPrice(fingPrice[j].price);
+					if (thingPrice[j].type == nType) {
+						if (thingPrice[j].name.toLower() == sName) {
+							thing->setPrice(thingPrice[j].price);
 							break;
 						}
 					}
 				}
 			//}
-			fingsPos++;
+			thingsPos++;
 		}
 	}
 }
@@ -263,7 +276,7 @@ void Pers::setFingElement(int mode, Thing* thing)
 /**
  * Возвращает общее количество вещей для указанного интерфейса
  */
-int Pers::getFingsCount(int iface) const
+int Pers::getThingsCount(int iface) const
 {
 	int all_cnt = 0;
 	ThingsProxyModel *tpm = thingModels.value(iface, NULL);
@@ -330,7 +343,7 @@ int Pers::getNoPriceCount(int iface) const
 /**
  * Возвращает указатель на объект вещи, учитывая номер позиции и заданный интерфейс
  */
-const Thing* Pers::getFingByRow(int row, int iface) const
+const Thing* Pers::getThingByRow(int row, int iface) const
 {
 	const Thing* thg = NULL;
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
@@ -342,36 +355,56 @@ const Thing* Pers::getFingByRow(int row, int iface) const
 /**
  * Возращает список указателей на фильтры
  */
-void Pers::getFingsFiltersEx(QList<FingFilter*>* filtersPtr) const
+void Pers::getThingsFiltersEx(QList<ThingFilter*>* filtersPtr) const
 {
 	filtersPtr->clear();
-	int cnt = fingFiltersEx.size();
+	int cnt = thingFiltersEx.size();
 	for (int i = 0; i < cnt; i++) {
-		filtersPtr->push_back(fingFiltersEx.at(i));
+		filtersPtr->push_back(thingFiltersEx.at(i));
 	}
 }
 
 /**
  * Переписывает существующие фильтры фильтрами из массива
  */
-void Pers::setFingsFiltersEx(QList<FingFilter*> newFilters)
+void Pers::setThingsFiltersEx(QList<ThingFilter*> newFilters)
 {
 	// Удаляем старый список фильтров
-	while (!fingFiltersEx.isEmpty())
-		delete fingFiltersEx.takeFirst();
+	while (!thingFiltersEx.isEmpty())
+		delete thingFiltersEx.takeFirst();
 	// Копируем новые фильтры
 	int cnt = newFilters.size();
 	for (int i = 0; i < cnt; i++)
-		fingFiltersEx.push_back(new FingFilter(*newFilters.at(i)));
+		thingFiltersEx.push_back(new ThingFilter(*newFilters.at(i)));
 	emit filtersChanged();
 }
 
 /**
  * Возвращает указатель на список цен
  */
-const QVector<Pers::price_item>* Pers::getFingsPrice() const
+const QVector<Pers::price_item>* Pers::getThingsPrice() const
 {
-	return &fingPrice;
+	return &thingPrice;
+}
+
+/**
+ * Выгружает все данные рюкзака в DOM элемент
+ */
+void Pers::backpackToXml(QDomElement &eBackpack) const
+{
+	QDomDocument xmlDoc = eBackpack.ownerDocument();
+	QDomElement eChild;
+	if (moneys != QINT32_MIN) {
+		eChild = xmlDoc.createElement("moneys");
+		eChild.appendChild(xmlDoc.createTextNode(QString::number(moneys)));
+		eBackpack.appendChild(eChild);
+	}
+	eChild = exportThingsToDomElement(xmlDoc);
+	if (!eChild.isNull())
+		eBackpack.appendChild(eChild);
+	eChild = exportPriceToDomElement(xmlDoc);
+	if (!eChild.isNull())
+		eBackpack.appendChild(eChild);
 }
 
 /**
@@ -397,17 +430,17 @@ QDomElement Pers::exportThingsToDomElement(QDomDocument &xmlDoc) const
 QDomElement Pers::exportPriceToDomElement(QDomDocument &xmlDoc) const
 {
 	QDomElement ePrice;
-	int priceCnt = fingPrice.size();
+	int priceCnt = thingPrice.size();
 	if (priceCnt > 0) {
 		ePrice = xmlDoc.createElement("price");
 		for (int i = 0; i < priceCnt; i++) {
 			QDomElement ePriceItem = xmlDoc.createElement("item");
-			int nType = fingPrice[i].type;
+			int nType = thingPrice[i].type;
 			QString sType = thingTypeToString(nType);
 			if (!sType.isEmpty()) {
 				ePriceItem.setAttribute("type", sType);
-				ePriceItem.setAttribute("name", fingPrice[i].name);
-				ePriceItem.setAttribute("price", QString::number(fingPrice[i].price));
+				ePriceItem.setAttribute("name", thingPrice[i].name);
+				ePriceItem.setAttribute("price", QString::number(thingPrice[i].price));
 				ePrice.appendChild(ePriceItem);
 			}
 		}
@@ -423,9 +456,9 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 	QDomElement eBackpack = xmlDoc.createElement("backpack");
 	QDomElement eFilters = xmlDoc.createElement("filters");
 	eBackpack.appendChild(eFilters);
-	int filtersCnt = fingFiltersEx.size();
+	int filtersCnt = thingFiltersEx.size();
 	for (int i = 0; i < filtersCnt; i++) {
-		FingFilter* oFilter = fingFiltersEx.at(i);
+		ThingFilter* oFilter = thingFiltersEx.at(i);
 		QDomElement eFilter = xmlDoc.createElement("filter");
 		if (!oFilter->isActive())
 			eFilter.setAttribute("disabled", "true");
@@ -437,23 +470,23 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 			eFilter.appendChild(eRules);
 			int ruleIndex = 0;
 			while (true) {
-				const struct FingFilter::fing_rule_ex* fre = oFilter->getRule(ruleIndex++);
+				const struct ThingFilter::thing_rule_ex* fre = oFilter->getRule(ruleIndex++);
 				if (!fre)
 					break;
 				QDomElement eRule = xmlDoc.createElement("rule");
 				QString str1 = "";
-				FingFilter::ParamRole nParam = fre->param;
-				if (nParam == FingFilter::NameRole) {
+				ThingFilter::ParamRole nParam = fre->param;
+				if (nParam == ThingFilter::NameRole) {
 					str1 = "name";
-				} else if (nParam == FingFilter::TypeRole) {
+				} else if (nParam == ThingFilter::TypeRole) {
 					str1 = "type";
-				} else if (nParam == FingFilter::NamedRole) {
+				} else if (nParam == ThingFilter::NamedRole) {
 					str1 = "named-level";
-				} else if (nParam == FingFilter::DressedRole) {
+				} else if (nParam == ThingFilter::DressedRole) {
 					str1 = "dressed";
-				} else if (nParam == FingFilter::PriceRole) {
+				} else if (nParam == ThingFilter::PriceRole) {
 					str1 = "price";
-				} else if (nParam == FingFilter::CountRole) {
+				} else if (nParam == ThingFilter::CountRole) {
 					str1 = "count";
 				}
 				if (!str1.isEmpty())
@@ -461,19 +494,19 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 				if (fre->negative)
 					eRule.setAttribute("not", "not");
 				str1 = "";
-				FingFilter::OperandRole nOper = fre->operand;
-				if (nOper == FingFilter::EqualRole) {
+				ThingFilter::OperandRole nOper = fre->operand;
+				if (nOper == ThingFilter::EqualRole) {
 					str1 = "equal";
-				} else if (nOper == FingFilter::ContainsRole) {
+				} else if (nOper == ThingFilter::ContainsRole) {
 					str1 = "contains";
-				} else if (nOper == FingFilter::AboveRole) {
+				} else if (nOper == ThingFilter::AboveRole) {
 					str1 = "above";
-				} else if (nOper == FingFilter::LowRole) {
+				} else if (nOper == ThingFilter::LowRole) {
 					str1 = "low";
 				}
 				if (!str1.isEmpty())
 					eRule.setAttribute("operand", str1);
-				if (nParam == FingFilter::TypeRole) {
+				if (nParam == ThingFilter::TypeRole) {
 					int nValue = fre->int_value;
 					str1 = thingTypeToString(nValue);
 					if (str1.isEmpty())
@@ -484,12 +517,12 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 				if (!str1.isEmpty())
 					eRule.setAttribute("value", str1);
 				str1 = "";
-				FingFilter::ActionRole nAction = fre->action;
-				if (nAction == FingFilter::YesRole) {
+				ThingFilter::ActionRole nAction = fre->action;
+				if (nAction == ThingFilter::YesRole) {
 					str1 = "yes";
-				} else if (nAction == FingFilter::NoRole) {
+				} else if (nAction == ThingFilter::NoRole) {
 					str1 = "no";
-				} else if (nAction == FingFilter::NextRole) {
+				} else if (nAction == ThingFilter::NextRole) {
 					str1 = "next";
 				}
 				if (!str1.isEmpty())
@@ -506,12 +539,18 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
  */
 void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 {
+	moneys = QINT32_MIN;
 	things->clear();
-	fingPrice.clear();
+	thingPrice.clear();
 	QDomElement eChild1 = eBackpack.firstChildElement();
 	while (!eChild1.isNull()) {
 		const QString sTagName = eChild1.tagName();
-		if (sTagName == "fings") {
+		if (sTagName == "moneys") {
+			bool fOk;
+			const int i = eChild1.text().toInt(&fOk);
+			if (fOk)
+				moneys = i;
+		} else if (sTagName == "fings") {
 			QDomElement eThing = eChild1.firstChildElement("fing");
 			while (!eThing.isNull()) {
 				Thing* thing = new Thing();
@@ -535,7 +574,7 @@ void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 						bool fOk = false;
 						priceItem.price = ePriceItem.attribute("price").toInt(&fOk);
 						if (fOk && priceItem.price >= 0) {
-							fingPrice.push_back(priceItem);
+							thingPrice.push_back(priceItem);
 						}
 					}
 				}
@@ -546,14 +585,14 @@ void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 	}
 	// Заполняем цены вещей из прайса
 	int thingsCnt = things->rowCount();
-	int priceCnt = fingPrice.size();
+	int priceCnt = thingPrice.size();
 	for (int i = 0; i < thingsCnt; i++) {
 		for (int j = 0; j < priceCnt; j++) {
 			Thing* thing = things->getThingByRow(i);
 			if (thing) {
-				if (thing->type() == fingPrice[j].type) {
-					if (thing->name().toLower() ==  fingPrice[j].name.toLower()) {
-						thing->setPrice(fingPrice[j].price);
+				if (thing->type() == thingPrice[j].type) {
+					if (thing->name().toLower() ==  thingPrice[j].name.toLower()) {
+						thing->setPrice(thingPrice[j].price);
 						break;
 					}
 				}
@@ -568,18 +607,32 @@ void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 {
 	// Очищаем старые настройки
-	while (!fingFiltersEx.isEmpty()) {
-		delete fingFiltersEx.takeFirst();
+	while (!thingFiltersEx.isEmpty()) {
+		delete thingFiltersEx.takeFirst();
 	}
 	// Анализируем DOM ноду
 	QDomElement eFilters = eBackpack.firstChildElement("filters");
-	if (eFilters.isNull())
+	if (eFilters.isNull()) {
+		// Грузим фильтры по умолчанию
+		ThingFilter *ffe = new ThingFilter();
+		ffe->setName(QString::fromUtf8("Одето"));
+		ffe->setActive(true);
+		ffe->appendRule(ThingFilter::DressedRole, false, ThingFilter::NoOperRole, QString(), ThingFilter::YesRole);
+		thingFiltersEx.append(ffe);
+		ffe = new ThingFilter();
+		ffe->setName(QString::fromUtf8("Кристаллы и ветки"));
+		ffe->setActive(true);
+		ffe->appendRule(ThingFilter::TypeRole, true, ThingFilter::EqualRole, QString::fromUtf8("вещь"), ThingFilter::NoRole);
+		ffe->appendRule(ThingFilter::NameRole, false, ThingFilter::ContainsRole, QString::fromUtf8("кристалл"), ThingFilter::YesRole);
+		ffe->appendRule(ThingFilter::NameRole, false, ThingFilter::ContainsRole, QString::fromUtf8("ветка"), ThingFilter::YesRole);
+		thingFiltersEx.append(ffe);
 		return;
+	}
 	QDomElement eFilter = eFilters.firstChildElement("filter");
 	while (!eFilter.isNull()) {
 		const QString sName = eFilter.attribute("name");
 		if (!sName.isEmpty()) {
-			FingFilter* ffe = new FingFilter();
+			ThingFilter* ffe = new ThingFilter();
 			ffe->setName(sName);
 			if (eFilter.attribute("disabled").toLower() == "true")
 				ffe->setActive(false);
@@ -590,48 +643,48 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 				while (!eRule.isNull()) {
 					// Грузим элемент правила
 					QString str1 = eRule.attribute("field").trimmed().toLower();
-					FingFilter::ParamRole nField = FingFilter::NoParamRole;
+					ThingFilter::ParamRole nField = ThingFilter::NoParamRole;
 					if (str1 == "name") {
-						nField = FingFilter::NameRole;
+						nField = ThingFilter::NameRole;
 					} else if (str1 == "type") {
-						nField = FingFilter::TypeRole;
+						nField = ThingFilter::TypeRole;
 					} else if (str1 == "named-level") {
-						nField = FingFilter::NamedRole;
+						nField = ThingFilter::NamedRole;
 					} else if (str1 == "dressed") {
-						nField = FingFilter::DressedRole;
+						nField = ThingFilter::DressedRole;
 					} else if (str1 == "price") {
-						nField = FingFilter::PriceRole;
+						nField = ThingFilter::PriceRole;
 					} else if (str1 == "count") {
-						nField = FingFilter::CountRole;
+						nField = ThingFilter::CountRole;
 					}
 					str1 = eRule.attribute("not");
 					bool fNot = !str1.isEmpty();
-					FingFilter::OperandRole nOperand = FingFilter::NoOperRole;
+					ThingFilter::OperandRole nOperand = ThingFilter::NoOperRole;
 					str1 = eRule.attribute("operand").trimmed().toLower();
 					if (str1 == "contains") {
-						nOperand = FingFilter::ContainsRole;
+						nOperand = ThingFilter::ContainsRole;
 					} else if (str1 == "equal") {
-						nOperand = FingFilter::EqualRole;
+						nOperand = ThingFilter::EqualRole;
 					} else if (str1 == "above") {
-						nOperand = FingFilter::AboveRole;
+						nOperand = ThingFilter::AboveRole;
 					} else if (str1 == "low") {
-						nOperand = FingFilter::LowRole;
+						nOperand = ThingFilter::LowRole;
 					}
 					str1 = eRule.attribute("action").trimmed().toLower();
-					FingFilter::ActionRole nAction = FingFilter::NoActionRole;
+					ThingFilter::ActionRole nAction = ThingFilter::NoActionRole;
 					if (str1 == "yes") {
-						nAction = FingFilter::YesRole;
+						nAction = ThingFilter::YesRole;
 					} else if (str1 == "no") {
-						nAction = FingFilter::NoRole;
+						nAction = ThingFilter::NoRole;
 					} else if (str1 == "next") {
-						nAction = FingFilter::NextRole;
+						nAction = ThingFilter::NextRole;
 					}
 					str1 = eRule.attribute("value");
 					ffe->appendRule(nField, fNot, nOperand, str1, nAction);
 					eRule = eRule.nextSiblingElement("rule");
 				}
 			}
-			fingFiltersEx.push_back(ffe);
+			thingFiltersEx.push_back(ffe);
 		}
 		eFilter = eFilter.nextSiblingElement("filter");
 	}
@@ -641,7 +694,7 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 /**
  * Устанавливает цену для вещи
  */
-void Pers::setFingPrice(int iface, int row, int price)
+void Pers::setThingPrice(int iface, int row, int price)
 {
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
 	if (tpm == NULL)
@@ -654,12 +707,12 @@ void Pers::setFingPrice(int iface, int row, int price)
 	int n_type = thg->type();
 	QString s_name = thg->name();
 	QString s_name2 = s_name.toLower();
-	int price_cnt = fingPrice.size();
+	int price_cnt = thingPrice.size();
 	bool f_find = false;
 	for (int i = 0; i < price_cnt; i++) {
-		if (fingPrice[i].type == n_type) {
-			if (fingPrice[i].name.toLower() == s_name2) {
-				fingPrice[i].price = price;
+		if (thingPrice[i].type == n_type) {
+			if (thingPrice[i].name.toLower() == s_name2) {
+				thingPrice[i].price = price;
 				f_find = true;
 				break;
 			}
@@ -670,7 +723,7 @@ void Pers::setFingPrice(int iface, int row, int price)
 		p_i.type = n_type;
 		p_i.name = s_name;
 		p_i.price = price;
-		fingPrice.push_back(p_i);
+		thingPrice.push_back(p_i);
 	}
 }
 
@@ -788,6 +841,8 @@ void Pers::endSetPersParams()
 				}
 			}
 		}
+		if (persHealthCurr > persHealthCurr_ && persHealthCurr_ < persHealthMax)
+			lastNegativeHealthUpdate = QDateTime::currentDateTime();
 		persHealthCurr = persHealthCurr_;
 	}
 	if (setPersEnergyMaxFlag) {
@@ -812,6 +867,8 @@ void Pers::endSetPersParams()
 				}
 			}
 		}
+		if (persEnergyCurr > persEnergyCurr_ + 1 && persEnergyCurr_ < persEnergyMax - 1)
+			lastNegativeEnergyUpdate = QDateTime::currentDateTime();
 		persEnergyCurr = persEnergyCurr_;
 	}
 	if (setPersLevelValueFlag) persLevelValue = persLevelValue_;
@@ -843,6 +900,8 @@ void Pers::endSetPersParams()
 	if (setPersHealthCurrFlag) {
 		if (persHealthCurr != QINT32_MIN) {
 			emit persParamChanged(ParamHealthCurr, TYPE_INTEGER_FULL, persHealthCurr);
+			if (persHealthCurr >= persHealthMax)
+				showRegenEvent(ParamHealthCurr);
 		} else {
 			emit persParamChanged(ParamHealthCurr, TYPE_NA, 0);
 		}
@@ -857,6 +916,8 @@ void Pers::endSetPersParams()
 	if (setPersEnergyCurrFlag) {
 		if (persEnergyCurr != QINT32_MIN) {
 			emit persParamChanged(ParamEnergyCurr, TYPE_INTEGER_FULL, persEnergyCurr);
+			if (persEnergyCurr >= persEnergyMax -1)
+				showRegenEvent(ParamEnergyCurr);
 		} else {
 			emit persParamChanged(ParamEnergyCurr, TYPE_NA, 0);
 		}
@@ -1196,7 +1257,7 @@ int Pers::getThingsInterface()
 			ThingsProxyModel* tpm = new ThingsProxyModel();
 			if (!tpm)
 				break;
-			tpm->setFingsSource(things);
+			tpm->setThingsSource(things);
 			thingModels.insert(i, tpm);
 			return i;
 		}
@@ -1208,9 +1269,9 @@ void Pers::setThingsInterfaceFilter(int iface, int filter_num)
 {
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
 	if (tpm) {
-		FingFilter* ff = NULL;
-		if (filter_num > 0 && filter_num <= fingFiltersEx.size())
-			ff = fingFiltersEx.at(filter_num - 1);
+		ThingFilter* ff = NULL;
+		if (filter_num > 0 && filter_num <= thingFiltersEx.size())
+			ff = thingFiltersEx.at(filter_num - 1);
 		tpm->setFilter(ff);
 	}
 }
@@ -1283,18 +1344,15 @@ QString Pers::getPersStatusString()
 
 void Pers::doWatchRestTime()
 {
-	if (persStatus == StatusStand) {
-		QString str1 = "0";
-		PluginCore::instance()->sendString(str1); // TODO Сделать отсылку только если нет очереди сообщений
+	if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
+		Sender::instance()->sendString("0");
 	}
 }
 
 void Pers::doWatchHealthRestTime()
 {
 	if (settingWatchRestHealthEnergy == 1 && watchHealthSpeedDelta == 0) {
-		if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
-			PluginCore::instance()->sendString("0");
-		}
+		doWatchRestTime();
 	} else if (settingWatchRestHealthEnergy == 1) {
 		if (watchHealthSpeedDelta > 0) { // Имеются результаты замеров
 			int timeDelta = watchHealthStartTime2.elapsed();
@@ -1305,6 +1363,8 @@ void Pers::doWatchHealthRestTime()
 				if (persHealthCurr > persHealthMax) persHealthCurr = persHealthMax;
 				if (persHealthCurr == persHealthMax) watchHealthRestTimer->stop();
 				emit persParamChanged(ParamHealthCurr, TYPE_INTEGER_FULL, persHealthCurr);
+				if (persHealthCurr >= persHealthMax)
+					showRegenEvent(ParamHealthCurr);
 			}
 		}
 	}
@@ -1315,9 +1375,7 @@ void Pers::doWatchEnergyRestTime()
 	if (settingWatchRestHealthEnergy != 1)
 		return;
 	if (watchEnergySpeedDelta == 0) {
-		if (persStatus == StatusStand && Sender::instance()->getGameQueueLength() == 0) {
-			PluginCore::instance()->sendString("0");
-		}
+		doWatchRestTime();
 	} else {
 		int timeDelta = watchEnergyStartTime2.elapsed();
 		if (persEnergyCurr == QINT32_MIN || persEnergyMax == QINT32_MIN || persEnergyCurr >= persEnergyMax) {
@@ -1329,14 +1387,16 @@ void Pers::doWatchEnergyRestTime()
 			if (persEnergyCurr == persEnergyMax)
 				watchEnergyRestTimer->stop();
 			emit persParamChanged(ParamEnergyCurr, TYPE_INTEGER_FULL, persEnergyCurr);
+			if (persEnergyCurr >= persEnergyMax)
+				showRegenEvent(ParamEnergyCurr);
 		}
 	}
 }
 
-void Pers::setCoordinates(const QPoint &p)
+void Pers::setMapPosition(const MapPos &p)
 {
-	if (p != coordinates) {
-		coordinates = p;
+	if (p != position) {
+		position = p;
 		emit persParamChanged(ParamCoordinates, TYPE_INTEGER_FULL, 0);
 		if (settingWatchRestHealthEnergy == 1) {
 			// Если производится расчет восстановления энергии, делаем поправку на ход (затраты энергии)
@@ -1344,6 +1404,27 @@ void Pers::setCoordinates(const QPoint &p)
 				--watchEnergyStartValue;
 				--watchEnergyStartValue2;
 			}
+		}
+	}
+}
+
+void Pers::showRegenEvent(PersParams param)
+{
+	if (param == ParamHealthCurr) {
+		if (!lastNegativeHealthUpdate.isNull()) {
+			const int regenDuration = Settings::instance()->getIntSetting(Settings::SettingRegenDurationForPopup);
+			if (regenDuration > 0 && lastNegativeHealthUpdate.secsTo(QDateTime::currentDateTime()) >= regenDuration) {
+				PluginCore::instance()->initPopup(QString::fromUtf8("Здоровье восстановлено"), 10);
+			}
+			lastNegativeHealthUpdate = QDateTime();
+		}
+	} else if (param == ParamEnergyCurr) {
+		if (!lastNegativeEnergyUpdate.isNull()) {
+			const int regenDuration = Settings::instance()->getIntSetting(Settings::SettingRegenDurationForPopup);
+			if (regenDuration > 0 && lastNegativeEnergyUpdate.secsTo(QDateTime::currentDateTime()) >= regenDuration) {
+				PluginCore::instance()->initPopup(QString::fromUtf8("Энергия восстановлена"), 10);
+			}
+			lastNegativeEnergyUpdate = QDateTime();
 		}
 	}
 }

@@ -1,6 +1,6 @@
 /*
- * thingruledlg.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * mappos.cpp - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,29 +23,42 @@
  *
  */
 
-#ifndef THINGRULEEDIT_H
-#define THINGRULEEDIT_H
+#include "mappos.h"
 
-#include "ui_thingruledlg.h"
-#include "pers.h"
-
-class ThingRuleEditDialog : public QDialog, public Ui::ThingRuleEdit
+MapPos::MapPos() :
+	x_(0), y_(0),
+	valid(false)
 {
-	Q_OBJECT
-public:
-	ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex*);
-	~ThingRuleEditDialog();
+}
 
-protected:
-	struct ThingFilter::thing_rule_ex* savedRulePtr;
-	QList<ThingFilter::ParamRole> paramRoles;
-	QList<ThingFilter::OperandRole> operandRoles;
-	QList<ThingFilter::ActionRole> actionRoles;
+MapPos::MapPos(int posX, int posY)
+{
+	setPos(posX, posY);
+}
 
-protected slots:
-	void paramChanged(int);
-	void okBtnClick();
+MapPos::MapPos(const MapPos &pos)
+{
+	valid = pos.valid;
+	if (valid) {
+		x_ = pos.x();
+		y_ = pos.y();
+	}
+}
 
-};
+void MapPos::setPos(int posX, int posY)
+{
+	x_ = posX;
+	y_ = posY;
+	valid = true;
+}
 
-#endif // THINGRULEEDIT_H
+bool MapPos::operator == (const MapPos &pos) const
+{
+	return (valid == pos.valid && x_ == pos.x_ && y_ == pos.y_);
+}
+
+bool MapPos::operator != (const MapPos &pos) const
+{
+	return (valid != pos.valid || x_ != pos.x_ || y_ != pos.y_);
+}
+

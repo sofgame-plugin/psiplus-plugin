@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FingRuleEdit</class>
- <widget class="QDialog" name="FingRuleEdit">
+ <class>ThingRuleEdit</class>
+ <widget class="QDialog" name="ThingRuleEdit">
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
@@ -147,7 +147,7 @@
   <connection>
    <sender>OkCancelBtn</sender>
    <signal>rejected()</signal>
-   <receiver>FingRuleEdit</receiver>
+   <receiver>ThingRuleEdit</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -160,5 +160,24 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>OkCancelBtn</sender>
+   <signal>accepted()</signal>
+   <receiver>ThingRuleEdit</receiver>
+   <slot>okBtnClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>484</x>
+     <y>74</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>50</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>okBtnClick()</slot>
+ </slots>
 </ui>

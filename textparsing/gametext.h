@@ -1,6 +1,6 @@
 /*
- * thingruledlg.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * gametext.h - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,29 +23,37 @@
  *
  */
 
-#ifndef THINGRULEEDIT_H
-#define THINGRULEEDIT_H
+#ifndef GAMETEXT_H
+#define GAMETEXT_H
 
-#include "ui_thingruledlg.h"
-#include "pers.h"
+#include <QString>
+#include <QList>
+#include <QPair>
 
-class ThingRuleEditDialog : public QDialog, public Ui::ThingRuleEdit
+class GameText
 {
-	Q_OBJECT
 public:
-	ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex*);
-	~ThingRuleEditDialog();
+	GameText();
+	GameText(const QString &text, bool html);
+	bool isEmpty() const {return textArray.isEmpty();};
+	bool isFirst() const {return (pos == 0);};
+	bool isEnd() const;
+	void setEnd() {pos = textArray.size();};
+	const QString &currentLine() const;
+	const QString &nextLine();
+	void prior();
+	void next();
+	void append(const QString &text, bool html);
+	void removeLine();
+	void replace(const QString &text, bool html);
+	void savePos() {savedPos = pos;};
+	void restorePos() {pos = savedPos;};
+	QString toHtml() const;
 
-protected:
-	struct ThingFilter::thing_rule_ex* savedRulePtr;
-	QList<ThingFilter::ParamRole> paramRoles;
-	QList<ThingFilter::OperandRole> operandRoles;
-	QList<ThingFilter::ActionRole> actionRoles;
-
-protected slots:
-	void paramChanged(int);
-	void okBtnClick();
-
+private:
+	QList< QPair<bool, QString> > textArray;
+	int pos;
+	int savedPos;
 };
 
-#endif // THINGRULEEDIT_H
+#endif // GAMETEXT_H

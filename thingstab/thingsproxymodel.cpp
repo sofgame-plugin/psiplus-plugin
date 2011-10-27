@@ -26,19 +26,18 @@
 
 #include "thingsproxymodel.h"
 
-ThingsProxyModel::ThingsProxyModel(QObject *parent) : QSortFilterProxyModel(parent)
+ThingsProxyModel::ThingsProxyModel(QObject *parent) :
+	QSortFilterProxyModel(parent),
+	thingsSource(NULL),
+	thingsFilter(NULL)
 {
-	thingsSource = NULL;
-	thingsFilter = NULL;
-	//setDynamicSortFilter(true);
 }
 
 ThingsProxyModel::~ThingsProxyModel()
 {
-
 }
 
-bool ThingsProxyModel::filterAcceptsColumn ( int /*source_column*/, const QModelIndex & /*source_parent*/ ) const
+bool ThingsProxyModel::filterAcceptsColumn ( int /*source_column*/, const QModelIndex &/*source_parent*/ ) const
 {
 	return true;
 }
@@ -49,7 +48,7 @@ bool ThingsProxyModel::filterAcceptsRow(int source_row, const QModelIndex &/*sou
 		return true; // Фильтр не задан
 	const Thing* thg = thingsSource->getThingByRow(source_row);
 	if (thg) {
-		if (thingsFilter->isFingShow(thg)) {
+		if (thingsFilter->isThingShow(thg)) {
 			return true;
 		}
 	}
@@ -87,7 +86,7 @@ bool ThingsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
 	return b_res;
 }
 
-void ThingsProxyModel::setFingsSource(ThingsModel* things_model) {
+void ThingsProxyModel::setThingsSource(ThingsModel* things_model) {
 	thingsSource = things_model;
 	if (thingsSource)
 		setSourceModel(thingsSource);
@@ -107,7 +106,7 @@ const Thing* ThingsProxyModel::getThingByRow(int row) const
 	return NULL;
 }
 
-void ThingsProxyModel::setFilter(FingFilter* filter)
+void ThingsProxyModel::setFilter(ThingFilter* filter)
 {
 	thingsFilter = filter;
 	invalidateFilter();

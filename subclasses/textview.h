@@ -1,6 +1,6 @@
 /*
- * thingruledlg.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * textview.h - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,29 +23,37 @@
  *
  */
 
-#ifndef THINGRULEEDIT_H
-#define THINGRULEEDIT_H
+#ifndef TEXTVIEW_H
+#define TEXTVIEW_H
 
-#include "ui_thingruledlg.h"
-#include "pers.h"
+#include <QTextEdit>
 
-class ThingRuleEditDialog : public QDialog, public Ui::ThingRuleEdit
+class TextView : public QTextEdit
 {
-	Q_OBJECT
+Q_OBJECT
 public:
-	ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex*);
-	~ThingRuleEditDialog();
+	enum TextType {
+		LocalText,
+		GameText,
+		PluginText
+	};
+	TextView(QWidget *parent = 0);
+	void appendText(const QString &text, TextType type);
 
 protected:
-	struct ThingFilter::thing_rule_ex* savedRulePtr;
-	QList<ThingFilter::ParamRole> paramRoles;
-	QList<ThingFilter::OperandRole> operandRoles;
-	QList<ThingFilter::ActionRole> actionRoles;
+	QMimeData *createMimeDataFromSelection() const;
 
-protected slots:
-	void paramChanged(int);
-	void okBtnClick();
+private:
+	QString logTimeString(TextType type);
+	void setLogIcons();
+	void changeEvent(QEvent *e);
+	QString convertToPlainText(const QTextDocument *doc) const;
+	bool atBottom() const;
+	void scrollToBottom();
+
+private slots:
+	void reloadResources();
 
 };
 
-#endif // THINGRULEEDIT_H
+#endif // TEXTVIEW_H

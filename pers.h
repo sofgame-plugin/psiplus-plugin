@@ -34,8 +34,9 @@
 #include "thingstab/thingsmodel.h"
 #include "thingstab/thingsproxymodel.h"
 #include "settings.h"
+#include "maps/mappos.h"
 
-#define FING_APPEND                 1
+#define THING_APPEND                 1
 
 class Pers: public QObject
 {
@@ -54,6 +55,7 @@ public:
 	};
 	enum PersParams {
 		ParamPersName,
+		ParamMoneysCount,
 		ParamPersLevel,
 		ParamPersStatus,
 		ParamExperienceCurr, ParamExperienceMax,
@@ -71,21 +73,21 @@ public:
 	void init();
 	void setName(const QString &);
 	const QString & name() const;
-	void setFingsStart(bool clear);
-	void setFingsEnd();
-	void setFingElement(int, Thing*);
-	int  getFingsCount(int) const;
+	int  moneysCount() const {return moneys;};
+	void setMoneys(int);
+	void setThingsStart(bool clear);
+	void setThingsEnd();
+	void setThingElement(int, Thing*);
+	int  getThingsCount(int) const;
 	int  getPriceAll(int) const;
 	int  getNoPriceCount(int) const;
-	const Thing* getFingByRow(int, int) const;
-	void getFingsFiltersEx(QList<FingFilter*>*) const;
-	void setFingsFiltersEx(QList<FingFilter*>);
-	const QVector<price_item>* getFingsPrice() const;
-	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
-	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
-	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
+	const Thing* getThingByRow(int, int) const;
+	void getThingsFiltersEx(QList<ThingFilter*>*) const;
+	void setThingsFiltersEx(QList<ThingFilter*>);
+	const QVector<price_item>* getThingsPrice() const;
+	void backpackToXml(QDomElement &eBackpack) const;
 	void loadThingsFromDomElement(QDomElement &);
-	void setFingPrice(int, int, int);
+	void setThingPrice(int, int, int);
 	void beginSetPersParams();
 	void setPersParams(int, int, int);
 	void setPersParams(int, int, long long);
@@ -99,8 +101,10 @@ public:
 	void removeThingsInterface(int);
 	QSortFilterProxyModel* getThingsModel(int) const;
 	QString getPersStatusString();
-	const QPoint &getCoordinates() const {return coordinates;};
-	void setCoordinates(const QPoint &p);
+	const MapPos &getCoordinates() const {return position;};
+	void setMapPosition(const MapPos &p);
+	const MapPos &getMapPosition() const {return position;};
+	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 private:
 	QString pers_name;
@@ -114,10 +118,10 @@ private:
 	int  persEnergyMax; int persEnergyMax_; bool setPersEnergyMaxFlag;
 	int  persEnergyCurr; int persEnergyCurr_; bool setPersEnergyCurrFlag;
 	bool setPersLevelFlag;
-	bool loadingFings;
-	bool fingChanged;
-	int  fingsPos;
-	int  fingsSize;
+	bool loadingThings;
+	bool thingChanged;
+	int  thingsPos;
+	int  thingsSize;
 	int  settingWatchRestHealthEnergy;
 	int  watchHealthStartValue;
 	int  watchHealthStartValue2;
@@ -130,23 +134,28 @@ private:
 	QTimer *watchRestTimer;
 	QTimer *watchHealthRestTimer;
 	QTimer *watchEnergyRestTimer;
-
 	QTime watchHealthStartTime;
 	QTime watchHealthStartTime2;
 	QTime watchEnergyStartTime;
 	QTime watchEnergyStartTime2;
 	ThingsModel* things;
-	QList<FingFilter*> fingFiltersEx;
+	QList<ThingFilter*> thingFiltersEx;
 	QHash<int, ThingsProxyModel*> thingModels;
-	QVector<price_item> fingPrice;
+	QVector<price_item> thingPrice;
 	static Pers *instance_;
 	static QHash<PersStatus, QString> statusStrings;
-	QPoint coordinates;
+	MapPos position;
+	QDateTime lastNegativeHealthUpdate;
+	QDateTime lastNegativeEnergyUpdate;
+	int moneys;
 
 private:
 	Pers(QObject *parent = 0);
 	~Pers();
 	void loadBackpackSettingsFromDomNode(const QDomElement &);
+	void showRegenEvent(PersParams param);
+	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
+	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
 
 private slots:
 	void doWatchRestTime();
@@ -154,7 +163,7 @@ private slots:
 	void doWatchEnergyRestTime();
 
 signals:
-	void fingsChanged();
+	void thingsChanged();
 	void filtersChanged();
 	void persParamChanged(int, int, int);
 

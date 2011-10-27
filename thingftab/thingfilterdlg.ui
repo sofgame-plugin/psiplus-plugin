@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FingFilterEdit</class>
- <widget class="QDialog" name="FingFilterEdit">
+ <class>ThingFilterEdit</class>
+ <widget class="QDialog" name="ThingFilterEdit">
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
@@ -78,7 +78,7 @@
   <connection>
    <sender>OkCancelBtn</sender>
    <signal>rejected()</signal>
-   <receiver>FingFilterEdit</receiver>
+   <receiver>ThingFilterEdit</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -91,5 +91,24 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>OkCancelBtn</sender>
+   <signal>accepted()</signal>
+   <receiver>ThingFilterEdit</receiver>
+   <slot>okBtnClick()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>303</x>
+     <y>67</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>196</x>
+     <y>45</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>okBtnClick()</slot>
+ </slots>
 </ui>

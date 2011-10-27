@@ -38,17 +38,17 @@ public:
 	ThingsProxyModel(QObject *parent = 0);
 	~ThingsProxyModel();
 	// --
-	void setFingsSource(ThingsModel*);
+	void setThingsSource(ThingsModel*);
 	const Thing* getThingByRow(int) const;
-	void setFilter(FingFilter*);
+	void setFilter(ThingFilter*);
 	void setPrice(int /*row*/, int /*price*/);
 private:
 	ThingsModel* thingsSource;
-	FingFilter* thingsFilter;
+	ThingFilter* thingsFilter;
 protected:
-	virtual bool filterAcceptsColumn ( int source_column, const QModelIndex & source_parent ) const;
-	virtual bool filterAcceptsRow ( int source_row, const QModelIndex & source_parent ) const;
-	virtual bool lessThan ( const QModelIndex & left, const QModelIndex & right ) const;
+	virtual bool filterAcceptsColumn ( int source_column, const QModelIndex &source_parent ) const;
+	virtual bool filterAcceptsRow ( int source_row, const QModelIndex &source_parent ) const;
+	virtual bool lessThan ( const QModelIndex & left, const QModelIndex &right ) const;
 };
 
 #endif // THINGSPROXYMODEL_H

@@ -1,6 +1,6 @@
 /*
- * thingruledlg.h - Sof Game Psi plugin
- * Copyright (C) 2010  Aleksey Andreev
+ * mappos.h - Sof Game Psi plugin
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,29 +23,30 @@
  *
  */
 
-#ifndef THINGRULEEDIT_H
-#define THINGRULEEDIT_H
+#ifndef MAPPOS_H
+#define MAPPOS_H
 
-#include "ui_thingruledlg.h"
-#include "pers.h"
+#include <QPoint>
 
-class ThingRuleEditDialog : public QDialog, public Ui::ThingRuleEdit
+class MapPos
 {
-	Q_OBJECT
 public:
-	ThingRuleEditDialog(QWidget* parent, struct ThingFilter::thing_rule_ex*);
-	~ThingRuleEditDialog();
+	MapPos();
+	MapPos(int posX, int posY);
+	MapPos(const MapPos &pos);
+	void reset() {valid = false;};
+	bool isValid() const {return valid;};
+	int  x() const {return x_;};
+	int  y() const {return y_;};
+	void setPos(int posX, int posY);
+	bool operator == (const MapPos &pos) const;
+	bool operator != (const MapPos &pos) const;
 
-protected:
-	struct ThingFilter::thing_rule_ex* savedRulePtr;
-	QList<ThingFilter::ParamRole> paramRoles;
-	QList<ThingFilter::OperandRole> operandRoles;
-	QList<ThingFilter::ActionRole> actionRoles;
-
-protected slots:
-	void paramChanged(int);
-	void okBtnClick();
+private:
+	int x_;
+	int y_;
+	bool valid;
 
 };
 
-#endif // THINGRULEEDIT_H
+#endif // MAPPOS_H

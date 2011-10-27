@@ -29,9 +29,7 @@
 #include <QtCore>
 #include <QDomDocument>
 
-#include "applicationinfoaccessinghost.h"
-
-
+extern const QString emptyString;
 bool savePluginXml(QDomDocument* xmlDoc, QString filename);
 bool saveXmlToFile(QDomDocument* xmlDoc, QString filename);
 bool loadPluginXml(QDomDocument* xmlDoc, QString filename);
@@ -42,8 +40,5 @@ QString thingTypeToString(int);
 int thingTypeFromString(QString);
 QString thingTypes();
 QStringList splitCommandString(const QString &str);
-
-extern ApplicationInfoAccessingHost *appInfoHost;
-
 
 #endif

@@ -160,8 +160,6 @@ class PersInfo: public QObject
 };
 
 void resetEquip(struct equip_element*);
-bool getEquipFromString(QString, struct equip_element*);
-
-//extern QStringList fingTypeStrings;
+bool getEquipFromString(const QString &, struct equip_element*);
 
 #endif

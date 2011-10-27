@@ -36,6 +36,8 @@
 #include "pers_info.h"
 #include "sender.h"
 #include "settings.h"
+#include "pluginhosts.h"
+#include "subclasses/textview.h"
 
 QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
 				<< (QPair<int, QString>) {VALUE_LAST_GAME_JID, "last-game-jid"}
@@ -45,8 +47,8 @@ QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<i
 				<< (QPair<int, QString>) {VALUE_DAMAGE_MIN_FROM_PERS, "damage-min-from-pers"}
 				<< (QPair<int, QString>) {VALUE_FIGHTS_COUNT, "fights-count"}
 				<< (QPair<int, QString>) {VALUE_DROP_MONEYS, "drop-moneys"}
-				<< (QPair<int, QString>) {VALUE_FINGS_DROP_COUNT, "fings-drop-count"}
-				<< (QPair<int, QString>) {VALUE_FING_DROP_LAST, "fing-drop-last"}
+				<< (QPair<int, QString>) {VALUE_THINGS_DROP_COUNT, "fings-drop-count"}
+				<< (QPair<int, QString>) {VALUE_THING_DROP_LAST, "fing-drop-last"}
 				<< (QPair<int, QString>) {VALUE_EXPERIENCE_DROP_COUNT, "experience-drop-count"}
 				<< (QPair<int, QString>) {VALUE_KILLED_ENEMIES, "killed-enemies"};
 
@@ -69,7 +71,7 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(mainModeBtn, SIGNAL(released()), SLOT(activateMainPage()));
 	connect(fightModeBtn, SIGNAL(released()), SLOT(activateFightPage()));
 	connect(persInfoModeBtn, SIGNAL(released()), SLOT(activatePersInfoPage()));
-	connect(thingsModeBtn, SIGNAL(released()), SLOT(activateFingsPage()));
+	connect(thingsModeBtn, SIGNAL(released()), SLOT(activateThingsPage()));
 	connect(statModeBtn, SIGNAL(released()), SLOT(activateStatPage()));
 	connect(settingsModeBtn, SIGNAL(released()), SLOT(activateSettingsPage()));
 	// Страницы плагина
@@ -123,32 +125,35 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
 	connect(userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
 	// Кнопка ввода команд
+	cmd_send->setIcon(PluginHosts::psiIcon->getIcon("psi/action_button_send"));
 	connect(cmd_send, SIGNAL(clicked()), SLOT(userCommandReturnPressed()));
 	// Таббар вещей (фильтры)
-	fingsTabBar = new QTabBar(page_4);
-	connect(fingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showFings(int)));
+	thingsTabBar = new QTabBar(page_4);
+	connect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
 	// Таблица вещей
 	thingsIface = 0;
 	QLayout* lt = page_4->layout();
-	lt->removeWidget(fingsTable);
-	lt->removeItem(fingsSummaryLayout);
-	lt->addWidget(fingsTabBar);
-	lt->addWidget(fingsTable);
-	lt->addItem(fingsSummaryLayout);
+	lt->removeWidget(thingsTable);
+	lt->removeItem(thingsSummaryLayout);
+	lt->removeItem(moneyCountLayout);
+	lt->addWidget(thingsTabBar);
+	lt->addWidget(thingsTable);
+	lt->addItem(thingsSummaryLayout);
+	lt->addItem(moneyCountLayout);
 	// Создаем контекстное меню вещей
-	actionSetFingPrice = new QAction(fingsTable);
-	actionSetFingPrice->setText(QString::fromUtf8("Цена у торговца"));
-	actionSetFingPrice->setStatusTip(QString::fromUtf8("Цена для продажи торговцу"));
-	connect(actionSetFingPrice, SIGNAL(triggered()), this, SLOT(setFingPrice()));
-	actionFingsParamToConsole = new QAction(fingsTable);
-	actionFingsParamToConsole->setText(QString::fromUtf8("Сбросить параметры в консоль"));
-	actionFingsParamToConsole->setStatusTip(QString::fromUtf8("Сбросить параметры вещи в консоль"));
-	connect(actionFingsParamToConsole, SIGNAL(triggered()), this, SLOT(fingParamToConsole()));
-	fingsMenu = new QMenu(this);
-	fingsMenu->addAction(actionSetFingPrice);
-	fingsMenu->addAction(actionFingsParamToConsole);
-	connect(fingsTable, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(fingsShowContextMenu(const QPoint &)));
-	fingsTable->setContextMenuPolicy(Qt::CustomContextMenu);
+	actionSetThingPrice = new QAction(thingsTable);
+	actionSetThingPrice->setText(QString::fromUtf8("Цена у торговца"));
+	actionSetThingPrice->setStatusTip(QString::fromUtf8("Цена для продажи торговцу"));
+	connect(actionSetThingPrice, SIGNAL(triggered()), this, SLOT(setThingPrice()));
+	actionThingsParamToConsole = new QAction(thingsTable);
+	actionThingsParamToConsole->setText(QString::fromUtf8("Сбросить параметры в консоль"));
+	actionThingsParamToConsole->setStatusTip(QString::fromUtf8("Сбросить параметры вещи в консоль"));
+	connect(actionThingsParamToConsole, SIGNAL(triggered()), this, SLOT(thingParamToConsole()));
+	thingsMenu = new QMenu(this);
+	thingsMenu->addAction(actionSetThingPrice);
+	thingsMenu->addAction(actionThingsParamToConsole);
+	connect(thingsTable, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(thingsShowContextMenu(const QPoint &)));
+	thingsTable->setContextMenuPolicy(Qt::CustomContextMenu);
 	// Табвиджет настроек
 	settingTab->setCurrentIndex(0);
 	// Кнопки шрифтов
@@ -163,19 +168,19 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	statisticWidgets[VALUE_LAST_CHAT_JID] = (StatWidgets) {lastGameChatCaption_label, lastGameChatValue_label};
 	statisticWidgets[VALUE_MESSAGES_COUNT] = (StatWidgets) {gameMessagesCountCaption_label, gameMessagesCountValue_label};
 	connect(resetCommonStatBtn, SIGNAL(released()), SLOT(resetCommonStatistic()));
-	statisticWidgets[VALUE_FIGHTS_COUNT] = (StatWidgets) {fingsCountCaption_label, fingsCountValue_label};
+	statisticWidgets[VALUE_FIGHTS_COUNT] = (StatWidgets) {fightsCountCaption_label, fightsCountValue_label};
 	statisticWidgets[VALUE_DAMAGE_MAX_FROM_PERS] = (StatWidgets) {damageMaxFromPersCaption_label, damageMaxFromPersValue_label};
 	statisticWidgets[VALUE_DAMAGE_MIN_FROM_PERS] = (StatWidgets) {damageMinFromPersCaption_label, damageMinFromPersValue_label};
 	statisticWidgets[VALUE_DROP_MONEYS] = (StatWidgets) {dropMoneysCaption_label, dropMoneysValue_label};
-	statisticWidgets[VALUE_FINGS_DROP_COUNT] = (StatWidgets) {fingsDropCountCaption_label, fingsDropCountValue_label};
-	statisticWidgets[VALUE_FING_DROP_LAST] = (StatWidgets) {fingDropLastCaption_label, fingDropLastValue_label};
+	statisticWidgets[VALUE_THINGS_DROP_COUNT] = (StatWidgets) {thingsDropCountCaption_label, thingsDropCountValue_label};
+	statisticWidgets[VALUE_THING_DROP_LAST] = (StatWidgets) {thingDropLastCaption_label, thingDropLastValue_label};
 	statisticWidgets[VALUE_EXPERIENCE_DROP_COUNT] = (StatWidgets) {experienceDropCountCaption_label, experienceDropCountValue_label};
 	statisticWidgets[VALUE_KILLED_ENEMIES] = (StatWidgets) {killedEnemiesCaption_label, killedEnemiesValue_label};
 	connect(resetFightsStatBtn, SIGNAL(released()), SLOT(resetFightStatistic()));
 	// Таблицы для настройки фильтров
-	fingFiltersTable->init(&filtersList);
-	fingRulesTable->init(&filtersList);
-	connect(fingFiltersTable, SIGNAL(currFilterChanged(int)), fingRulesTable, SLOT(currFilterChanged(int)));
+	thingFiltersTable->init(&filtersList);
+	thingRulesTable->init(&filtersList);
+	connect(thingFiltersTable, SIGNAL(currFilterChanged(int)), thingRulesTable, SLOT(currFilterChanged(int)));
 	// Настройки слотов
 	fillSlotCombo(slot1Combo);
 	fillSlotCombo(slot2Combo);
@@ -217,10 +222,12 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(stackedWidget, SIGNAL(currentChanged(int)), this, SLOT(changePage(int)));
 	// Соединение с параметрами персонажа
 	Pers *pers = Pers::instance();
-	connect(pers, SIGNAL(fingsChanged()), this, SLOT(persFingsChanged()));
+	connect(pers, SIGNAL(thingsChanged()), this, SLOT(persThingsChanged()));
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	// Сигнал на смену фильтров
-	connect(pers, SIGNAL(filtersChanged()), this, SLOT(updateFingFiltersTab()));
+	connect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
+	// Завязки в настройках
+	connect(restPopup, SIGNAL(toggled(bool)), restDurationPopup, SLOT(setEnabled(bool)));
 	// Инициируем форму
 	init();
 	// Устанавливаем фокус ввода
@@ -239,12 +246,12 @@ SofMainWindow::~SofMainWindow()
 	while (!filtersList.isEmpty()) {
 		delete filtersList.takeFirst();
 	}
-	disconnect(pers, SIGNAL(fingsChanged()), this, SLOT(persFingsChanged()));
+	disconnect(pers, SIGNAL(thingsChanged()), this, SLOT(persThingsChanged()));
 	disconnect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	disconnect(stackedWidget, SIGNAL(currentChanged(int)), this, SLOT(changePage(int)));
 	disconnect (serverTextLabel, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(textShowContextMenu(const QPoint &)));
 	disconnect (console_textedit, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
-	disconnect(pers, SIGNAL(filtersChanged()), this, SLOT(updateFingFiltersTab()));
+	disconnect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
 
 	disconnect(fontButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(chooseFont(QAbstractButton*)));
 }
@@ -258,18 +265,10 @@ void SofMainWindow::init()
 	if (timeoutStamp)
 		delete timeoutStamp;
 	timeoutStamp = new QDateTime();
-	statMessagesCount = 0;
-	statDropMoneys = 0;
-	statFingsCount = 0;
-	statFightsCount = 0;
-	statDamageMinFromPers = -1;
-	statDamageMaxFromPers = -1;
-	statGameJid = "";
-	statFingDropLast = "";
 	currentPage = 0;
 	settingTimeOutDisplay = 0;
 	selectedMapElement = -1;
-	fingsChanged = false;
+	thingsChanged = false;
 	timeoutEventSlot = 0;
 	queueEventSlot = 0;
 	queueShowFlag = false;
@@ -281,7 +280,6 @@ void SofMainWindow::init()
 	persNameFont_label->setFont(f.toString());
 	f = serverTextLabel->font();
 	gameTextFont_label->setFont(f.toString());
-	console_textedit->setFont(f.toString());
 	// Получаем основные настройки окна
 	getAllDataFromCore();
 	// Размеры сплиттера
@@ -295,18 +293,23 @@ void SofMainWindow::init()
 	// Таблица вещей
 	thingsIface = Pers::instance()->getThingsInterface();
 	if (thingsIface)
-		fingsTable->setModel(Pers::instance()->getThingsModel(thingsIface));
-	fingsTable->init();
+		thingsTable->setModel(Pers::instance()->getThingsModel(thingsIface));
+	thingsTable->init();
 	// Загружаем настройки внешнего вида
 	loadAppearanceSettings(settings->getAppearanceData());
 	// Убираем табы фильтров вещей
-	updateFingFiltersTab();
+	updateThingFiltersTab();
 	// Сбрасываем цвет текста кнопки вещей
 	thingsModeBtn->setStyleSheet(QString());
 	// Сбрасываем режим автоввода
 	setAutoEnterMode(false);
 	// Инициируем слоты событий и уведомлений
 	initEventSlots();
+	// Фрейм аватара
+	if (!avatarFrame->updateAvatar())
+		avatarFrame->showPluginInfo();
+	// Особые враги
+	specificEnemiesTable->init();
 }
 
 void SofMainWindow::setAutoEnterMode(bool mode)
@@ -361,8 +364,8 @@ void SofMainWindow::initStatisticData()
 	statisticCapInitVal[VALUE_DAMAGE_MIN_FROM_PERS] = (StatCapInitVal) {QString::fromUtf8("Худший удар"), QString::fromUtf8("n/a")};
 	statisticCapInitVal[VALUE_FIGHTS_COUNT] = (StatCapInitVal) {QString::fromUtf8("Всего боев"), QString::fromUtf8("0")};
 	statisticCapInitVal[VALUE_DROP_MONEYS] = (StatCapInitVal) {QString::fromUtf8("Денег собрано"), QString::fromUtf8("0")};
-	statisticCapInitVal[VALUE_FINGS_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Вещей собрано"), QString::fromUtf8("0")};
-	statisticCapInitVal[VALUE_FING_DROP_LAST] = (StatCapInitVal) {QString::fromUtf8("Последняя вещь"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[VALUE_THINGS_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Вещей собрано"), QString::fromUtf8("0")};
+	statisticCapInitVal[VALUE_THING_DROP_LAST] = (StatCapInitVal) {QString::fromUtf8("Последняя вещь"), QString::fromUtf8("n/a")};
 	statisticCapInitVal[VALUE_EXPERIENCE_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Полученный опыт"), QString::fromUtf8("0")};
 	statisticCapInitVal[VALUE_KILLED_ENEMIES] = (StatCapInitVal) {QString::fromUtf8("Противников повержено"), QString::fromUtf8("0")};
 }
@@ -483,7 +486,7 @@ void SofMainWindow::getAllDataFromCore() {
 	// Автозакрытие боя
 	setAutoCloseFight->setCurrentIndex(settings->getIntSetting(Settings::SettingFightAutoClose));
 	// Попап при дропе вещей
-	checkbox_FingDropPopup->setChecked(settings->getBoolSetting(Settings::SettingThingDropPopup));
+	checkbox_ThingDropPopup->setChecked(settings->getBoolSetting(Settings::SettingThingDropPopup));
 	// Попап при заказе в клубе убийц
 	checkbox_InKillersCupPopup->setChecked(settings->getBoolSetting(Settings::SettingInKillersCupPopup));
 	// Попап при нападении убийцы
@@ -519,12 +522,14 @@ void SofMainWindow::getAllDataFromCore() {
 	btnPersPosColor->setColor(maps->getPersPosColor());
 	// Автовыгрузка карт
 	mapsUnloadInterval->setValue(maps->getUnloadInterval());
+	// Позиция персонажа в центре карты
+	checkbox_PersPosInCenter->setChecked(settings->getBoolSetting(Settings::SettingPersPosInCenter));
 	// *** Основные данные ***
 	Pers *pers = Pers::instance();
 	changePersStatus();
 	newStrValue = pers->name();
 	if (newStrValue.isEmpty())
-		newStrValue = "n/a";
+		newStrValue = NA_TEXT;
 	persNameLabel->setText(newStrValue);
 	if (!pers->getIntParamValue(Pers::ParamPersLevel, &newIntValue)) {
 		newStrValue = NA_TEXT;
@@ -557,6 +562,12 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 0;
 	}
 	energyBar->setRange(0, newIntValue);
+	newIntValue = pers->moneysCount();
+	if (newIntValue == QINT32_MIN) {
+		labelMoneysCount->setText(NA_TEXT);
+	} else {
+		labelMoneysCount->setText(numToStr(newIntValue, "'"));
+	}
 	// Прокрутка карты к позиции персонажа
 	scrollMapToPersPosition();
 	// *** Статистические данные ***
@@ -592,22 +603,22 @@ void SofMainWindow::getAllDataFromCore() {
 		newStrValue = statisticCapInitVal.value(VALUE_DAMAGE_MAX_FROM_PERS).initVal;
 	}
 	updateValue(VALUE_DAMAGE_MAX_FROM_PERS, newStrValue);
-	if (core->getIntValue(VALUE_FINGS_DROP_COUNT, &newIntValue)) {
+	if (core->getIntValue(VALUE_THINGS_DROP_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_FINGS_DROP_COUNT).initVal;
+		newStrValue = statisticCapInitVal.value(VALUE_THINGS_DROP_COUNT).initVal;
 	}
-	updateValue(VALUE_FINGS_DROP_COUNT, newStrValue);
+	updateValue(VALUE_THINGS_DROP_COUNT, newStrValue);
 	if (core->getIntValue(VALUE_FIGHTS_COUNT, &newIntValue)) {
 		newStrValue = numToStr(newIntValue, "'");
 	} else {
 		newStrValue = statisticCapInitVal.value(VALUE_FIGHTS_COUNT).initVal;
 	}
 	updateValue(VALUE_FIGHTS_COUNT, newStrValue);
-	if (!core->getTextValue(VALUE_FING_DROP_LAST, &newStrValue)) {
-		newStrValue = statisticCapInitVal.value(VALUE_FING_DROP_LAST).initVal;
+	if (!core->getTextValue(VALUE_THING_DROP_LAST, &newStrValue)) {
+		newStrValue = statisticCapInitVal.value(VALUE_THING_DROP_LAST).initVal;
 	}
-	updateValue(VALUE_FING_DROP_LAST, newStrValue);
+	updateValue(VALUE_THING_DROP_LAST, newStrValue);
 	if (core->getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &newLongValue)) {
 		newStrValue = numToStr(newLongValue, "'");
 	} else {
@@ -628,10 +639,25 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 100;
 	}
 	maxTextBlocksCount->setValue(newIntValue);
-	serverTextLabel->setMaximumBlockCount(newIntValue);
-	console_textedit->setMaximumBlockCount(newIntValue);
+	serverTextLabel->document()->setMaximumBlockCount(newIntValue);
+	console_textedit->document()->setMaximumBlockCount(newIntValue);
+	// Расцветка текста игры
+	gameTextColoring->setChecked(settings->getBoolSetting(Settings::SettingGameTextColoring));
 	// Режим сохранения карт
 	mapsParamSaveMode->setCurrentIndex(GameMap::instance()->getMapsSettingParam(GameMap::AutoSaveMode));
+	// Длительность регена для отображения Popup-а
+	newIntValue = settings->getIntSetting(Settings::SettingRegenDurationForPopup);
+	if (newIntValue > 0) {
+		if (newIntValue < restDurationPopup->minimum())
+			newIntValue = restDurationPopup->minimum();
+		restDurationPopup->setValue(newIntValue);
+		restDurationPopup->setEnabled(true);
+		restPopup->setChecked(true);
+	} else {
+		restDurationPopup->setValue(restDurationPopup->minimum());
+		restDurationPopup->setEnabled(false);
+		restPopup->setChecked(false);
+	}
 }
 
 /**
@@ -673,17 +699,16 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		} else if (eventId == VALUE_DAMAGE_MAX_FROM_PERS) {
 			// Максимальный урон от персонажа
 			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, str1);
-		} else if (eventId == VALUE_FINGS_DROP_COUNT) {
+		} else if (eventId == VALUE_THINGS_DROP_COUNT) {
 			// Количество упавших вещей
-			statFingsCount = value;
-			updateValue(VALUE_FINGS_DROP_COUNT, str1);
+			updateValue(VALUE_THINGS_DROP_COUNT, str1);
 			// Последняя упавшая вещь
-			if (PluginCore::instance()->getTextValue(VALUE_FING_DROP_LAST, &str1)) {
+			if (PluginCore::instance()->getTextValue(VALUE_THING_DROP_LAST, &str1)) {
 				str1 = str1.left(20);
 			} else {
 				str1 = NA_TEXT;
 			}
-			updateValue(VALUE_FING_DROP_LAST, str1);
+			updateValue(VALUE_THING_DROP_LAST, str1);
 		} else if (eventId == VALUE_FIGHTS_COUNT) {
 			updateValue(VALUE_FIGHTS_COUNT, str1);
 		}
@@ -724,9 +749,9 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 		} else if (eventId == VALUE_LAST_CHAT_JID) {
 			// JID чата
 			updateValue(VALUE_LAST_CHAT_JID, str1);
-		} else if (eventId == VALUE_FING_DROP_LAST) {
+		} else if (eventId == VALUE_THING_DROP_LAST) {
 			// Последняя найденная вещь
-			updateValue(VALUE_FING_DROP_LAST, str1);
+			updateValue(VALUE_THING_DROP_LAST, str1);
 		} else if (eventId == Pers::ParamHealthCurr) {
 			// Текущее здоровье
 			healthLabel->setText(str1);
@@ -753,54 +778,43 @@ void SofMainWindow::changePersStatus()
 	persStatusLabel->setText(Pers::instance()->getPersStatusString());
 }
 
-void SofMainWindow::setGameText(QString gameText, int type)
+void SofMainWindow::setGameText(const QString &gameText, int type)
 {
 	/**
 	* gameText - строка для отображения, если gameText == 0, то очищаем
-	* type - 1: исходящее, 2: входящее
+	* type - 1: исходящее, 2: входящее, 3 - информационное
 	**/
 	if (gameText.isEmpty()) {
 		serverTextLabel->clear();
 	}
-	if (gameText.isEmpty()) {
-		serverTextLabel->clear();
-	}
-	// Значение 32 тупо взято из аналогичного кода psi+
-	bool do_scroll = (serverTextLabel->verticalScrollBar()->maximum() - serverTextLabel->verticalScrollBar()->value() <= 32);
-	//serverTextLabel->moveCursor(QTextCursor::End);
-	serverTextLabel->appendPlainText(QString::fromUtf8("") + (type == 1 ? "^" : "v") + " ***** [" + QTime::currentTime().toString("hh:mm:ss") + "] ***** " + (type == 1 ? "^" : "v"));
 	if (!gameText.isEmpty()) {
-		serverTextLabel->appendPlainText(gameText);
+		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
+		serverTextLabel->appendText("<span>" + gameText + "</span>", type_);
 	} else {
-		serverTextLabel->appendPlainText(QString::fromUtf8("--- очищено ---"));
+		serverTextLabel->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
 	if (type == 1) {
 		text_tabWidget->setCurrentIndex(0);
-	}
-	if (do_scroll || type == 1) {
-		serverTextLabel->verticalScrollBar()->setValue(serverTextLabel->verticalScrollBar()->maximum());
 	}
 }
 
 /**
  * text - строка для отображения, если text == "", то очищаем
- * type - 1: исходящее, 2: входящее
+ * type - 1: исходящее, 2: входящее, 3 - информационное
  * switch_ - переключать или нет на консоль
  */
-void SofMainWindow::setConsoleText(QString text, int type, bool switch_)
+void SofMainWindow::setConsoleText(const QString &text, int type, bool switch_)
 {
 	if (text.isEmpty()) {
 		console_textedit->clear();
 	}
-	//console_textedit->moveCursor(QTextCursor::End);
-	console_textedit->appendPlainText(QString::fromUtf8("") + (type == 1 ? "^" : "v") + " ***** [" + QTime::currentTime().toString("hh:mm:ss") + "] ***** " + (type == 1 ? "^" : "v"));
 	if (!text.isEmpty()) {
-		console_textedit->appendPlainText(text);
+		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
+		console_textedit->appendText("<span>" + text + "</span>", type_);
 	} else {
-		console_textedit->appendPlainText(QString::fromUtf8("--- очищено ---"));
+		console_textedit->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
 	console_textedit->verticalScrollBar()->setValue(console_textedit->verticalScrollBar()->maximum());
-	//console_textedit->moveCursor(QTextCursor::End);
 	if (switch_) {
 		text_tabWidget->setCurrentIndex(1);
 	}
@@ -821,8 +835,8 @@ QDomElement SofMainWindow::exportAppearanceSettings(QDomDocument &xmlDoc) const
 	eAppearance.appendChild(eServerTextAppe);
 	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
 	eServerTextAppe.appendChild(eServerTextFontAppe);
-	eServerTextFontAppe.setAttribute("value", serverTextLabel->font().toString());
-	QDomElement eThingsTable = fingsTable->saveSettingsToXml(xmlDoc);
+	eServerTextFontAppe.setAttribute("value", serverTextLabel->document()->defaultFont().toString());
+	QDomElement eThingsTable = thingsTable->saveSettingsToXml(xmlDoc);
 	eAppearance.appendChild(eThingsTable);
 	if (settingWindowSizePos == 1) {
 		QDomElement eWindowParams = xmlDoc.createElement("window-save-params");
@@ -891,7 +905,7 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 		}
 	}
 	QDomElement eThingsSettings = xml.firstChildElement("things-table");
-	fingsTable->loadSettingsFromXml(eThingsSettings);
+	thingsTable->loadSettingsFromXml(eThingsSettings);
 	QDomElement eGeometry = xml.firstChildElement("window-save-params");
 	if (!eGeometry.isNull()) {
 		if (eGeometry.attribute("mode") == "position-and-size") {
@@ -942,21 +956,34 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 void SofMainWindow::loadSlotsSettings(const QDomElement &xml)
 {
 	statisticFooterPos.clear();
-	QDomElement eSlot = xml.firstChildElement("slot");
-	while (!eSlot.isNull()) {
-		QString param = eSlot.attribute("param").toLower();
-		if (!param.isEmpty()) {
-			int slotNum = eSlot.attribute("num").toInt();
-			if (slotNum >= 1 && slotNum <= SLOT_ITEMS_COUNT) {
-				for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
-					if (SofMainWindow::statisticXmlStrings.at(i).second == param) {
-						statisticFooterPos[SofMainWindow::statisticXmlStrings.at(i).first] = slotNum;
-						break;
+	if (!xml.isNull()) {
+		QDomElement eSlot = xml.firstChildElement("slot");
+		while (!eSlot.isNull()) {
+			QString param = eSlot.attribute("param").toLower();
+			if (!param.isEmpty()) {
+				int slotNum = eSlot.attribute("num").toInt();
+				if (slotNum >= 1 && slotNum <= SLOT_ITEMS_COUNT) {
+					for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
+						if (SofMainWindow::statisticXmlStrings.at(i).second == param) {
+							statisticFooterPos[SofMainWindow::statisticXmlStrings.at(i).first] = slotNum;
+							break;
+						}
 					}
 				}
 			}
+			eSlot = eSlot.nextSiblingElement("slot");
 		}
-		eSlot = eSlot.nextSiblingElement("slot");
+	} else {
+		// Значения по умолчанию
+		statisticFooterPos[VALUE_LAST_GAME_JID] = 1;
+		statisticFooterPos[VALUE_FIGHTS_COUNT] = 2;
+		statisticFooterPos[VALUE_KILLED_ENEMIES] = 3;
+		statisticFooterPos[VALUE_EXPERIENCE_DROP_COUNT] = 4;
+		statisticFooterPos[VALUE_DAMAGE_MAX_FROM_PERS] = 5;
+		statisticFooterPos[VALUE_DAMAGE_MIN_FROM_PERS] = 6;
+		statisticFooterPos[VALUE_DROP_MONEYS] = 7;
+		statisticFooterPos[VALUE_THINGS_DROP_COUNT] = 8;
+		statisticFooterPos[VALUE_THING_DROP_LAST] = 9;
 	}
 	fullUpdateFooterStatistic();
 	// Меняем элементы настроек слотов
@@ -1118,25 +1145,29 @@ void SofMainWindow::setTimeout(int value)
 	}
 }
 
-void SofMainWindow::scrollMapNewPosition(int x, int y)
+/**
+ * Прокручивает карту так, что бы была видна часть карты с указанными координатами
+ */
+void SofMainWindow::scrollMapNewPosition(const MapPos &pos)
 {
-	/**
-	* Прокручивает карту так, что бы была видна часть карты с указанными координатами
-	**/
-	QRectF coordinates = GameMap::instance()->getSceneCoordinates(x, y);
+	QRectF coordinates = GameMap::instance()->gameToSceneCoordinates(pos);
 	if (!coordinates.isNull()) {
-		gameMapView->ensureVisible(coordinates, 50, 50);
+		if (Settings::instance()->getBoolSetting(Settings::SettingPersPosInCenter)) { // TODO Откэшировать!
+			gameMapView->centerOn(coordinates.center());
+		} else {
+			gameMapView->ensureVisible(coordinates, 50, 50);
+		}
 	}
 }
 
+/**
+ * Прокручивает карту так, что бы была видна позиция персонажа
+ */
 void SofMainWindow::scrollMapToPersPosition()
 {
-	/**
-	* Прокручивает карту так, что бы была видна позиция персонажа
-	**/
-	QGraphicsItem* persItem = GameMap::instance()->getPersItem();
-	if (persItem) {
-		gameMapView->ensureVisible(persItem, 50, 50);
+	const MapPos &pos = Pers::instance()->getMapPosition();
+	if (pos.isValid()) {
+		scrollMapNewPosition(pos);
 	}
 }
 
@@ -1165,11 +1196,10 @@ void SofMainWindow::setCurrentHealth(int health)
 		str1.append(" (" + QString::number((100*health/maxValue)) + "%)");
 	}*/
 	healthLabel->setText(str1);
-	if (health > 0) {
-		healthBar->setValue(health);
-	} else {
-		healthBar->setValue(0);
-	}
+	int he = (health > maxValue) ? maxValue : health;
+	if (he < 0)
+		he = 0;
+	healthBar->setValue(he);
 }
 
 void SofMainWindow::setCurrentEnergy(int energy)
@@ -1197,11 +1227,10 @@ void SofMainWindow::setCurrentEnergy(int energy)
 		str1.append(" (" + QString::number((100*energy/maxValue)) + "%)");
 	}*/
 	energyLabel->setText(str1);
-	if (energy > 0) {
-		energyBar->setValue(energy);
-	} else {
-		energyBar->setValue(0);
-	}
+	int en = (energy > maxValue) ? maxValue : energy;
+	if (en < 0)
+		en = 0;
+	energyBar->setValue(en);
 }
 
 /**
@@ -1253,20 +1282,20 @@ void SofMainWindow::changePage(int index)
 	**/
 	currentPage = index;
 	if (currentPage == 3) { // Вещи
-		if (fingsChanged) { // Список вещей менялся
+		if (thingsChanged) { // Список вещей менялся
 			// Сбрасываем цвет текста кнопки
 			thingsModeBtn->setStyleSheet(QString());
 		}
 		// Инициируем табы и таблицу
-		if (fingsTabBar->count() == 0) {
-			updateFingFiltersTab();
-			showFings(0);
+		if (thingsTabBar->count() == 0) {
+			updateThingFiltersTab();
+			showThings(0);
 		//} else {
-		//	if (fingsChanged) {
-		//		showFings(fingsTabBar->currentIndex());
+		//	if (thingsChanged) {
+		//		showThings(thingsTabBar->currentIndex());
 		//	}
 		}
-		fingsChanged = false;
+		thingsChanged = false;
 	}
 }
 
@@ -1298,7 +1327,7 @@ void SofMainWindow::activatePersInfoPage()
 	currentPage = 2;
 }
 
-void SofMainWindow::activateFingsPage()
+void SofMainWindow::activateThingsPage()
 {
 	stackedWidget->setCurrentIndex(3);
 }
@@ -1336,8 +1365,8 @@ void SofMainWindow::resetFightStatistic()
 	core->resetStatistic(VALUE_DAMAGE_MAX_FROM_PERS);
 	core->resetStatistic(VALUE_DAMAGE_MIN_FROM_PERS);
 	core->resetStatistic(VALUE_DROP_MONEYS);
-	core->resetStatistic(VALUE_FINGS_DROP_COUNT);
-	core->resetStatistic(VALUE_FING_DROP_LAST);
+	core->resetStatistic(VALUE_THINGS_DROP_COUNT);
+	core->resetStatistic(VALUE_THING_DROP_LAST);
 	core->resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
 	core->resetStatistic(VALUE_KILLED_ENEMIES);
 }
@@ -1367,7 +1396,7 @@ void SofMainWindow::applySettings()
 	// Автозакрытие боя
 	settings->setIntSetting(Settings::SettingFightAutoClose, setAutoCloseFight->currentIndex());
 	// Попап при дропе вещей
-	settings->setBoolSetting(Settings::SettingThingDropPopup, checkbox_FingDropPopup->isChecked());
+	settings->setBoolSetting(Settings::SettingThingDropPopup, checkbox_ThingDropPopup->isChecked());
 	// Попап при заказе в клубе убийц
 	settings->setBoolSetting(Settings::SettingInKillersCupPopup, checkbox_InKillersCupPopup->isChecked());
 	// Попап при нападении убийцы
@@ -1439,7 +1468,7 @@ void SofMainWindow::applySettings()
 	// Сохранение статистики
 	settings->setBoolSetting(Settings::SettingSaveStatistic, saveStatistic_checkbox->isChecked());
 	// Применение фильтров вещей
-	pers->setFingsFiltersEx(fingFiltersTable->getFilters());
+	pers->setThingsFiltersEx(thingFiltersTable->getFilters());
 	// Применение шрифтов
 	QFont f;
 	if (f.fromString(persNameFont_label->fontName())) {
@@ -1456,9 +1485,11 @@ void SofMainWindow::applySettings()
 	} else if (textBlocksCount > 0 && textBlocksCount < 100) {
 		textBlocksCount = 100;
 	}
-	serverTextLabel->setMaximumBlockCount(textBlocksCount);
-	console_textedit->setMaximumBlockCount(textBlocksCount);
+	serverTextLabel->document()->setMaximumBlockCount(textBlocksCount);
+	console_textedit->document()->setMaximumBlockCount(textBlocksCount);
 	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
+	// Расцветка текста игры
+	settings->setBoolSetting(Settings::SettingGameTextColoring, gameTextColoring->isChecked());
 	// Режим сохранения карт
 	GameMap *maps = GameMap::instance();
 	maps->setMapsParam(GameMap::AutoSaveMode, mapsParamSaveMode->currentIndex());
@@ -1466,6 +1497,13 @@ void SofMainWindow::applySettings()
 	maps->setPersPosColor(btnPersPosColor->getColor());
 	// Период автовыгрузки карт
 	maps->setUnloadInterval(mapsUnloadInterval->value());
+	// Длительность регена для отображения popup-а
+	i = (restPopup->isChecked()) ? restDurationPopup->value() : 0;
+	settings->setIntSetting(Settings::SettingRegenDurationForPopup, i);
+	// Позиция персонажа в центре карты
+	settings->setBoolSetting(Settings::SettingPersPosInCenter, checkbox_PersPosInCenter->isChecked());
+	// Особые враги
+	specificEnemiesTable->save();
 }
 
 void SofMainWindow::saveSettings()
@@ -1492,8 +1530,7 @@ void SofMainWindow::userCommandChanged()
 	if (strLen == 1) {
 		if (sText != "/") {
 			if (sText >= "0" && sText <= "9") {
-				setGameText(sText, 1);
-				userCommandLine->setText("");
+				userCommandLine->setText(QString());
 				PluginCore::instance()->sendString(sText);
 			}
 		}
@@ -1505,9 +1542,6 @@ void SofMainWindow::userCommandReturnPressed()
 	QString sText = userCommandLine->toPlainText().trimmed();
 	if (!sText.isEmpty()) {
 		userCommandLine->appendMessageHistory(sText);
-		if (!sText.startsWith("/")) {
-			setGameText(sText, 1);
-		}
 		PluginCore::instance()->sendString(sText);
 	}
 	userCommandLine->setText(QString());
@@ -1577,7 +1611,7 @@ void SofMainWindow::mapShowContextMenu(const QPoint &pos)
 	* Обработчик события вызова контекстного меню
 	**/
 	QPointF viewPos = gameMapView->mapToScene(pos);
-	selectedMapElement = GameMap::instance()->getIndexByCoordinate(viewPos.x(), viewPos.y());
+	selectedMapElement = GameMap::instance()->getIndexByCoordinate(viewPos);
 	if (selectedMapElement != -1) {
 		actionMarkMapElement->setEnabled(true);
 		actionMoveMapElement->setEnabled(true);
@@ -1708,9 +1742,9 @@ void SofMainWindow::markMapElement()
 /**
  * Заполняет данные вещей в табличном виджете
  */
-void SofMainWindow::showFings(int tab_num)
+void SofMainWindow::showThings(int tab_num)
 {
-	int flt_num = fingsTabBar->tabData(tab_num).toInt() + 1;
+	int flt_num = thingsTabBar->tabData(tab_num).toInt() + 1;
 	Pers::instance()->setThingsInterfaceFilter(thingsIface, flt_num);
 	showThingsSummary();
 }
@@ -1721,41 +1755,41 @@ void SofMainWindow::showFings(int tab_num)
 void SofMainWindow::showThingsSummary()
 {
 	Pers *pers = Pers::instance();
-	int nCountAll = pers->getFingsCount(thingsIface);
+	int nCountAll = pers->getThingsCount(thingsIface);
 	int nPriceAll = pers->getPriceAll(thingsIface);
 	int noPrice = pers->getNoPriceCount(thingsIface);
-	labelFingsCountAll->setText(numToStr(nCountAll, "'"));
+	labelThingsCountAll->setText(numToStr(nCountAll, "'"));
 	QString str1 = numToStr(nPriceAll, "'");
 	if (noPrice != 0)
 		str1.append("+");
-	labelFingsPriceAll->setText(str1);
+	labelThingsPriceAll->setText(str1);
 }
 
-void SofMainWindow::fingsShowContextMenu(const QPoint &pos)
+void SofMainWindow::thingsShowContextMenu(const QPoint &/*pos*/)
 {
 	/**
 	* Отображает контекстное меню для таблицы с вещами
 	**/
-	if (fingsTable->currentIndex().row() >= 0) {
-		actionSetFingPrice->setEnabled(true);
-		actionFingsParamToConsole->setEnabled(true);
+	if (thingsTable->currentIndex().row() >= 0) {
+		actionSetThingPrice->setEnabled(true);
+		actionThingsParamToConsole->setEnabled(true);
 	} else {
-		actionSetFingPrice->setEnabled(false);
-		actionFingsParamToConsole->setEnabled(false);
+		actionSetThingPrice->setEnabled(false);
+		actionThingsParamToConsole->setEnabled(false);
 	}
-	fingsMenu->exec(fingsTable->mapToGlobal(pos));
+	thingsMenu->exec(QCursor::pos());
 }
 
 /**
  * Вызывает и обрабатывает диалог редактирования цены вещи
  */
-void SofMainWindow::setFingPrice()
+void SofMainWindow::setThingPrice()
 {
 	Pers *pers = Pers::instance();
 	// Получаем номер строки
-	int row = fingsTable->currentIndex().row();
+	int row = thingsTable->currentIndex().row();
 	// Получаем указатель на вещь
-	const Thing *thg = pers->getFingByRow(row, thingsIface);
+	const Thing *thg = pers->getThingByRow(row, thingsIface);
 	if (!thg || !thg->isValid())
 		return;
 	// Получаем имя выбранной вещи и цену
@@ -1765,7 +1799,7 @@ void SofMainWindow::setFingPrice()
 	int new_price = QInputDialog::getInt(this, QString::fromUtf8("Цена торговца"), s_name, n_price, -1, 2147483647, 1, &f_ok, 0);
 	if (f_ok && n_price != new_price) {
 		// Меняем цену вещи
-		pers->setFingPrice(thingsIface, row, new_price);
+		pers->setThingPrice(thingsIface, row, new_price);
 		// Пересчитываем итоги таблицы
 		showThingsSummary();
 	}
@@ -1774,13 +1808,13 @@ void SofMainWindow::setFingPrice()
 /**
  * Формирует строку с параметрами вещи и отсылает ее в консоль плагина
  */
-void SofMainWindow::fingParamToConsole()
+void SofMainWindow::thingParamToConsole()
 {
-	int row = fingsTable->currentIndex().row();
-	const Thing *thg = Pers::instance()->getFingByRow(row, thingsIface);
+	int row = thingsTable->currentIndex().row();
+	const Thing *thg = Pers::instance()->getThingByRow(row, thingsIface);
 	if (thg) {
 		if (thg->isValid()) {
-			setConsoleText(thg->toString(Thing::ShowAll), 2, true);
+			setConsoleText(thg->toString(Thing::ShowAll), 3, true);
 		}
 	}
 }
@@ -1788,11 +1822,11 @@ void SofMainWindow::fingParamToConsole()
 /**
  * Изменился состав вещей у персонажа
  */
-void SofMainWindow::persFingsChanged()
+void SofMainWindow::persThingsChanged()
 {
 	if (currentPage != 3) {
 		// Если текущая страница не вещи
-		fingsChanged = true;
+		thingsChanged = true;
 		// Меняем цвет текста кнопки
 		thingsModeBtn->setStyleSheet("color:red;");
 	}
@@ -1830,6 +1864,9 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			levelLabel->setText(QString::number(paramValue));
 		} else if (paramId == Pers::ParamCoordinates) {
 			scrollMapToPersPosition();
+		} else if (paramId == Pers::ParamMoneysCount) {
+			// Количество денег
+			labelMoneysCount->setText(numToStr(paramValue, "'"));
 		}
 	} else if (paramType == TYPE_LONGLONG_FULL) {
 		if (paramId == Pers::ParamExperienceCurr) {
@@ -1866,32 +1903,35 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 		} else if (paramId == Pers::ParamExperienceMax) {
 			// Максимальный опыт для уровня
 			setMaximumExperience(0);
+		} else if (paramId == Pers::ParamExperienceMax) {
+			// Количество денег
+			labelMoneysCount->setText(NA_TEXT);
 		}
 	}
 }
 
-void SofMainWindow::updateFingFiltersTab()
+void SofMainWindow::updateThingFiltersTab()
 {
-	int current_tab = fingsTabBar->currentIndex();
-	disconnect(fingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showFings(int)));
-	while (fingsTabBar->count() > 0)
-		fingsTabBar->removeTab(0);
-	fingsTabBar->setTabData(fingsTabBar->addTab(QString::fromUtf8("Все вещи")), -1);
-	QList<FingFilter*> filtersList;
-	Pers::instance()->getFingsFiltersEx(&filtersList);
+	int current_tab = thingsTabBar->currentIndex();
+	disconnect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
+	while (thingsTabBar->count() > 0)
+		thingsTabBar->removeTab(0);
+	thingsTabBar->setTabData(thingsTabBar->addTab(QString::fromUtf8("Все вещи")), -1);
+	QList<ThingFilter*> filtersList;
+	Pers::instance()->getThingsFiltersEx(&filtersList);
 	int fltr_index = 0;
 	while (!filtersList.isEmpty()) {
-		FingFilter* ff = filtersList.takeFirst();
+		ThingFilter* ff = filtersList.takeFirst();
 		if (ff->isActive()) {
-			fingsTabBar->setTabData(fingsTabBar->addTab(ff->name()), fltr_index);
+			thingsTabBar->setTabData(thingsTabBar->addTab(ff->name()), fltr_index);
 		}
 		fltr_index++;
 	}
-	if (current_tab < 0 || current_tab >= fingsTabBar->count())
+	if (current_tab < 0 || current_tab >= thingsTabBar->count())
 		current_tab = 0;
-	connect(fingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showFings(int)));
-	fingsTabBar->setCurrentIndex(current_tab);
-	showFings(current_tab);
+	connect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
+	thingsTabBar->setCurrentIndex(current_tab);
+	showThings(current_tab);
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * fingfilter.h - Sof Game Psi plugin
+ * thingfilter.h - Sof Game Psi plugin
  * Copyright (C) 2010  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -23,14 +23,14 @@
  *
  */
 
-#ifndef FINGFILTER_H
-#define FINGFILTER_H
+#ifndef THINGFILTER_H
+#define THINGFILTER_H
 
 #include <QtCore>
 
 #include "../thingstab/thing.h"
 
-class FingFilter
+class ThingFilter
 {
 public:
 	enum ParamRole {
@@ -55,7 +55,7 @@ public:
 		NoRole,
 		NextRole
 	};
-	struct fing_rule_ex {
+	struct thing_rule_ex {
 		ParamRole    param;
 		bool         negative;
 		OperandRole  operand;
@@ -63,28 +63,28 @@ public:
 		QString      value;
 		ActionRole   action;
 	};
-	FingFilter();
-	FingFilter(const FingFilter&);
-	~FingFilter();
-	QString name();
-	void setName(QString);
-	bool isActive();
+	ThingFilter();
+	ThingFilter(const ThingFilter&);
+	~ThingFilter();
+	QString name() const;
+	void setName(const QString &);
+	bool isActive() const;
 	void setActive(bool);
-	int  rulesCount();
-	bool appendRule(ParamRole, bool, OperandRole, QString, ActionRole);
-	void modifyRule(int, const struct fing_rule_ex*);
+	int  rulesCount() const;
+	bool appendRule(ParamRole, bool, OperandRole, const QString &, ActionRole);
+	void modifyRule(int, const struct thing_rule_ex*);
 	void removeRule(int);
 	bool moveRuleUp(int index);
 	bool moveRuleDown(int index);
-	const struct fing_rule_ex* getRule(int);
-	bool isFingShow(const Thing*);
+	const struct thing_rule_ex* getRule(int) const;
+	bool isThingShow(const Thing*) const;
 
 private:
 	bool enabled;
 	QString filterName;
 
 protected:
-	QList<struct fing_rule_ex> rules;
+	QList<struct thing_rule_ex> rules;
 };
 
-#endif // FINGFILTER_H
+#endif // THINGFILTER_H
