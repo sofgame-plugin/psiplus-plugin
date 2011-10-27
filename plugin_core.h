@@ -31,7 +31,7 @@
 #include <QDateTime>
 #include <QtDebug>
 
-#define cVer "0.2.2"
+#define cVer "0.2.3.dev"
 
 #include "pers.h"
 #include "pers_info.h"
