@@ -174,7 +174,7 @@ bool ThingFilter::isThingShow(const Thing* thing) const
 			if (nOper == ContainsRole) {
 				ruleOk = (thing->name().contains(rules.at(i).value, Qt::CaseInsensitive));
 			} else if (nOper == EqualRole) {
-				ruleOk = (thing->name().toLower() == rules.at(i).value);
+				ruleOk = (thing->name().toLower() == rules.at(i).value.toLower());
 			}
 		} else if (nParam == TypeRole) {
 			if (rules.at(i).operand == EqualRole) {
