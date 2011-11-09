@@ -130,7 +130,6 @@ PluginCore::~PluginCore()
 {
 	if (saveStatusTimer.isActive())
 		saveStatusTimer.stop();
-	Sender *sender = Sender::instance();
 	if (mainWindow) {
 		delete mainWindow;
 	}
