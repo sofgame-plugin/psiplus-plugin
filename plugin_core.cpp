@@ -131,8 +131,6 @@ PluginCore::~PluginCore()
 	if (saveStatusTimer.isActive())
 		saveStatusTimer.stop();
 	Sender *sender = Sender::instance();
-	disconnect(sender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
-	disconnect(sender, SIGNAL(gameTextReceived(QString*,QString*)), this, SLOT(textParsing(QString*, QString*)));
 	if (mainWindow) {
 		delete mainWindow;
 	}
