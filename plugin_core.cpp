@@ -1563,7 +1563,7 @@ bool PluginCore::sendString(const QString &str)
 		GameText text;
 		text.append(QString::fromUtf8("<big><strong><em>--= help =--</em></strong></big>"), true);
 		text.append(QString::fromUtf8("<strong>/-</strong> — Сброс очереди команд"), true);
-		text.append(QString::fromUtf8("<strong>/1...</strong> — Позволяет отдавать односимвольные числовые команды в игру без дублирования их клавишей <Enter>."), true);
+		text.append(QString::fromUtf8("<strong>/1...</strong> — Позволяет отдавать односимвольные числовые команды в игру без дублирования их клавишей &lt;Enter&gt;."), true);
 		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1+</strong> — Включение режима автоввода."), true);
 		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1-</strong> — Отключение режима автоввода."), true);
 		text.append(QString::fromUtf8("<strong>&nbsp;&nbsp;/1</strong> — Состояние режима (вкл или выкл)."), true);
