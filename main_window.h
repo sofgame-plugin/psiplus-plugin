@@ -127,7 +127,8 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		QAction* actionMoveMapElement;
 		QAction* actionRemoveMapElement;
 		QAction* actionSetThingPrice;
-		QAction* actionThingsParamToConsole;
+		QAction *actionThingParamToConsole;
+		QAction *actionThingParamToClipboard;
 		QTabBar* thingsTabBar;
 		QList<FontLabel*>fontLabelGroup;
 		QButtonGroup* fontButtonGroup;
@@ -175,6 +176,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void thingsShowContextMenu(const QPoint &);
 		void setThingPrice();
 		void thingParamToConsole();
+		void thingParamToClipboard();
 		void persThingsChanged();
 		void persParamChanged(int, int, int);
 

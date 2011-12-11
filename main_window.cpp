@@ -145,13 +145,18 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	actionSetThingPrice->setText(QString::fromUtf8("Цена у торговца"));
 	actionSetThingPrice->setStatusTip(QString::fromUtf8("Цена для продажи торговцу"));
 	connect(actionSetThingPrice, SIGNAL(triggered()), this, SLOT(setThingPrice()));
-	actionThingsParamToConsole = new QAction(thingsTable);
-	actionThingsParamToConsole->setText(QString::fromUtf8("Сбросить параметры в консоль"));
-	actionThingsParamToConsole->setStatusTip(QString::fromUtf8("Сбросить параметры вещи в консоль"));
-	connect(actionThingsParamToConsole, SIGNAL(triggered()), this, SLOT(thingParamToConsole()));
+	actionThingParamToConsole = new QAction(thingsTable);
+	actionThingParamToConsole->setText(QString::fromUtf8("Сбросить параметры в консоль"));
+	actionThingParamToConsole->setStatusTip(QString::fromUtf8("Сбросить параметры вещи в консоль плагина"));
+	connect(actionThingParamToConsole, SIGNAL(triggered()), this, SLOT(thingParamToConsole()));
+	actionThingParamToClipboard = new QAction(thingsTable);
+	actionThingParamToClipboard->setText(QString::fromUtf8("Параметры в буфер обмена"));
+	actionThingParamToClipboard->setStatusTip(QString::fromUtf8("Поместить параметры вещи в буфер обмена"));
+	connect(actionThingParamToClipboard, SIGNAL(triggered()), this, SLOT(thingParamToClipboard()));
 	thingsMenu = new QMenu(this);
 	thingsMenu->addAction(actionSetThingPrice);
-	thingsMenu->addAction(actionThingsParamToConsole);
+	thingsMenu->addAction(actionThingParamToConsole);
+	thingsMenu->addAction(actionThingParamToClipboard);
 	connect(thingsTable, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(thingsShowContextMenu(const QPoint &)));
 	thingsTable->setContextMenuPolicy(Qt::CustomContextMenu);
 	// Табвиджет настроек
@@ -1772,10 +1777,12 @@ void SofMainWindow::thingsShowContextMenu(const QPoint &/*pos*/)
 	**/
 	if (thingsTable->currentIndex().row() >= 0) {
 		actionSetThingPrice->setEnabled(true);
-		actionThingsParamToConsole->setEnabled(true);
+		actionThingParamToConsole->setEnabled(true);
+		actionThingParamToClipboard->setEnabled(true);
 	} else {
 		actionSetThingPrice->setEnabled(false);
-		actionThingsParamToConsole->setEnabled(false);
+		actionThingParamToConsole->setEnabled(false);
+		actionThingParamToClipboard->setEnabled(false);
 	}
 	thingsMenu->exec(QCursor::pos());
 }
@@ -1816,6 +1823,17 @@ void SofMainWindow::thingParamToConsole()
 		if (thg->isValid()) {
 			setConsoleText(thg->toString(Thing::ShowAll), 3, true);
 		}
+	}
+}
+
+/**
+ * Формирует строку с параметрами вещи и помещает ее в буфер обмена
+ */
+void SofMainWindow::thingParamToClipboard()
+{
+	Thing const *thg = Pers::instance()->getThingByRow(thingsTable->currentIndex().row(), thingsIface);
+	if (thg && thg->isValid()) {
+		qApp->clipboard()->setText(thg->toString(Thing::ShowAll));
 	}
 }
 
