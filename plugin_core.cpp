@@ -154,7 +154,7 @@ void PluginCore::updateRegExpForPersName()
 	// Функция настраивает регулярные выражения, зависящие от имени персонажа
 	QString sName = QRegExp::escape(Pers::instance()->name());
 	fightDamageFromPersReg1.setPattern("^" + sName + QString::fromUtf8(" .+ Повреждения: ([0-9]+)$"));
-	fightDamageFromPersReg2.setPattern("^" + sName + QString::fromUtf8("\\*([0-9]+) .+/повр:([0-9]+)$"));
+	fightDamageFromPersReg2.setPattern("^(.+, )?" + sName + QString::fromUtf8("(\\*([0-9]+))?,? .+/повр:([0-9]+)$"));
 	fightDamageFromPersReg3.setPattern("^" + sName + QString::fromUtf8(" .+ нет повреждений$"));
 	fightDropMoneyReg1.setPattern("^" + sName + QString::fromUtf8(" ([-+][0-9]+) дринк$")); // xxxxx +5 дринк;
 	fightDropThingReg1.setPattern("^" + sName + QString::fromUtf8(" \\+(.+)$")); // xxxxx +шкура мат. волка
