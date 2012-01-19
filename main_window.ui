@@ -332,7 +332,7 @@
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_31">
                  <item>
-                  <widget class="TextView" name="serverTextLabel">
+                  <widget class="TextView" name="serverTextView">
                    <property name="cursor" stdset="0">
                     <cursorShape>ArrowCursor</cursorShape>
                    </property>
@@ -355,7 +355,7 @@
                 </attribute>
                 <layout class="QVBoxLayout" name="verticalLayout_32">
                  <item>
-                  <widget class="TextView" name="console_textedit">
+                  <widget class="TextView" name="consoleTextView">
                    <property name="cursor" stdset="0">
                     <cursorShape>ArrowCursor</cursorShape>
                    </property>

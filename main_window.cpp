@@ -118,9 +118,9 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(gameMapView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(mapShowContextMenu(const QPoint &)));
 	gameMapView->setContextMenuPolicy(Qt::CustomContextMenu);
 	// Текст игры
-	connect (serverTextLabel, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(textShowContextMenu(const QPoint &)));
+	connect (serverTextView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(textShowContextMenu(const QPoint &)));
 	// Консоль игры
-	connect (console_textedit, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
+	connect (consoleTextView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
 	// Строка команд
 	connect(userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
 	connect(userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
@@ -251,14 +251,6 @@ SofMainWindow::~SofMainWindow()
 	while (!filtersList.isEmpty()) {
 		delete filtersList.takeFirst();
 	}
-	disconnect(pers, SIGNAL(thingsChanged()), this, SLOT(persThingsChanged()));
-	disconnect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
-	disconnect(stackedWidget, SIGNAL(currentChanged(int)), this, SLOT(changePage(int)));
-	disconnect (serverTextLabel, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(textShowContextMenu(const QPoint &)));
-	disconnect (console_textedit, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
-	disconnect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
-
-	disconnect(fontButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(chooseFont(QAbstractButton*)));
 }
 
 void SofMainWindow::init()
@@ -283,7 +275,7 @@ void SofMainWindow::init()
 	// Настройки шрифтов
 	QFont f = persNameLabel->font();
 	persNameFont_label->setFont(f.toString());
-	f = serverTextLabel->font();
+	f = serverTextView->font();
 	gameTextFont_label->setFont(f.toString());
 	// Получаем основные настройки окна
 	getAllDataFromCore();
@@ -644,8 +636,8 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 100;
 	}
 	maxTextBlocksCount->setValue(newIntValue);
-	serverTextLabel->document()->setMaximumBlockCount(newIntValue);
-	console_textedit->document()->setMaximumBlockCount(newIntValue);
+	serverTextView->setMaximumBlockCount(newIntValue);
+	consoleTextView->setMaximumBlockCount(newIntValue);
 	// Расцветка текста игры
 	gameTextColoring->setChecked(settings->getBoolSetting(Settings::SettingGameTextColoring));
 	// Режим сохранения карт
@@ -790,13 +782,13 @@ void SofMainWindow::setGameText(const QString &gameText, int type)
 	* type - 1: исходящее, 2: входящее, 3 - информационное
 	**/
 	if (gameText.isEmpty()) {
-		serverTextLabel->clear();
+		serverTextView->clear();
 	}
 	if (!gameText.isEmpty()) {
 		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
-		serverTextLabel->appendText("<span>" + gameText + "</span>", type_);
+		serverTextView->appendText("<span>" + gameText + "</span>", type_);
 	} else {
-		serverTextLabel->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
+		serverTextView->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
 	if (type == 1) {
 		text_tabWidget->setCurrentIndex(0);
@@ -811,15 +803,15 @@ void SofMainWindow::setGameText(const QString &gameText, int type)
 void SofMainWindow::setConsoleText(const QString &text, int type, bool switch_)
 {
 	if (text.isEmpty()) {
-		console_textedit->clear();
+		consoleTextView->clear();
 	}
 	if (!text.isEmpty()) {
 		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
-		console_textedit->appendText("<span>" + text + "</span>", type_);
+		consoleTextView->appendText("<span>" + text + "</span>", type_);
 	} else {
-		console_textedit->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
+		consoleTextView->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
-	console_textedit->verticalScrollBar()->setValue(console_textedit->verticalScrollBar()->maximum());
+	consoleTextView->verticalScrollBar()->setValue(consoleTextView->verticalScrollBar()->maximum());
 	if (switch_) {
 		text_tabWidget->setCurrentIndex(1);
 	}
@@ -840,7 +832,7 @@ QDomElement SofMainWindow::exportAppearanceSettings(QDomDocument &xmlDoc) const
 	eAppearance.appendChild(eServerTextAppe);
 	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
 	eServerTextAppe.appendChild(eServerTextFontAppe);
-	eServerTextFontAppe.setAttribute("value", serverTextLabel->document()->defaultFont().toString());
+	eServerTextFontAppe.setAttribute("value", serverTextView->document()->defaultFont().toString());
 	QDomElement eThingsTable = thingsTable->saveSettingsToXml(xmlDoc);
 	eAppearance.appendChild(eThingsTable);
 	if (settingWindowSizePos == 1) {
@@ -903,8 +895,8 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 				QFont f;
 				if (f.fromString(fontStr)) {
 					gameTextFont_label->setFont(f.toString());
-					serverTextLabel->setFont(f);
-					console_textedit->setFont(f);
+					serverTextView->setFont(f);
+					consoleTextView->setFont(f);
 				}
 			}
 		}
@@ -1480,8 +1472,8 @@ void SofMainWindow::applySettings()
 		persNameLabel->setFont(f);
 	}
 	if (f.fromString(gameTextFont_label->fontName())) {
-		serverTextLabel->setFont(f);
-		console_textedit->setFont(f);
+		serverTextView->setFont(f);
+		consoleTextView->setFont(f);
 	}
 	// Максимальное количество блоков текста
 	int textBlocksCount = maxTextBlocksCount->value();
@@ -1490,8 +1482,8 @@ void SofMainWindow::applySettings()
 	} else if (textBlocksCount > 0 && textBlocksCount < 100) {
 		textBlocksCount = 100;
 	}
-	serverTextLabel->document()->setMaximumBlockCount(textBlocksCount);
-	console_textedit->document()->setMaximumBlockCount(textBlocksCount);
+	serverTextView->setMaximumBlockCount(textBlocksCount);
+	consoleTextView->setMaximumBlockCount(textBlocksCount);
 	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
 	// Расцветка текста игры
 	settings->setBoolSetting(Settings::SettingGameTextColoring, gameTextColoring->isChecked());
@@ -1631,15 +1623,15 @@ void SofMainWindow::mapShowContextMenu(const QPoint &pos)
 
 void SofMainWindow::textShowContextMenu(const QPoint &pos)
 {
-	QMenu *menu = serverTextLabel->createStandardContextMenu();
-	menu->exec(serverTextLabel->mapToGlobal(pos));
+	QMenu *menu = serverTextView->createStandardContextMenu();
+	menu->exec(serverTextView->mapToGlobal(pos));
 	delete menu;
 }
 
 void SofMainWindow::consoleShowContextMenu(const QPoint &pos)
 {
-	QMenu *menu = console_textedit->createStandardContextMenu();
-	menu->exec(console_textedit->mapToGlobal(pos));
+	QMenu *menu = consoleTextView->createStandardContextMenu();
+	menu->exec(consoleTextView->mapToGlobal(pos));
 	delete menu;
 }
 

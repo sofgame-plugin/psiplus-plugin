@@ -39,6 +39,7 @@ public:
 	};
 	TextView(QWidget *parent = 0);
 	void appendText(const QString &text, TextType type);
+	void setMaximumBlockCount(int n);
 
 protected:
 	QMimeData *createMimeDataFromSelection() const;

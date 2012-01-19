@@ -119,6 +119,11 @@ void TextView::appendText(const QString &text, TextType type)
 
 }
 
+void TextView::setMaximumBlockCount(int n)
+{
+	document()->setMaximumBlockCount(n);
+}
+
 QString TextView::logTimeString(TextType type)
 {
 	QString iconString;
