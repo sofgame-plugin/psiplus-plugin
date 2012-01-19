@@ -28,6 +28,8 @@
 #include <QIcon>
 #include <QPixmap>
 #include <QScrollBar>
+#include <QMenu>
+#include <QContextMenuEvent>
 
 #include "textview.h"
 #include "pluginhosts.h"
@@ -60,6 +62,15 @@ QMimeData *TextView::createMimeDataFromSelection() const
 	data->setText(text);
 	data->setHtml(Qt::convertFromPlainText(text));
 	return data;
+}
+
+void TextView::contextMenuEvent(QContextMenuEvent *e)
+{
+	QMenu *menu = createStandardContextMenu();
+	menu->addSeparator();
+	menu->addAction(QString::fromUtf8("Очистить"), this, SLOT(clear()));
+	menu->exec(e->globalPos());
+	delete menu;
 }
 
 void TextView::appendText(const QString &text, TextType type)

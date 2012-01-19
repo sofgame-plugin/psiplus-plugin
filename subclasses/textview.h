@@ -42,6 +42,7 @@ public:
 
 protected:
 	QMimeData *createMimeDataFromSelection() const;
+	void contextMenuEvent(QContextMenuEvent *e);
 
 private:
 	QString logTimeString(TextType type);

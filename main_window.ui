@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>661</width>
+    <width>678</width>
     <height>721</height>
    </rect>
   </property>
@@ -339,9 +339,6 @@
                    <property name="focusPolicy">
                     <enum>Qt::NoFocus</enum>
                    </property>
-                   <property name="contextMenuPolicy">
-                    <enum>Qt::CustomContextMenu</enum>
-                   </property>
                    <property name="undoRedoEnabled">
                     <bool>false</bool>
                    </property>
@@ -364,9 +361,6 @@
                    </property>
                    <property name="focusPolicy">
                     <enum>Qt::NoFocus</enum>
-                   </property>
-                   <property name="contextMenuPolicy">
-                    <enum>Qt::CustomContextMenu</enum>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
