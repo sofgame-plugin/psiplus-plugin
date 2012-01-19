@@ -117,10 +117,6 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	// Привязываем сигнал
 	connect(gameMapView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(mapShowContextMenu(const QPoint &)));
 	gameMapView->setContextMenuPolicy(Qt::CustomContextMenu);
-	// Текст игры
-	connect (serverTextView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(textShowContextMenu(const QPoint &)));
-	// Консоль игры
-	connect (consoleTextView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(consoleShowContextMenu(const QPoint &)));
 	// Строка команд
 	connect(userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
 	connect(userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
@@ -1619,20 +1615,6 @@ void SofMainWindow::mapShowContextMenu(const QPoint &pos)
 		actionRemoveMapElement->setEnabled(false);
 	}
 	mapMenu->exec(gameMapView->mapToGlobal(pos));
-}
-
-void SofMainWindow::textShowContextMenu(const QPoint &pos)
-{
-	QMenu *menu = serverTextView->createStandardContextMenu();
-	menu->exec(serverTextView->mapToGlobal(pos));
-	delete menu;
-}
-
-void SofMainWindow::consoleShowContextMenu(const QPoint &pos)
-{
-	QMenu *menu = consoleTextView->createStandardContextMenu();
-	menu->exec(consoleTextView->mapToGlobal(pos));
-	delete menu;
 }
 
 void SofMainWindow::moveMapElement()

@@ -167,8 +167,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void createMap();
 		void clearMap();
 		void mapShowContextMenu(const QPoint &);
-		void textShowContextMenu(const QPoint &);
-		void consoleShowContextMenu(const QPoint &);
 		void moveMapElement();
 		void removeMapElement();
 		void markMapElement();
