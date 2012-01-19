@@ -53,7 +53,7 @@ private:
 	void scrollToBottom();
 
 private slots:
-	void reloadResources();
+	void firstLoadResources();
 
 };
 

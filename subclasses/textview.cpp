@@ -40,7 +40,7 @@ TextView::TextView(QWidget *parent) :
 {
 	setUndoRedoEnabled(false);
 	setLogIcons();
-	connect(this, SIGNAL(textChanged()), this, SLOT(reloadResources()));
+	connect(this, SIGNAL(textChanged()), this, SLOT(firstLoadResources()));
 }
 
 void TextView::changeEvent(QEvent *e)
@@ -152,7 +152,7 @@ void TextView::setLogIcons()
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log-icon-info"), infoPixmap);
 }
 
-void TextView::reloadResources()
+void TextView::firstLoadResources()
 {
 	if (document()->isEmpty())
 		setLogIcons();
