@@ -36,7 +36,9 @@
 #include "pers.h"
 
 TextView::TextView(QWidget *parent) :
-	QTextEdit(parent)
+	QTextEdit(parent),
+	maxBlockActive(true),
+	maxBlockCount(0)
 {
 	setUndoRedoEnabled(false);
 	setLogIcons();
@@ -112,16 +114,26 @@ void TextView::appendText(const QString &text, TextType type)
 	}
 	setTextCursor(cursor);
 
-	if (doScrollToBottom || type == LocalText)
+	if (doScrollToBottom || type == LocalText) {
+		if (!maxBlockActive) {
+			maxBlockActive = true;
+			document()->setMaximumBlockCount(maxBlockCount);
+		}
 		scrollToBottom();
-	else
+	} else {
+		if (maxBlockActive) {
+			maxBlockActive = false;
+			document()->setMaximumBlockCount(0);
+		}
 		verticalScrollBar()->setValue(scrollbarValue);
-
+	}
 }
 
 void TextView::setMaximumBlockCount(int n)
 {
-	document()->setMaximumBlockCount(n);
+	maxBlockCount = n;
+	if (maxBlockActive)
+		document()->setMaximumBlockCount(n);
 }
 
 QString TextView::logTimeString(TextType type)

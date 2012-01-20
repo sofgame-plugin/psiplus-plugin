@@ -53,6 +53,10 @@ private:
 	bool atBottom() const;
 	void scrollToBottom();
 
+private:
+	bool maxBlockActive;
+	int  maxBlockCount;
+
 private slots:
 	void firstLoadResources();
 
