@@ -72,7 +72,7 @@ PluginCore::PluginCore()
 	statisticChangedFlag = false;
 	// Настройка регулярок
 	mapCoordinatesExp.setPattern(QString::fromUtf8("^(-?[0-9]+):(-?[0-9]+)$"));
-	parPersRegExp.setPattern(QString::fromUtf8("^(\\w+)\\[у:([0-9]{1,2})\\|з:(-?[0-9]{1,6})/([0-9]{1,6})\\|э:(-?[0-9]{1,6})/([0-9]{1,6})\\|о:([0-9]{1,12})/([0-9]{1,12})\\]$"));
+	parPersRegExp.setPattern(QString::fromUtf8("^(\\w+)\\[у:([0-9]{1,2})\\|з:(-?[0-9]{1,6})/([0-9]{1,6})\\|э:(-?[0-9]{1,6})/([0-9]{1,6})\\|о:([0-9]{1,20})/(-?[0-9]{1,20})\\]$"));
 	moneysCountExp.setPattern(QString::fromUtf8("^деньги:? (-?[0-9]+) дринк$")); //деньги: 100000 дринк
 	fightDropMoneyReg2.setPattern(QString::fromUtf8("(нашли|выпало) ([0-9]+) дринк"));
 	secretDropThingReg.setPattern(QString::fromUtf8("(забрали|нашли|выпала) \"(.+)\"")); // забрали "панцирь раритет" и ушли
