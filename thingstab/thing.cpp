@@ -343,84 +343,20 @@ QString Thing::toString(QFlags<enum ToStringFlag> flags) const
 		// Параметры и модификаторы
 		QStringList aModifList;
 		aModifList.clear();
-		int abs = loss_;
-		float mul = loss_mul;
-		if (mul != 0.0f || abs != 0) {
-			QString str1 = QString::fromUtf8("урон:");
-			if (mul != 0.0f) {
-				str1.append(QString::number(mul) + QString::fromUtf8("*ур"));
-			}
-			if (abs != 0) {
-				if (mul != 0.0f) {
-					str1.append("+");
-				}
-				str1.append(QString::number(abs));
-			}
-			aModifList.push_back(str1);
+		if (loss_mul != 0.0f || loss_ != 0) {
+			aModifList.push_back(QString::fromUtf8("урон:%1").arg(paramToStr(loss_mul, loss_)));
 		}
-		// Защита
-		abs = protect_;
-		mul = protect_mul;
-		if (mul != 0.0f || abs != 0) {
-			QString str1 = QString::fromUtf8("защ:");
-			if (mul != 0.0f) {
-				str1.append(QString::number(mul) + QString::fromUtf8("*ур"));
-			}
-			if (abs != 0) {
-				if (mul != 0.0f) {
-					str1.append("+");
-				}
-				str1.append(QString::number(abs));
-			}
-			aModifList.push_back(str1);
+		if (protect_mul != 0.0f || protect_ != 0) {
+			aModifList.push_back(QString::fromUtf8("защ:%1").arg(paramToStr(protect_mul, protect_)));
 		}
-		// Сила
-		abs = force_;
-		mul = force_mul;
-		if (mul != 0.0f || abs != 0) {
-			QString str1 = QString::fromUtf8("сила:");
-			if (mul != 0.0f) {
-				str1.append(QString::number(mul) + QString::fromUtf8("*ур"));
-			}
-			if (abs != 0) {
-				if (mul != 0.0f) {
-					str1.append("+");
-				}
-				str1.append(QString::number(abs));
-			}
-			aModifList.push_back(str1);
+		if (force_mul != 0.0f || force_ != 0) {
+			aModifList.push_back(QString::fromUtf8("сила:%1").arg(paramToStr(force_mul, force_)));
 		}
-		// Ловкость
-		abs = dext_;
-		mul = dext_mul;
-		if (mul != 0.0f || abs != 0) {
-			QString str1 = QString::fromUtf8("ловк:");
-			if (mul != 0.0f) {
-				str1.append(QString::number(mul) + QString::fromUtf8("*ур"));
-			}
-			if (abs != 0) {
-				if (mul != 0.0f) {
-					str1.append("+");
-				}
-				str1.append(QString::number(abs));
-			}
-			aModifList.push_back(str1);
+		if (dext_mul != 0.0f || dext_ != 0) {
+			aModifList.push_back(QString::fromUtf8("ловк:%1").arg(paramToStr(dext_mul, dext_)));
 		}
-		// Интеллект
-		abs = intell_;
-		mul = intell_mul;
-		if (mul != 0.0f || abs != 0) {
-			QString str1 = QString::fromUtf8("инт:");
-			if (mul != 0.0f) {
-				str1.append(QString::number(mul) + QString::fromUtf8("*ур"));
-			}
-			if (abs != 0) {
-				if (mul != 0.0f) {
-					str1.append("+");
-				}
-				str1.append(QString::number(abs));
-			}
-			aModifList.push_back(str1);
+		if (intell_mul != 0.0f || intell_ != 0) {
+			aModifList.push_back(QString::fromUtf8("инт:%1").arg(paramToStr(intell_mul, intell_)));
 		}
 		//--
 		if (aModifList.size() > 0 || !param_str.isEmpty()) {
