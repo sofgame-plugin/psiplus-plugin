@@ -96,6 +96,8 @@ public:
 	int   reqintell() const {return req_intell;};
 	void  setReqintell(int _reqintell) {req_intell = _reqintell;};
 	QString toString(QFlags<enum ToStringFlag>) const;
+	static QString paramToStr(float mul, int abs);
+	QString toTip() const;
 	void  importFromXml(const QDomElement &);
 	QDomElement exportToXml(QDomDocument &xmlDoc) const;
 

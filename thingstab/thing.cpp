@@ -23,7 +23,7 @@
 *
 */
 
-//#include <QtCore>
+#include <QTextDocument>
 
 #include "thing.h"
 #include "pers_info.h"
@@ -329,8 +329,7 @@ QString Thing::toString(QFlags<enum ToStringFlag> flags) const
 		res.append(name_); // Имя вещи
 	}
 	if (flags.testFlag(ShowType)) {
-		int num1 = type_; // Тип вещи
-		QString sType = thingTypeToString(num1);
+		QString sType = thingTypeToString(type_);
 		if (!sType.isEmpty()) {
 			if (flags == ShowType) {
 				// Запрос только типа вещи
@@ -463,6 +462,66 @@ QString Thing::toString(QFlags<enum ToStringFlag> flags) const
 		res.append(QString::fromUtf8("- %1шт.").arg(count_));
 	}
 	return res;
+}
+
+QString Thing::paramToStr(float mul, int abs)
+{
+	QString str1;
+	if (mul != 0.0f) {
+		str1 = QString::number(mul);
+		if (str1.indexOf('.') == -1)
+			str1.append(".0");
+		str1.append(QString::fromUtf8("*ур"));
+	}
+	if (abs != 0) {
+		if (mul != 0.0f) {
+			str1.append("+");
+		}
+		str1.append(QString::number(abs));
+	}
+	if (str1.isEmpty())
+		str1 = QString::fromUtf8("нет");
+	return str1;
+}
+
+QString Thing::toTip() const
+{
+	QString tipStr;
+	if (loss_mul != 0.0f || loss_ != 0 || protect_mul != 0.0f || protect_ != 0 || force_mul != 0.0f || force_ != 0 || dext_mul != 0.0f || dext_ != 0 || intell_mul != 0.0f || intell_ != 0) {
+		tipStr.append(QString::fromUtf8("<tr><td colspan=\"2\"><strong>Параметры</strong></td></tr>"));
+		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Урон:</div></td><td>%1</td></tr>").arg(paramToStr(loss_mul, loss_)));
+		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Защита:</div></td><td>%1</td></tr>").arg(paramToStr(protect_mul, protect_)));
+		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Сила:</div></td><td>%1</td></tr>").arg(paramToStr(force_mul, force_)));
+		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Ловкость:</div></td><td>%1</td></tr>").arg(paramToStr(dext_mul, dext_)));
+		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Интеллект:</div></td><td>%1</td></tr>").arg(paramToStr(intell_mul, intell_)));
+	}
+	if (req_level != 0 || req_force != 0 || req_dext != 0 || req_intell != 0) {
+		tipStr.append(QString::fromUtf8("<tr><td colspan=\"2\"><strong>Требования</strong></td></tr>"));
+		if (req_level != 0)
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Уровень:</div></td><td>%1</td></tr>").arg(req_level));
+		if (req_force != 0)
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Сила:</div></td><td>%1</td></tr>").arg(req_force));
+		if (req_dext != 0)
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Ловкость:</div></td><td>%1</td></tr>").arg(req_dext));
+		if (req_intell != 0)
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Интеллект:</div></td><td>%1</td></tr>").arg(req_intell));
+	}
+	if (up_level != 0) {
+		tipStr.append(QString::fromUtf8("<tr><td colspan=\"2\"><strong>Именная</strong></td></tr>"));
+		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Уровень:</div></td><td>%1</td></tr>").arg(up_level));
+	}
+
+	QString resStr = "<qt><style type='text/css'>"
+			".layer1 {white-space:pre}"
+			".layer2 {white-space:normal;margin-left:16px;}"
+			"</style>";
+	resStr.append(QString("<table><tr><td colspan=\"2\"><div class=\"layer1\"><strong><em><big>%1 (%2)</big></em></strong></div>%3</td></tr>")
+			.arg(Qt::escape(name_))
+			.arg(Qt::escape(thingTypeToString(type_)))
+			.arg(tipStr.isEmpty() ? QString() : "<hr />"));
+	resStr.append(tipStr);
+	tipStr.append("</table></qt>");
+	return resStr;
 }
 
 /**

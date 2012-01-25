@@ -118,13 +118,7 @@ QVariant ThingsModel::data(const QModelIndex &index, int role) const
 			if (row >= 0 && row < thingsList.size()) {
 				Thing* thing = thingsList.at(row);
 				if (thing) {
-					QFlags<enum Thing::ToStringFlag> flags;
-					flags |= Thing::ShowName;
-					flags |= Thing::ShowType;
-					flags |= Thing::ShowModif;
-					flags |= Thing::ShowReq;
-					flags |= Thing::ShowUplevel;
-					return thing->toString(flags);
+					return thing->toTip();
 				}
 			}
 		}
