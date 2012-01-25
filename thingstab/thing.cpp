@@ -423,13 +423,27 @@ QString Thing::paramToStr(float mul, int abs)
 QString Thing::toTip() const
 {
 	QString tipStr;
-	if (loss_mul != 0.0f || loss_ != 0 || protect_mul != 0.0f || protect_ != 0 || force_mul != 0.0f || force_ != 0 || dext_mul != 0.0f || dext_ != 0 || intell_mul != 0.0f || intell_ != 0) {
+	bool mainParam = (loss_mul != 0.0f || loss_ != 0 || protect_mul != 0.0f || protect_ != 0 || force_mul != 0.0f || force_ != 0 || dext_mul != 0.0f || dext_ != 0 || intell_mul != 0.0f || intell_ != 0);
+	if (mainParam || !param_str.isEmpty()) {
 		tipStr.append(QString::fromUtf8("<tr><td colspan=\"2\"><strong>Параметры</strong></td></tr>"));
-		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Урон:</div></td><td>%1</td></tr>").arg(paramToStr(loss_mul, loss_)));
-		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Защита:</div></td><td>%1</td></tr>").arg(paramToStr(protect_mul, protect_)));
-		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Сила:</div></td><td>%1</td></tr>").arg(paramToStr(force_mul, force_)));
-		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Ловкость:</div></td><td>%1</td></tr>").arg(paramToStr(dext_mul, dext_)));
-		tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Интеллект:</div></td><td>%1</td></tr>").arg(paramToStr(intell_mul, intell_)));
+		if (mainParam) {
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Урон:</div></td><td>%1</td></tr>").arg(paramToStr(loss_mul, loss_)));
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Защита:</div></td><td>%1</td></tr>").arg(paramToStr(protect_mul, protect_)));
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Сила:</div></td><td>%1</td></tr>").arg(paramToStr(force_mul, force_)));
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Ловкость:</div></td><td>%1</td></tr>").arg(paramToStr(dext_mul, dext_)));
+			tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">Интеллект:</div></td><td>%1</td></tr>").arg(paramToStr(intell_mul, intell_)));
+		}
+		if (!param_str.isEmpty()) {
+			QStringList aOtherModifList = param_str.split(';');
+			for (int i = 0, cnt = aOtherModifList.size(); i < cnt; ++i) {
+				const QString str1 = aOtherModifList.at(i);
+				int splitPos = str1.indexOf(':');
+				if (splitPos > 0 && splitPos < str1.length() - 1) {
+					tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">%1:</div></td><td>%2</td></tr>")
+						.arg(str1.left(splitPos)).arg(str1.mid(splitPos + 1)));
+				}
+			}
+		}
 	}
 	if (req_level != 0 || req_force != 0 || req_dext != 0 || req_intell != 0) {
 		tipStr.append(QString::fromUtf8("<tr><td colspan=\"2\"><strong>Требования</strong></td></tr>"));
