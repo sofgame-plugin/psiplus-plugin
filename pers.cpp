@@ -1279,21 +1279,21 @@ void Pers::setThingsInterfaceFilter(int iface, int filter_num)
 /**
  * Освобождает память занятую под ProxyModel и удаляет запись в массиве
  */
-void Pers::removeThingsInterface(int index)
+void Pers::removeThingsInterface(int ifaceNum)
 {
-	ThingsProxyModel* tpm = thingModels.value(index, NULL);
+	ThingsProxyModel* tpm = thingModels.value(ifaceNum, NULL);
 	if (tpm) {
+		thingModels.remove(ifaceNum);
 		delete tpm;
-		thingModels.remove(index);
 	}
 }
 
 /**
  * Возвращает указатель на модель по индексу интерфейса
  */
-QSortFilterProxyModel* Pers::getThingsModel(int index) const
+QSortFilterProxyModel* Pers::getThingsModel(int ifaceNum) const
 {
-	ThingsProxyModel* tpm = thingModels.value(index, NULL);
+	ThingsProxyModel* tpm = thingModels.value(ifaceNum, NULL);
 	if (tpm) {
 		return tpm;
 	}

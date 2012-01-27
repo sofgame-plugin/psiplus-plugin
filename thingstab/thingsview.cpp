@@ -24,23 +24,31 @@
  */
 
 #include <QMenu>
-//#include <QContextMenuEvent>
+#include <QContextMenuEvent>
 #include <QtGui/QHeaderView>
+#include <QInputDialog>
+#include <QApplication>
+#include <QClipboard>
 
 #include "thingsview.h"
 #include "thingsmodel.h"
+#include "pers.h"
 
 ThingsView::ThingsView( QWidget * parent ) : QTableView(parent)
 {
+	ifaceNum = Pers::instance()->getThingsInterface();
 	connect(horizontalHeader(), SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(headerContentMenu(const QPoint &)));
 }
 
 ThingsView::~ThingsView()
 {
+	Pers::instance()->removeThingsInterface(ifaceNum);
 }
 
 void ThingsView::init()
 {
+	setModel(Pers::instance()->getThingsModel(ifaceNum));
+
 	resizeColumnsToContents();
 
 	QHeaderView *hHeader = horizontalHeader();
@@ -57,8 +65,6 @@ void ThingsView::init()
 	vHeader->setResizeMode(QHeaderView::ResizeToContents);
 
 	connect(hHeader, SIGNAL(sectionClicked(int)), this, SLOT(sortByColumn(int)));
-
-	hHeader->setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
 /**
@@ -117,8 +123,30 @@ void ThingsView::loadSettingsFromXml(QDomElement &xml)
 	}
 }
 
-void ThingsView::contextMenuEvent(QContextMenuEvent */*e*/)
+void ThingsView::contextMenuEvent(QContextMenuEvent *e)
 {
+	QMenu *menu = new QMenu();
+	QAction *actSetPrice = new QAction(QString::fromUtf8("Цена у торговца"), menu);
+	connect(actSetPrice, SIGNAL(triggered()), this, SLOT(setPrice()));
+	QAction *actParamToConsole = new QAction(QString::fromUtf8("Сбросить параметры в консоль"), menu);
+	connect(actParamToConsole, SIGNAL(triggered()), this, SLOT(paramToConsole()));
+	QAction *actParamToClipboard = new QAction(QString::fromUtf8("Сбросить параметры в буфер обмена"), menu);
+	connect(actParamToClipboard, SIGNAL(triggered()), this, SLOT(paramToClipboard()));
+
+	if (currentIndex().row() >= 0) {
+		actSetPrice->setEnabled(true);
+		actParamToConsole->setEnabled(true);
+		actParamToClipboard->setEnabled(true);
+	} else {
+		actSetPrice->setEnabled(false);
+		actParamToConsole->setEnabled(false);
+		actParamToClipboard->setEnabled(false);
+	}
+	menu->addAction(actSetPrice);
+	menu->addAction(actParamToConsole);
+	menu->addAction(actParamToClipboard);
+	menu->exec(e->globalPos());
+	delete menu;
 }
 
 void ThingsView::keyPressEvent(QKeyEvent */*e*/)
@@ -149,4 +177,69 @@ void ThingsView::headerContentMenu(const QPoint &/*p*/)
 		header->setSectionHidden(col, !res->isChecked());
 	}
 	delete menu;
+}
+
+void ThingsView::setFilter(int filterNum)
+{
+	Pers::instance()->setThingsInterfaceFilter(ifaceNum, filterNum);
+	emit changeSummary();
+}
+
+void ThingsView::setPrice()
+{
+	Pers *pers = Pers::instance();
+	// Получаем номер активной строки
+	int row = currentIndex().row();
+	if (row < 0)
+		return;
+	// Получаем указатель на вещь
+	const Thing *thg = pers->getThingByRow(row, ifaceNum);
+	if (!thg || !thg->isValid())
+		return;
+	QString s_name = QString::fromUtf8("Укажите цену для ") + thg->name() + QString::fromUtf8(", или -1 для сброса цены.");
+	int price = thg->price();
+	bool fOk = false;
+	int new_price = QInputDialog::getInt(this, QString::fromUtf8("Новая цена вещи"), s_name, price, -1, 2147483647, 1, &fOk, 0);
+	if (fOk && price != new_price) {
+		pers->setThingPrice(ifaceNum, row, new_price);
+		emit changeSummary();
+	}
+}
+
+void ThingsView::paramToConsole()
+{
+	int row = currentIndex().row();
+	if (row < 0)
+		return;
+	Thing const *thg = Pers::instance()->getThingByRow(row, ifaceNum);
+	if (thg && thg->isValid()) {
+		emit writeToConsole(thg->toString(Thing::ShowAll), 3, true);
+	}
+}
+
+void ThingsView::paramToClipboard()
+{
+	int row = currentIndex().row();
+	if (row < 0)
+		return;
+	Thing const *thg = Pers::instance()->getThingByRow(row, ifaceNum);
+	if (thg && thg->isValid()) {
+		qApp->clipboard()->setText(thg->toString(Thing::ShowAll));
+	}
+}
+
+int ThingsView::summaryCount()
+{
+	return Pers::instance()->getThingsCount(ifaceNum);
+
+}
+
+int ThingsView::summaryPriceAll()
+{
+	return Pers::instance()->getPriceAll(ifaceNum);
+}
+
+int ThingsView::summaryNoPriceCount()
+{
+	return Pers::instance()->getNoPriceCount(ifaceNum);
 }

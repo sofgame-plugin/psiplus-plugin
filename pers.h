@@ -81,13 +81,13 @@ public:
 	int  getThingsCount(int) const;
 	int  getPriceAll(int) const;
 	int  getNoPriceCount(int) const;
-	const Thing* getThingByRow(int, int) const;
+	const Thing* getThingByRow(int row, int iface) const;
 	void getThingsFiltersEx(QList<ThingFilter*>*) const;
 	void setThingsFiltersEx(QList<ThingFilter*>);
 	const QVector<price_item>* getThingsPrice() const;
 	void backpackToXml(QDomElement &eBackpack) const;
 	void loadThingsFromDomElement(QDomElement &);
-	void setThingPrice(int, int, int);
+	void setThingPrice(int iface, int row, int price);
 	void beginSetPersParams();
 	void setPersParams(int, int, int);
 	void setPersParams(int, int, long long);
@@ -97,9 +97,9 @@ public:
 	bool getStringParamValue(PersParams, QString*) const;
 	void setSetting(Settings::SettingKey, int);
 	int  getThingsInterface();
-	void setThingsInterfaceFilter(int, int);
-	void removeThingsInterface(int);
-	QSortFilterProxyModel* getThingsModel(int) const;
+	void setThingsInterfaceFilter(int iface, int filter_num);
+	void removeThingsInterface(int ifaceNum);
+	QSortFilterProxyModel* getThingsModel(int ifaceNum) const;
 	QString getPersStatusString();
 	const MapPos &getCoordinates() const {return position;};
 	void setMapPosition(const MapPos &p);

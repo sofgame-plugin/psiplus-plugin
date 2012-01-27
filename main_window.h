@@ -63,7 +63,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		~SofMainWindow();
 		void init();
 		void setGameText(const QString &, int);
-		void setConsoleText(const QString &, int, bool);
 		bool getAutoEnterMode() const {return autoEnterMode;};
 		void setAutoEnterMode(bool);
 		QDomElement exportAppearanceSettings(QDomDocument &xmlDoc) const;
@@ -106,7 +105,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void setCurrentEnergy(int);
 		void setCurrentExperience(long long);
 		void setMaximumExperience(long long);
-		void showThingsSummary();
 		void loadSlotsSettings(const QDomElement &xml);
 		void loadAppearanceSettings(const QDomElement &xml);
 
@@ -122,20 +120,14 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		bool thingsChanged;
 		int currentPage;
 		QMenu* mapMenu;
-		QMenu* thingsMenu;
 		QAction* actionMarkMapElement;
 		QAction* actionMoveMapElement;
 		QAction* actionRemoveMapElement;
-		QAction* actionSetThingPrice;
-		QAction *actionThingParamToConsole;
-		QAction *actionThingParamToClipboard;
 		QTabBar* thingsTabBar;
 		QList<FontLabel*>fontLabelGroup;
 		QButtonGroup* fontButtonGroup;
-		ThingsModel* thingsTableModel;
 		QList<ThingFilter*> filtersList;
 		bool autoEnterMode;
-		int  thingsIface;
 		QString lastMapForMoveElement; // Запоминается имя карты последнего переноса элемента
 		long long experienceMax; // Нужно для расчета делителя в QProgressBar
 		long long experienceCurr;
@@ -146,6 +138,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void updateThingFiltersTab(); // Обновляет список (имена) табов у вещей
 		void showQueueLen(int); // Отображение очереди команд
 		void chooseFont(QAbstractButton* button); // Нажата кнопка выбора фонта
+		void setConsoleText(const QString &, int, bool);
 
 	private slots:
 		void changePage(int index);
@@ -171,12 +164,9 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void removeMapElement();
 		void markMapElement();
 		void showThings(int);
-		void thingsShowContextMenu(const QPoint &);
-		void setThingPrice();
-		void thingParamToConsole();
-		void thingParamToClipboard();
 		void persThingsChanged();
 		void persParamChanged(int, int, int);
+		void showThingsSummary();
 
 };
 

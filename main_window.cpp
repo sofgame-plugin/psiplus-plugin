@@ -127,7 +127,6 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	thingsTabBar = new QTabBar(page_4);
 	connect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
 	// Таблица вещей
-	thingsIface = 0;
 	QLayout* lt = page_4->layout();
 	lt->removeWidget(thingsTable);
 	lt->removeItem(thingsSummaryLayout);
@@ -136,25 +135,8 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	lt->addWidget(thingsTable);
 	lt->addItem(thingsSummaryLayout);
 	lt->addItem(moneyCountLayout);
-	// Создаем контекстное меню вещей
-	actionSetThingPrice = new QAction(thingsTable);
-	actionSetThingPrice->setText(QString::fromUtf8("Цена у торговца"));
-	actionSetThingPrice->setStatusTip(QString::fromUtf8("Цена для продажи торговцу"));
-	connect(actionSetThingPrice, SIGNAL(triggered()), this, SLOT(setThingPrice()));
-	actionThingParamToConsole = new QAction(thingsTable);
-	actionThingParamToConsole->setText(QString::fromUtf8("Сбросить параметры в консоль"));
-	actionThingParamToConsole->setStatusTip(QString::fromUtf8("Сбросить параметры вещи в консоль плагина"));
-	connect(actionThingParamToConsole, SIGNAL(triggered()), this, SLOT(thingParamToConsole()));
-	actionThingParamToClipboard = new QAction(thingsTable);
-	actionThingParamToClipboard->setText(QString::fromUtf8("Параметры в буфер обмена"));
-	actionThingParamToClipboard->setStatusTip(QString::fromUtf8("Поместить параметры вещи в буфер обмена"));
-	connect(actionThingParamToClipboard, SIGNAL(triggered()), this, SLOT(thingParamToClipboard()));
-	thingsMenu = new QMenu(this);
-	thingsMenu->addAction(actionSetThingPrice);
-	thingsMenu->addAction(actionThingParamToConsole);
-	thingsMenu->addAction(actionThingParamToClipboard);
-	connect(thingsTable, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(thingsShowContextMenu(const QPoint &)));
-	thingsTable->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(thingsTable, SIGNAL(changeSummary()), this, SLOT(showThingsSummary()));
+	connect(thingsTable, SIGNAL(writeToConsole(QString,int,bool)), this, SLOT(setConsoleText(QString,int,bool)));
 	// Табвиджет настроек
 	settingTab->setCurrentIndex(0);
 	// Кнопки шрифтов
@@ -237,9 +219,6 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 
 SofMainWindow::~SofMainWindow()
 {
-	Pers *pers = Pers::instance();
-	if (thingsIface)
-		pers->removeThingsInterface(thingsIface);
 	if (timeoutStamp)
 		delete timeoutStamp;
 	if (timeoutTimer)
@@ -284,9 +263,6 @@ void SofMainWindow::init()
 	Settings *settings = Settings::instance();
 	loadSlotsSettings(settings->getSlotsData());
 	// Таблица вещей
-	thingsIface = Pers::instance()->getThingsInterface();
-	if (thingsIface)
-		thingsTable->setModel(Pers::instance()->getThingsModel(thingsIface));
 	thingsTable->init();
 	// Загружаем настройки внешнего вида
 	loadAppearanceSettings(settings->getAppearanceData());
@@ -1723,9 +1699,7 @@ void SofMainWindow::markMapElement()
  */
 void SofMainWindow::showThings(int tab_num)
 {
-	int flt_num = thingsTabBar->tabData(tab_num).toInt() + 1;
-	Pers::instance()->setThingsInterfaceFilter(thingsIface, flt_num);
-	showThingsSummary();
+	thingsTable->setFilter(thingsTabBar->tabData(tab_num).toInt() + 1);
 }
 
 /**
@@ -1733,82 +1707,14 @@ void SofMainWindow::showThings(int tab_num)
  */
 void SofMainWindow::showThingsSummary()
 {
-	Pers *pers = Pers::instance();
-	int nCountAll = pers->getThingsCount(thingsIface);
-	int nPriceAll = pers->getPriceAll(thingsIface);
-	int noPrice = pers->getNoPriceCount(thingsIface);
+	int nCountAll = thingsTable->summaryCount();
+	int nPriceAll = thingsTable->summaryPriceAll();
+	int noPrice = thingsTable->summaryNoPriceCount();
 	labelThingsCountAll->setText(numToStr(nCountAll, "'"));
 	QString str1 = numToStr(nPriceAll, "'");
 	if (noPrice != 0)
 		str1.append("+");
 	labelThingsPriceAll->setText(str1);
-}
-
-void SofMainWindow::thingsShowContextMenu(const QPoint &/*pos*/)
-{
-	/**
-	* Отображает контекстное меню для таблицы с вещами
-	**/
-	if (thingsTable->currentIndex().row() >= 0) {
-		actionSetThingPrice->setEnabled(true);
-		actionThingParamToConsole->setEnabled(true);
-		actionThingParamToClipboard->setEnabled(true);
-	} else {
-		actionSetThingPrice->setEnabled(false);
-		actionThingParamToConsole->setEnabled(false);
-		actionThingParamToClipboard->setEnabled(false);
-	}
-	thingsMenu->exec(QCursor::pos());
-}
-
-/**
- * Вызывает и обрабатывает диалог редактирования цены вещи
- */
-void SofMainWindow::setThingPrice()
-{
-	Pers *pers = Pers::instance();
-	// Получаем номер строки
-	int row = thingsTable->currentIndex().row();
-	// Получаем указатель на вещь
-	const Thing *thg = pers->getThingByRow(row, thingsIface);
-	if (!thg || !thg->isValid())
-		return;
-	// Получаем имя выбранной вещи и цену
-	QString s_name = QString::fromUtf8("Укажите цену для ") + thg->name() + QString::fromUtf8(", или -1 для сброса цены.");
-	int n_price = thg->price();
-	bool f_ok = false;
-	int new_price = QInputDialog::getInt(this, QString::fromUtf8("Цена торговца"), s_name, n_price, -1, 2147483647, 1, &f_ok, 0);
-	if (f_ok && n_price != new_price) {
-		// Меняем цену вещи
-		pers->setThingPrice(thingsIface, row, new_price);
-		// Пересчитываем итоги таблицы
-		showThingsSummary();
-	}
-}
-
-/**
- * Формирует строку с параметрами вещи и отсылает ее в консоль плагина
- */
-void SofMainWindow::thingParamToConsole()
-{
-	int row = thingsTable->currentIndex().row();
-	const Thing *thg = Pers::instance()->getThingByRow(row, thingsIface);
-	if (thg) {
-		if (thg->isValid()) {
-			setConsoleText(thg->toString(Thing::ShowAll), 3, true);
-		}
-	}
-}
-
-/**
- * Формирует строку с параметрами вещи и помещает ее в буфер обмена
- */
-void SofMainWindow::thingParamToClipboard()
-{
-	Thing const *thg = Pers::instance()->getThingByRow(thingsTable->currentIndex().row(), thingsIface);
-	if (thg && thg->isValid()) {
-		qApp->clipboard()->setText(thg->toString(Thing::ShowAll));
-	}
 }
 
 /**

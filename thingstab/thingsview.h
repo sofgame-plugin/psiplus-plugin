@@ -38,13 +38,32 @@ public:
 	void init();
 	QDomElement saveSettingsToXml(QDomDocument &xmlDoc) const;
 	void loadSettingsFromXml(QDomElement &xml);
+	int summaryCount();
+	int summaryPriceAll();
+	int summaryNoPriceCount();
 
-private slots:
-	void headerContentMenu(const QPoint &);
 
 protected:
 	void contextMenuEvent(QContextMenuEvent *e);
 	void keyPressEvent(QKeyEvent *e);
+
+private:
+	int  ifaceNum;
+
+public slots:
+	void setFilter(int);
+
+private slots:
+	void headerContentMenu(const QPoint &);
+	void setPrice();
+	void paramToConsole();
+	void paramToClipboard();
+
+signals:
+	void changeSummary();
+	void writeToConsole(const QString &, int, bool);
+
+
 };
 
 #endif // THINGSVIEW_H

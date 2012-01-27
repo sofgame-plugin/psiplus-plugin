@@ -46,7 +46,6 @@ Fight::Fight()
 
 Fight::~Fight()
 {
-
 }
 
 bool Fight::isActive()

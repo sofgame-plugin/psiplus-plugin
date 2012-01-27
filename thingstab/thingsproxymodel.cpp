@@ -110,6 +110,7 @@ void ThingsProxyModel::setFilter(ThingFilter* filter)
 {
 	thingsFilter = filter;
 	invalidateFilter();
+	reset();
 }
 
 void ThingsProxyModel::setPrice(int row, int price)
