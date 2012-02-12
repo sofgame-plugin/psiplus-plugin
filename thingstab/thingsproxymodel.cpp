@@ -87,15 +87,19 @@ bool ThingsProxyModel::lessThan(const QModelIndex &left, const QModelIndex &righ
 }
 
 void ThingsProxyModel::setThingsSource(ThingsModel* things_model) {
-	thingsSource = things_model;
 	if (thingsSource)
+		disconnect(thingsSource, SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(invalidate()));
+	thingsSource = things_model;
+	if (thingsSource) {
 		setSourceModel(thingsSource);
+		connect(thingsSource, SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SLOT(invalidate()));
+	}
 }
 
 const Thing* ThingsProxyModel::getThingByRow(int row) const
 {
 	if (thingsSource) {
-		QModelIndex proxy_index = index(row, 1);
+		QModelIndex proxy_index = index(row, 0);
 		if (proxy_index.isValid()) {
 			QModelIndex source_index = mapToSource(proxy_index);
 			if (source_index.isValid()) {
