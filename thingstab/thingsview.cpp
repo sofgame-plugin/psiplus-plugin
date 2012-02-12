@@ -37,6 +37,7 @@
 ThingsView::ThingsView( QWidget * parent ) : QTableView(parent)
 {
 	ifaceNum = Pers::instance()->getThingsInterface();
+	horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(horizontalHeader(), SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(headerContentMenu(const QPoint &)));
 }
 
