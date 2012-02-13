@@ -28,6 +28,7 @@
 #include <QDomDocument>
 #include <QPainter>
 #include <QImage>
+#include <QTextDocument>
 
 
 #include "game_map.h"
@@ -1413,39 +1414,57 @@ QString GameMap::makeTooltipForMapElement(int el_index) const
 {
 	// Проверять el_index не будем - предполагается что вызов метода происходит уже после проверки.
 	// mapCurrArrayPtr не проверяем по той же причине
-	QString s_res = QString();
+	QString s_res;
 	const MapElement *me = &mapCurrArrayPtr->at(el_index);
-	if (me->mark.enabled && !me->mark.title.isEmpty()) {
-		s_res.append(QString::fromUtf8("Метка: %1").arg(me->mark.title));
+	if (me->mark.enabled) {
+		s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
+			.arg(QString::fromUtf8("Метка:"))
+			.arg((me->mark.title.isEmpty()) ? QString::fromUtf8("<em>нет&nbsp;описания</em>") : Qt::escape(me->mark.title)));
 	}
 	int min_enem = me->enemies_min;
 	int max_enem = me->enemies_max;
 	if (min_enem > 0 || max_enem != 0) {
-		if (!s_res.isEmpty())
-			s_res.append("\n");
-		s_res.append(QString::fromUtf8("Противники: "));
+		QString enemStr;
 		if (min_enem == max_enem) {
-			s_res.append(QString::fromUtf8("%1").arg(min_enem));
+			enemStr = QString::fromUtf8("%1").arg(min_enem);
 		} else {
-			s_res.append(QString::fromUtf8("%1-%2").arg(min_enem).arg(max_enem));
+			enemStr = QString::fromUtf8("от&nbsp;%1&nbsp;до&nbsp;%2").arg(min_enem).arg(max_enem);
 		}
-		if (mapCurrArrayPtr->at(el_index).enemies_list.size() > 0) {
-			s_res.append("; ").append(me->enemies_list.join(", "));
+		s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
+			.arg(QString::fromUtf8("Кол-во противников:"))
+			.arg(enemStr));
+		if (me->enemies_list.size() > 0) {
+			QStringList enemList;
+			foreach (const QString &enemStr, me->enemies_list) {
+				enemList.append(Qt::escape(enemStr).replace(" ", "&nbsp;", Qt::CaseInsensitive));
+			}
+			s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
+				.arg(QString::fromUtf8("Противники:"))
+				.arg(enemList.join(", "))); //escape сделано ранее
 		}
 	}
 	MapScene::MapElementFeature feature = me->feature;
 	if (feature.testFlag(MapScene::LocationPortal) || feature.testFlag(MapScene::LocationSecret)) {
-		if (!s_res.isEmpty())
-			s_res.append("\n");
-		s_res.append(QString::fromUtf8("Другие элементы: "));
+		QString featureStr;
 		if (feature.testFlag(MapScene::LocationPortal)) {
-			s_res.append(QString::fromUtf8("портал"));
+			featureStr = QString::fromUtf8("портал");
 		}
 		if (feature.testFlag(MapScene::LocationSecret)) {
 			if (feature.testFlag(MapScene::LocationPortal))
-				s_res.append(", ");
-			s_res.append(QString::fromUtf8("тайник"));
+				featureStr.append(", ");
+			featureStr.append(QString::fromUtf8("тайник"));
 		}
+		s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
+			.arg(QString::fromUtf8("Другие элементы:"))
+			.arg(Qt::escape(featureStr)));
+	}
+
+	if (!s_res.isEmpty()) {
+		s_res = "<qt><style type='text/css'>"
+			".layer1 {white-space:pre;}"
+			".layer2 {white-space:normal;margin-left:10px;}"
+			"</style>"
+			"<table>" + s_res + "</table></qt>";
 	}
 	return s_res;
 }
