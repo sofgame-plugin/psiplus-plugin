@@ -440,7 +440,7 @@ QString Thing::toTip() const
 				int splitPos = str1.indexOf(':');
 				if (splitPos > 0 && splitPos < str1.length() - 1) {
 					tipStr.append(QString::fromUtf8("<tr><td><div class=\"layer2\">%1:</div></td><td>%2</td></tr>")
-						.arg(str1.left(splitPos)).arg(str1.mid(splitPos + 1)));
+						.arg(Qt::escape(str1.left(splitPos))).arg(Qt::escape(str1.mid(splitPos + 1))));
 				}
 			}
 		}
@@ -462,7 +462,7 @@ QString Thing::toTip() const
 	}
 
 	QString resStr = "<qt><style type='text/css'>"
-			".layer1 {white-space:pre}"
+			".layer1 {white-space:pre;}"
 			".layer2 {white-space:normal;margin-left:16px;}"
 			"</style>";
 	resStr.append(QString("<table><tr><td colspan=\"2\"><div class=\"layer1\"><strong><em><big>%1 (%2)</big></em></strong></div>%3</td></tr>")
