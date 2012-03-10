@@ -1338,6 +1338,7 @@ QString Pers::getPersStatusString()
 		Pers::statusStrings[StatusWarehouse]        = QString::fromUtf8("Склад");
 		Pers::statusStrings[StatusWarehouseShelf]   = QString::fromUtf8("Полка с вещами на складе");
 		Pers::statusStrings[StatusAtHome]           = QString::fromUtf8("Дома");
+		Pers::statusStrings[StatusTroll]            = QString::fromUtf8("Тролль");
 	}
 	return Pers::statusStrings.value(persStatus, "???");
 }

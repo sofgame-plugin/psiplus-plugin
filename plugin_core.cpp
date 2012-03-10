@@ -689,6 +689,8 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			} else if (sMessage == QString::fromUtf8("Выберите полку:")) {
 				nPersStatus = Pers::StatusWarehouse;
 				gameText.setEnd(); // Блокируем дальнейший анализ
+			} else if (sMessage == QString::fromUtf8("Тролль:")) {
+				nPersStatus = Pers::StatusTroll;
 			} else if (warehouseShelfReg.indexIn(sMessage, 0) != -1) {
 				nPersStatus = Pers::StatusWarehouseShelf;
 				gameText.setEnd(); // Блокируем дальнейший анализ
@@ -863,6 +865,14 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 					// Берем опыт, который дали в тайнике
 					statExperienceDropCount += experienceDropReg2.cap(1).toLongLong();
 					fExperienceDrop = true;
+				}
+			} else if (nPersStatus == Pers::StatusTroll) {
+				if (sMessage.contains(QString::fromUtf8("вот вам осколок"), Qt::CaseInsensitive)) {
+					++nThingsDropCount;
+					sThingDropLast = QString::fromUtf8("осколок камня судьбы");
+					if (Settings::instance()->getBoolSetting(Settings::SettingThingDropPopup)) {
+						initPopup("+" + sThingDropLast, 3);
+					}
 				}
 			} else if (nPersStatus != Pers::StatusFightFinish) {
 				if (experienceDropReg.indexIn(sMessage, 0) != -1) {

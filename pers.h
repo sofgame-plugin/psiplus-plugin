@@ -51,7 +51,7 @@ public:
 		StatusYard, StatusMasterRoom1, StatusMasterRoom2, StatusMasterRoom3, StatusDealerBuy,
 		StatusDealerSale, StatusBuyOk, StatusHelpMenu, StatusTopList,
 		StatusServerStatistic1, StatusServerStatistic2, StatusRealEstate, StatusWarehouse,
-		StatusWarehouseShelf, StatusInKillersCup, StatusThingIsTaken, StatusAtHome
+		StatusWarehouseShelf, StatusInKillersCup, StatusThingIsTaken, StatusAtHome, StatusTroll
 	};
 	enum PersParams {
 		ParamPersName,
