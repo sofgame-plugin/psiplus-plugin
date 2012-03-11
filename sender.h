@@ -28,12 +28,6 @@
 
 #include <QtCore>
 
-#include "applicationinfoaccessinghost.h"
-#include "stanzasendinghost.h"
-
-extern StanzaSendingHost* sender_;
-extern QStringList chatJids;
-
 class Sender: public QObject
 {
 Q_OBJECT
@@ -56,8 +50,12 @@ public:
 	void setAccountStatus(int curr_status);
 	void insertGameJid(const QString &, int);
 	void removeGameJid(const QString &);
-	int  getGameJidIndex(const QString &) const;
-	QStringList getGameJids() const;
+	int  gameJidIndex(const QString &) const;
+	QStringList gameJidList() const;
+	void insertChatJid(const QString &, int);
+	void removeChatJid(const QString &);
+	int  chatJidIndex(const QString &) const;
+	QStringList chatJidList() const;
 	const struct jid_status* getGameJidInfo(int) const;
 	bool setGameJidStatus(int, qint32);
 	int  getGameMirrorsMode() const {return gameMirrorsMode;}
@@ -77,6 +75,7 @@ private:
 	int currentAccount;
 	QString currentAccJid;
 	QVector<struct jid_status> gameJidsEx;
+	QStringList chatJids;
 	int jidActiveCount;
 	bool pingMirrors;
 	int jidInterval;

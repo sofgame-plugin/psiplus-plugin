@@ -32,6 +32,7 @@
 #include "optionaccessinghost.h"
 #include "applicationinfoaccessinghost.h"
 #include "iconfactoryaccessinghost.h"
+#include "stanzasendinghost.h"
 
 class PluginHosts
 {
@@ -40,7 +41,7 @@ public:
 	static OptionAccessingHost* psiOptions;
 	static ApplicationInfoAccessingHost *appInfoHost;
 	static IconFactoryAccessingHost *psiIcon;
-
+	static StanzaSendingHost* psiSender;
 };
 
 #endif // PLUGINHOSTS_H

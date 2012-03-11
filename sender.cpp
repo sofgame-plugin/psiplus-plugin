@@ -27,10 +27,9 @@
 
 #include "sender.h"
 #include "common.h"
+#include "pluginhosts.h"
 
 QString alfa = "0123456789abcdefghijklmnopqrstuvwxyz";
-StanzaSendingHost* sender_;
-QStringList chatJids;
 QList<short int> aPrefix = (QList<short int>()
 	<< 22 << 13 << 5  << 16 << 29 << 4  << 5  << 34 << 27 << 25
 	<< 4  << 5  << 16 << 27 << 29 << 1  << 9  << 17 << 2  << 3
@@ -123,7 +122,7 @@ void Sender::insertGameJid(const QString &jid, int pos)
 	if (jid.isEmpty())
 		return;
 	// Проверяем наличие такого зеркала
-	if (getGameJidIndex(jid) != -1)
+	if (gameJidIndex(jid) != -1)
 		return;
 	// Вставляем запись
 	struct jid_status jst;
@@ -148,15 +147,21 @@ void Sender::insertGameJid(const QString &jid, int pos)
  */
 void Sender::removeGameJid(const QString &jid)
 {
-	int i = getGameJidIndex(jid);
+	int i = gameJidIndex(jid);
 	if (i != -1) {
+		QString lastJid = gameJidsEx.at(i).jid;
 		gameJidsEx.remove(i);
-		if (lastSendIndex == i)
-			lastSendIndex = -1;
+		lastSendIndex = -1;
+		for (int idx = 0, cnt = gameJidsEx.size(); idx < cnt; ++idx) {
+			if (lastJid == gameJidsEx.at(idx).jid) {
+				lastSendIndex = idx;
+				break;
+			}
+		}
 	}
 }
 
-int Sender::getGameJidIndex(const QString &jid) const
+int Sender::gameJidIndex(const QString &jid) const
 {
 	int cnt = gameJidsEx.size();
 	for (int i = 0; i < cnt; i++) {
@@ -166,12 +171,45 @@ int Sender::getGameJidIndex(const QString &jid) const
 	return -1;
 }
 
-QStringList Sender::getGameJids() const
+QStringList Sender::gameJidList() const
 {
 	QStringList res;
 	int cnt = gameJidsEx.size();
 	for (int i = 0; i < cnt; i++) {
 		res.push_back(gameJidsEx.at(i).jid);
+	}
+	return res;
+}
+
+void Sender::insertChatJid(const QString &jid, int pos)
+{
+	if (jid.isEmpty() || chatJidIndex(jid) != -1)
+		return;
+	if (pos < 0 || pos >= chatJids.size())
+		chatJids.append(jid);
+	else
+		chatJids.insert(pos, jid);
+}
+
+void Sender::removeChatJid(const QString &jid)
+{
+	chatJids.removeAll(jid);
+}
+
+int Sender::chatJidIndex(const QString &jid) const
+{
+	for (int i = 0, cnt = chatJids.size(); i < cnt; ++i) {
+		if (chatJids.at(i) == jid)
+			return i;
+	}
+	return -1;
+}
+
+QStringList Sender::chatJidList() const
+{
+	QStringList res;
+	for (int i = 0, cnt = chatJids.size(); i < cnt; ++i) {
+		res.append(chatJids.at(i));
 	}
 	return res;
 }
@@ -276,7 +314,7 @@ int Sender::getServerTimeoutDuration() const
  */
 bool Sender::doGameAsk(const QString &mirrorJid, const QString &message)
 {
-	int jidIndex = getGameJidIndex(mirrorJid);
+	int jidIndex = gameJidIndex(mirrorJid);
 	if (jidIndex != -1) {
 		const struct jid_status* jstat = getGameJidInfo(jidIndex);
 		if (jstat != 0) {
@@ -492,7 +530,7 @@ void Sender::doPingJob()
 					gameJidsEx[i].last_send_ping = currTime;
 					gameJidsEx[i].last_send_ping.time().start();
 					lastSend = currTime;
-					sender_->sendMessage(currentAccount, gameJidsEx[i].jid, "000", "", "chat");
+					PluginHosts::psiSender->sendMessage(currentAccount, gameJidsEx[i].jid, "000", "", "chat");
 				}
 			} else {
 				timeout = jidInterval - timeDeltaMsec;
@@ -529,7 +567,7 @@ void Sender::doSendGameStringJob() {
 	// Получаем текущее время
 	QDateTime currTime = QDateTime::currentDateTime();
 	// Проверяем, пришел ли ответ на предыдущий пакет
-	if (waitingForReceive) {
+	if (waitingForReceive && lastSendIndex != -1) {
 		// Ответа пока не было
 		int timeDeltaMsec = gameJidsEx[lastSendIndex].last_send.time().msecsTo(currTime.time());
 		if (timeDeltaMsec < 0) {
@@ -674,7 +712,7 @@ void Sender::doSendGameStringJob() {
 				emit queueSizeChanged(gameQueue.size());
 			}
 		}
-		sender_->sendMessage(currentAccount, gameJidsEx[jidIndex].jid, lastCommand, "", "chat");
+		PluginHosts::psiSender->sendMessage(currentAccount, gameJidsEx[jidIndex].jid, lastCommand, "", "chat");
 		lastSendIndex = jidIndex;
 		waitingForReceive = true;
 		sendCommandRetries++;

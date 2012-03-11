@@ -1792,7 +1792,7 @@ void PluginCore::getStatistics(const QString &commandPtr)
 	if (mode == 0 || mode == 9) {
 		text.append(QString::fromUtf8("<strong><em>--Статистика зеркал игры--</em></strong>"), true);
 		Sender *sender = Sender::instance();
-		QStringList game_jids = sender->getGameJids();
+		QStringList game_jids = sender->gameJidList();
 		text.append(QString::fromUtf8("Всего зеркал: <em>%1</em>").arg(QString::number(game_jids.size())), true);
 		int jid_index = 0;
 		while (!game_jids.isEmpty()) {
