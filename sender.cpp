@@ -28,6 +28,7 @@
 #include "sender.h"
 #include "common.h"
 #include "pluginhosts.h"
+#include "plugin_core.h"
 
 QString alfa = "0123456789abcdefghijklmnopqrstuvwxyz";
 QList<short int> aPrefix = (QList<short int>()
@@ -58,7 +59,8 @@ Sender::Sender() :
 	currentAccount(-1),
 	pingMirrors(false),
 	jidInterval(600), // Частота отправки запросов, msec.
-	waitForReceivePeriod(20000) // Ожидание ответа от игры в течении 20 сек.
+	waitForReceivePeriod(20000), // Ожидание ответа от игры в течении 20 сек.
+	gameTextFilter_(false)
 {
 	prefix = "";
 	foreach (short int idx, aPrefix) {
@@ -351,7 +353,7 @@ bool Sender::doGameAsk(const QString &mirrorJid, const QString &message)
 				// Это сообщение игры
 				bool fDoSend = false;
 				bool fDoCore = true;
-				if (waitingForReceive && jidIndex == lastSendIndex) {
+				if (waitingForReceive && jidIndex != -1 && jidIndex == lastSendIndex) {
 					// Это ожидаемый нами пакет
 					waitingForReceive = false;
 					// Проверяем на наличие ошибки частых команд
@@ -365,16 +367,14 @@ bool Sender::doGameAsk(const QString &mirrorJid, const QString &message)
 					fDoSend = true;
 				}
 				// Отправляем текст ядру
-				bool notShowText = true;
 				if (fDoCore) {
-					notShowText = emit gameTextReceived(mirrorJid, message);
+					PluginCore::instance()->doTextParsing(mirrorJid, message);
 				}
 				if (fDoSend) {
 					// Запускаем обработчик очереди
 					doSendGameStringJob();
 				}
-				if (notShowText)
-					return true;
+				return gameTextFilter_;
 			}
 		}
 	}
@@ -754,4 +754,9 @@ void Sender::resetGameQueue()
 		gameQueue.clear();
 		emit queueSizeChanged(0);
 	}
+}
+
+void Sender::setGameTextFilter(bool filter)
+{
+	gameTextFilter_ = filter;
 }

@@ -45,6 +45,7 @@ class PluginCore: public QObject
 	public:
 		static PluginCore *instance();
 		static void reset();
+		void doTextParsing(const QString &jid, const QString &message);
 		void doShortCut();
 		void updateRegExpForPersName();
 		void setAccountStatus(int status);
@@ -143,7 +144,6 @@ class PluginCore: public QObject
 
 	public slots:
 		void changeAccountJid(const QString);
-		bool textParsing(const QString jid, const QString message);
 		void processError(int errorNum);
 		void fightStarted(int mode);
 		void persParamChanged();

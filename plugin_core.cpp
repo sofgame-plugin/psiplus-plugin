@@ -116,7 +116,6 @@ PluginCore::PluginCore()
 	connect(settings, SIGNAL(settingChanged(Settings::SettingKey)), this, SLOT(updateSetting(Settings::SettingKey)));
 	Sender *sender = Sender::instance();
 	connect(sender, SIGNAL(errorOccurred(int)), this, SLOT(processError(int)));
-	connect(sender, SIGNAL(gameTextReceived(const QString, const QString)), this, SLOT(textParsing(const QString, const QString)));
 	connect(sender, SIGNAL(accountChanged(const QString)), this, SLOT(changeAccountJid(const QString)));
 	Pers *pers = Pers::instance();
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged()));
@@ -230,7 +229,7 @@ void PluginCore::setGameJidStatus(int jid_index, qint32 status)
 	}
 }
 
-bool PluginCore::textParsing(const QString jid, const QString message)
+void PluginCore::doTextParsing(const QString &jid, const QString &message)
 {
 	bool myMessage = false; // Пока считаем что сообщение послано не нами
 //	if (mySender->doGameAsk(&jid, &message)) { // Сначала сообщение обрабатывает Sender
@@ -1069,7 +1068,7 @@ bool PluginCore::textParsing(const QString jid, const QString message)
 			setConsoleText(text, 3, false);
 		}
 	}
-	return myMessage;
+	Sender::instance()->setGameTextFilter(myMessage);
 }
 
 void PluginCore::searchHorseshoe(const QString &sMessage)

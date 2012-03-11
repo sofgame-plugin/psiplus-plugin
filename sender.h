@@ -69,6 +69,7 @@ public:
 	bool sendSystemString(const QString &stringPtr);
 	int  getGameQueueLength() const;
 	void resetGameQueue();
+	void setGameTextFilter(bool);
 
 private:
 	static Sender *instanse_;
@@ -95,6 +96,7 @@ private:
 	QRegExp fastSendReg;
 	QTimer gameSenderTimer;
 	QString prefix;
+	bool gameTextFilter_;
 
 private:
 	Sender();
@@ -109,7 +111,6 @@ private slots:
 
 signals:
 	void accountChanged(const QString);
-	bool gameTextReceived(const QString, const QString);
 	void errorOccurred(int);
 	void queueSizeChanged(int);
 

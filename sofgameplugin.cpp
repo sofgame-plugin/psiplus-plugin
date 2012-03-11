@@ -420,7 +420,7 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 		return false;
 	Sender *senderObj = Sender::instance();
 	if (currentAccount == -1) {
-		// Проверяем JID, от которого пришло сообщение
+		// Проверяем JID получателя
 		if (accountJid != accInfoHost->getJid(account))
 			return false;
 		// Сохраняем id аккаунта
@@ -429,7 +429,7 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 	} else if (currentAccount != account) {
 		return false;
 	}
-	// Проверяем JID от которого пришло сообщение
+	// Проверяем JID отправителя
 	QString jid = stanza.attribute("from");
 	jid = jid.left(jid.indexOf("/")).toLower();
 	int i = senderObj->gameJidIndex(jid);
