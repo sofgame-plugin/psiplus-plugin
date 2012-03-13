@@ -152,7 +152,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void resetFightStatistic();
 		void applySettings();
 		void saveSettings();
-		void resetGameJid();
 		void userCommandChanged();
 		void userCommandReturnPressed();
 		void timeoutEvent();
@@ -167,6 +166,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void persThingsChanged();
 		void persParamChanged(int, int, int);
 		void showThingsSummary();
+		void updateStatistic(int);
 
 };
 

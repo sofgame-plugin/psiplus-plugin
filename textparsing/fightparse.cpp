@@ -30,6 +30,7 @@
 #include "plugin_core.h"
 #include "fight.h"
 #include "settings.h"
+#include "statistic/statistic.h"
 
 #define MAX_BRIGHTNESS 128
 
@@ -268,22 +269,21 @@ xxxxx*2 атаковали матерый волк/повр:4524
 			QStringList killed_list = str.mid(8).split(",");
 			int k_cnt = killed_list.size();
 			QString s_name = Pers::instance()->name();
-			int n_killed_enemies = 0;
+			int nKilledEnemies = 0;
 			int ally_cnt = fight->allyCount();
 			for (int i = 0; i < k_cnt; i++) {
 				if (killed_list.at(i).trimmed() == s_name) {
 					fight->setMyPersInFight(false);
 				} else {
 					if (ally_cnt == 0) { // Нет союзников
-						n_killed_enemies++;
+						++nKilledEnemies;
 					}
 				}
 			}
 			// Отправляем сколько противников повержено
-			if (n_killed_enemies != 0) {
-				statKilledEnemies += n_killed_enemies;
-				valueChanged(VALUE_KILLED_ENEMIES, TYPE_INTEGER_FULL, statKilledEnemies);
-				statisticsChanged();
+			if (nKilledEnemies != 0) {
+				Statistic *stat = Statistic::instance();
+				stat->setValue(Statistic::StatKilledEnemies, stat->value(Statistic::StatKilledEnemies).toInt() + nKilledEnemies);
 			}
 			//--
 			gameText.next();
@@ -322,15 +322,13 @@ xxxxx*2 атаковали матерый волк/повр:4524
 					}
 				}
 				if (nDropMoneys != 0) {
-					statMoneysDropCount += nDropMoneys;
-					valueChanged(VALUE_DROP_MONEYS, TYPE_INTEGER_FULL, statMoneysDropCount);
-					statisticsChanged();
+					Statistic *stat = Statistic::instance();
+					stat->setValue(Statistic::StatDropMoneys, stat->value(Statistic::StatDropMoneys).toInt() + nDropMoneys);
 				}
 				if (nDropThings != 0) {
-					statThingsDropCount += nDropThings;
-					statThingDropLast = sDropThingLast;
-					valueChanged(VALUE_THINGS_DROP_COUNT, TYPE_INTEGER_FULL, statThingsDropCount);
-					statisticsChanged();
+					Statistic *stat = Statistic::instance();
+					stat->setValue(Statistic::StatThingsDropCount, stat->value(Statistic::StatThingsDropCount).toInt() + nDropThings);
+					stat->setValue(Statistic::StatThingDropLast, sDropThingLast);
 				}
 			}
 			gameText.next();

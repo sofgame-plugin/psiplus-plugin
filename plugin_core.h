@@ -50,9 +50,6 @@ class PluginCore: public QObject
 		void updateRegExpForPersName();
 		void setAccountStatus(int status);
 		void setGameJidStatus(int, qint32);
-		bool getIntValue(int valueId, int* valuePtr);
-		bool getLongValue(int valueId, long long *valuePtr) const;
-		bool getTextValue(int valueId, QString* valuePtr);
 		void resetStatistic(int valueId);
 		bool sendCommandToCore(qint32 commandId);
 		bool sendString(const QString &str);
@@ -63,18 +60,7 @@ class PluginCore: public QObject
 		static PluginCore *instance_;
 		SofMainWindow* mainWindow;
 		QString accJid;
-		QString lastGameJid;
-		QString lastChatJid;
-		int statMessagesCount;
 		int persStatus;
-		int statMoneysDropCount;
-		int statFightsCount;
-		int statFightDamageMin;
-		int statFightDamageMax;
-		int statThingsDropCount;
-		QString statThingDropLast;
-		long long statExperienceDropCount;
-		int statKilledEnemies;
 
 		QRegExp mapCoordinatesExp;
 		QRegExp parPersRegExp;

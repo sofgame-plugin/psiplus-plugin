@@ -72,7 +72,7 @@ public:
 	void setGameTextFilter(bool);
 
 private:
-	static Sender *instanse_;
+	static Sender *instance_;
 	int currentAccount;
 	QString currentAccJid;
 	QVector<struct jid_status> gameJidsEx;

@@ -37,21 +37,21 @@ QList<short int> aPrefix = (QList<short int>()
 	<< 17 << 13 << 15 << 27 << 2  << 2  << 3  << 4  << 2  << 20
 	<< 19) ;
 
-Sender *Sender::instanse_ = NULL;
+Sender *Sender::instance_ = NULL;
 
 Sender *Sender::instance()
 {
-	if (Sender::instanse_ == NULL) {
-		Sender::instanse_ = new Sender();
+	if (Sender::instance_ == NULL) {
+		Sender::instance_ = new Sender();
 	}
-	return Sender::instanse_;
+	return Sender::instance_;
 }
 
 void Sender::reset()
 {
-	if (Sender::instanse_ != NULL) {
-		delete Sender::instanse_;
-		Sender::instanse_ = NULL;
+	if (Sender::instance_ != NULL) {
+		delete Sender::instance_;
+		Sender::instance_ = NULL;
 	}
 }
 

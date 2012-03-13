@@ -38,19 +38,20 @@
 #include "settings.h"
 #include "pluginhosts.h"
 #include "subclasses/textview.h"
+#include "statistic/statistic.h"
 
 QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
-				<< (QPair<int, QString>) {VALUE_LAST_GAME_JID, "last-game-jid"}
-				<< (QPair<int, QString>) {VALUE_LAST_CHAT_JID, "last-chat-jid"}
-				<< (QPair<int, QString>) {VALUE_MESSAGES_COUNT, "messages-count"}
-				<< (QPair<int, QString>) {VALUE_DAMAGE_MAX_FROM_PERS, "damage-max-from-pers"}
-				<< (QPair<int, QString>) {VALUE_DAMAGE_MIN_FROM_PERS, "damage-min-from-pers"}
-				<< (QPair<int, QString>) {VALUE_FIGHTS_COUNT, "fights-count"}
-				<< (QPair<int, QString>) {VALUE_DROP_MONEYS, "drop-moneys"}
-				<< (QPair<int, QString>) {VALUE_THINGS_DROP_COUNT, "fings-drop-count"}
-				<< (QPair<int, QString>) {VALUE_THING_DROP_LAST, "fing-drop-last"}
-				<< (QPair<int, QString>) {VALUE_EXPERIENCE_DROP_COUNT, "experience-drop-count"}
-				<< (QPair<int, QString>) {VALUE_KILLED_ENEMIES, "killed-enemies"};
+				<< (QPair<int, QString>) {Statistic::StatLastGameJid, "last-game-jid"}
+				<< (QPair<int, QString>) {Statistic::StatLastChatJid, "last-chat-jid"}
+				<< (QPair<int, QString>) {Statistic::StatMessagesCount, "messages-count"}
+				<< (QPair<int, QString>) {Statistic::StatDamageMaxFromPers, "damage-max-from-pers"}
+				<< (QPair<int, QString>) {Statistic::StatDamageMinFromPers, "damage-min-from-pers"}
+				<< (QPair<int, QString>) {Statistic::StatFightsCount, "fights-count"}
+				<< (QPair<int, QString>) {Statistic::StatDropMoneys, "drop-moneys"}
+				<< (QPair<int, QString>) {Statistic::StatThingsDropCount, "fings-drop-count"}
+				<< (QPair<int, QString>) {Statistic::StatThingDropLast, "fing-drop-last"}
+				<< (QPair<int, QString>) {Statistic::StatExperienceDropCount, "experience-drop-count"}
+				<< (QPair<int, QString>) {Statistic::StatKilledEnemies, "killed-enemies"};
 
 
 SofMainWindow::SofMainWindow() : QWidget(0)
@@ -147,18 +148,18 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	fontButtonGroup->addButton(gameTextFont_button);
 	connect(fontButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(chooseFont(QAbstractButton*)));
 	// Виджеты страницы статистики
-	statisticWidgets[VALUE_LAST_GAME_JID] = (StatWidgets) {lastGameJidCaption_label, lastGameJidValue_label};
-	statisticWidgets[VALUE_LAST_CHAT_JID] = (StatWidgets) {lastGameChatCaption_label, lastGameChatValue_label};
-	statisticWidgets[VALUE_MESSAGES_COUNT] = (StatWidgets) {gameMessagesCountCaption_label, gameMessagesCountValue_label};
+	statisticWidgets[Statistic::StatLastGameJid] = (StatWidgets) {lastGameJidCaption_label, lastGameJidValue_label};
+	statisticWidgets[Statistic::StatLastChatJid] = (StatWidgets) {lastGameChatCaption_label, lastGameChatValue_label};
+	statisticWidgets[Statistic::StatMessagesCount] = (StatWidgets) {gameMessagesCountCaption_label, gameMessagesCountValue_label};
 	connect(resetCommonStatBtn, SIGNAL(released()), SLOT(resetCommonStatistic()));
-	statisticWidgets[VALUE_FIGHTS_COUNT] = (StatWidgets) {fightsCountCaption_label, fightsCountValue_label};
-	statisticWidgets[VALUE_DAMAGE_MAX_FROM_PERS] = (StatWidgets) {damageMaxFromPersCaption_label, damageMaxFromPersValue_label};
-	statisticWidgets[VALUE_DAMAGE_MIN_FROM_PERS] = (StatWidgets) {damageMinFromPersCaption_label, damageMinFromPersValue_label};
-	statisticWidgets[VALUE_DROP_MONEYS] = (StatWidgets) {dropMoneysCaption_label, dropMoneysValue_label};
-	statisticWidgets[VALUE_THINGS_DROP_COUNT] = (StatWidgets) {thingsDropCountCaption_label, thingsDropCountValue_label};
-	statisticWidgets[VALUE_THING_DROP_LAST] = (StatWidgets) {thingDropLastCaption_label, thingDropLastValue_label};
-	statisticWidgets[VALUE_EXPERIENCE_DROP_COUNT] = (StatWidgets) {experienceDropCountCaption_label, experienceDropCountValue_label};
-	statisticWidgets[VALUE_KILLED_ENEMIES] = (StatWidgets) {killedEnemiesCaption_label, killedEnemiesValue_label};
+	statisticWidgets[Statistic::StatFightsCount] = (StatWidgets) {fightsCountCaption_label, fightsCountValue_label};
+	statisticWidgets[Statistic::StatDamageMaxFromPers] = (StatWidgets) {damageMaxFromPersCaption_label, damageMaxFromPersValue_label};
+	statisticWidgets[Statistic::StatDamageMinFromPers] = (StatWidgets) {damageMinFromPersCaption_label, damageMinFromPersValue_label};
+	statisticWidgets[Statistic::StatDropMoneys] = (StatWidgets) {dropMoneysCaption_label, dropMoneysValue_label};
+	statisticWidgets[Statistic::StatThingsDropCount] = (StatWidgets) {thingsDropCountCaption_label, thingsDropCountValue_label};
+	statisticWidgets[Statistic::StatThingDropLast] = (StatWidgets) {thingDropLastCaption_label, thingDropLastValue_label};
+	statisticWidgets[Statistic::StatExperienceDropCount] = (StatWidgets) {experienceDropCountCaption_label, experienceDropCountValue_label};
+	statisticWidgets[Statistic::StatKilledEnemies] = (StatWidgets) {killedEnemiesCaption_label, killedEnemiesValue_label};
 	connect(resetFightsStatBtn, SIGNAL(released()), SLOT(resetFightStatistic()));
 	// Таблицы для настройки фильтров
 	thingFiltersTable->init(&filtersList);
@@ -209,6 +210,8 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	// Сигнал на смену фильтров
 	connect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
+	// Соединение на обновление статистики
+	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(updateStatistic(int)));
 	// Завязки в настройках
 	connect(restPopup, SIGNAL(toggled(bool)), restDurationPopup, SLOT(setEnabled(bool)));
 	// Инициируем форму
@@ -323,20 +326,20 @@ void SofMainWindow::fillSlotCombo(QComboBox* slotCombo)
 	}
 }
 
-void SofMainWindow::initStatisticData()
+void SofMainWindow::initStatisticData() // TODO Проверить, возможно стоит выкинуть этот метод
 {
 	// Заполняем заголовки наименований элементов статистики и начальные значения
-	statisticCapInitVal[VALUE_LAST_GAME_JID] = (StatCapInitVal) {QString::fromUtf8("JID игры"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[VALUE_LAST_CHAT_JID] = (StatCapInitVal) {QString::fromUtf8("JID чата"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[VALUE_MESSAGES_COUNT] = (StatCapInitVal) {QString::fromUtf8("Сообщений"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[VALUE_DAMAGE_MAX_FROM_PERS] = (StatCapInitVal) {QString::fromUtf8("Лучший удар"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[VALUE_DAMAGE_MIN_FROM_PERS] = (StatCapInitVal) {QString::fromUtf8("Худший удар"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[VALUE_FIGHTS_COUNT] = (StatCapInitVal) {QString::fromUtf8("Всего боев"), QString::fromUtf8("0")};
-	statisticCapInitVal[VALUE_DROP_MONEYS] = (StatCapInitVal) {QString::fromUtf8("Денег собрано"), QString::fromUtf8("0")};
-	statisticCapInitVal[VALUE_THINGS_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Вещей собрано"), QString::fromUtf8("0")};
-	statisticCapInitVal[VALUE_THING_DROP_LAST] = (StatCapInitVal) {QString::fromUtf8("Последняя вещь"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[VALUE_EXPERIENCE_DROP_COUNT] = (StatCapInitVal) {QString::fromUtf8("Полученный опыт"), QString::fromUtf8("0")};
-	statisticCapInitVal[VALUE_KILLED_ENEMIES] = (StatCapInitVal) {QString::fromUtf8("Противников повержено"), QString::fromUtf8("0")};
+	statisticCapInitVal[Statistic::StatLastGameJid] = (StatCapInitVal) {QString::fromUtf8("JID игры"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[Statistic::StatLastChatJid] = (StatCapInitVal) {QString::fromUtf8("JID чата"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[Statistic::StatMessagesCount] = (StatCapInitVal) {QString::fromUtf8("Сообщений"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[Statistic::StatDamageMaxFromPers] = (StatCapInitVal) {QString::fromUtf8("Лучший удар"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[Statistic::StatDamageMinFromPers] = (StatCapInitVal) {QString::fromUtf8("Худший удар"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[Statistic::StatFightsCount] = (StatCapInitVal) {QString::fromUtf8("Всего боев"), QString::fromUtf8("0")};
+	statisticCapInitVal[Statistic::StatDropMoneys] = (StatCapInitVal) {QString::fromUtf8("Денег собрано"), QString::fromUtf8("0")};
+	statisticCapInitVal[Statistic::StatThingsDropCount] = (StatCapInitVal) {QString::fromUtf8("Вещей собрано"), QString::fromUtf8("0")};
+	statisticCapInitVal[Statistic::StatThingDropLast] = (StatCapInitVal) {QString::fromUtf8("Последняя вещь"), QString::fromUtf8("n/a")};
+	statisticCapInitVal[Statistic::StatExperienceDropCount] = (StatCapInitVal) {QString::fromUtf8("Полученный опыт"), QString::fromUtf8("0")};
+	statisticCapInitVal[Statistic::StatKilledEnemies] = (StatCapInitVal) {QString::fromUtf8("Противников повержено"), QString::fromUtf8("0")};
 }
 
 void SofMainWindow::setStatisticCaptionText()
@@ -435,7 +438,6 @@ void SofMainWindow::getAllDataFromCore() {
 	int newIntValue;
 	QString newStrValue;
 	// *** Настройки плагина ***
-	PluginCore *core = PluginCore::instance();
 	Settings *settings = Settings::instance();
 	GameMap *maps = GameMap::instance();
 	// Имя персонажа
@@ -540,66 +542,17 @@ void SofMainWindow::getAllDataFromCore() {
 	// Прокрутка карты к позиции персонажа
 	scrollMapToPersPosition();
 	// *** Статистические данные ***
-	if (core->getIntValue(VALUE_DROP_MONEYS, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_DROP_MONEYS).initVal;
-	}
-	updateValue(VALUE_DROP_MONEYS, newStrValue);
-	if (core->getIntValue(VALUE_MESSAGES_COUNT, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_MESSAGES_COUNT).initVal;
-	}
-	updateValue(VALUE_MESSAGES_COUNT, newStrValue);
-	if (!core->getTextValue(VALUE_LAST_GAME_JID, &newStrValue)) {
-		newStrValue = statisticCapInitVal.value(VALUE_LAST_GAME_JID).initVal;
-	}
-	updateValue(VALUE_LAST_GAME_JID, newStrValue);
-	if (!core->getTextValue(VALUE_LAST_CHAT_JID, &newStrValue)) {
-		newStrValue = statisticCapInitVal.value(VALUE_LAST_CHAT_JID).initVal;
-	}
-	updateValue(VALUE_LAST_CHAT_JID, newStrValue);
-	if (core->getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_DAMAGE_MIN_FROM_PERS).initVal;
-	}
-	updateValue(VALUE_DAMAGE_MIN_FROM_PERS, newStrValue);
-	if (core->getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_DAMAGE_MAX_FROM_PERS).initVal;
-	}
-	updateValue(VALUE_DAMAGE_MAX_FROM_PERS, newStrValue);
-	if (core->getIntValue(VALUE_THINGS_DROP_COUNT, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_THINGS_DROP_COUNT).initVal;
-	}
-	updateValue(VALUE_THINGS_DROP_COUNT, newStrValue);
-	if (core->getIntValue(VALUE_FIGHTS_COUNT, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_FIGHTS_COUNT).initVal;
-	}
-	updateValue(VALUE_FIGHTS_COUNT, newStrValue);
-	if (!core->getTextValue(VALUE_THING_DROP_LAST, &newStrValue)) {
-		newStrValue = statisticCapInitVal.value(VALUE_THING_DROP_LAST).initVal;
-	}
-	updateValue(VALUE_THING_DROP_LAST, newStrValue);
-	if (core->getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &newLongValue)) {
-		newStrValue = numToStr(newLongValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_EXPERIENCE_DROP_COUNT).initVal;
-	}
-	updateValue(VALUE_EXPERIENCE_DROP_COUNT, newStrValue);
-	if (core->getIntValue(VALUE_KILLED_ENEMIES, &newIntValue)) {
-		newStrValue = numToStr(newIntValue, "'");
-	} else {
-		newStrValue = statisticCapInitVal.value(VALUE_KILLED_ENEMIES).initVal;
-	}
-	updateValue(VALUE_KILLED_ENEMIES, newStrValue);
+	updateStatistic(Statistic::StatMessagesCount);
+	updateStatistic(Statistic::StatLastGameJid);
+	updateStatistic(Statistic::StatLastChatJid);
+	updateStatistic(Statistic::StatDamageMinFromPers);
+	updateStatistic(Statistic::StatDamageMaxFromPers);
+	updateStatistic(Statistic::StatFightsCount);
+	updateStatistic(Statistic::StatDropMoneys);
+	updateStatistic(Statistic::StatThingsDropCount);
+	updateStatistic(Statistic::StatThingDropLast);
+	updateStatistic(Statistic::StatExperienceDropCount);
+	updateStatistic(Statistic::StatKilledEnemies);
 	//--
 	newIntValue = settings->getIntSetting(Settings::SettingServerTextBlocksCount);
 	if (newIntValue < 0) {
@@ -635,9 +588,9 @@ void SofMainWindow::getAllDataFromCore() {
 void SofMainWindow::updateValue(int valueId, const QString &valString) {
 
 	// Обновляем основной виджет статистики
-	setStatisticValue(valueId, valString);
+	setStatisticValue(valueId, valString.left(20));
 	// Обновляем footer
-	setFooterStatisticValue(valueId, valString);
+	setFooterStatisticValue(valueId, valString.left(20));
 }
 
 void SofMainWindow::valueChanged(int eventId, int valueType, int value)
@@ -648,80 +601,16 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 	if (valueType == TYPE_INTEGER_FULL) {
 		// В событии есть полные данные
 		str1 = numToStr(value, "'");
-		if (eventId == VALUE_DROP_MONEYS) {
-			// Это упавшие деньги
-			updateValue(VALUE_DROP_MONEYS, str1);
-		} else if (eventId == VALUE_MESSAGES_COUNT) {
-			// Счетчик сообщений
-			updateValue(VALUE_MESSAGES_COUNT, str1);
-		} else if (eventId == VALUE_KILLED_ENEMIES) {
-			// Повержено противников
-			updateValue(VALUE_KILLED_ENEMIES, str1);
-		} else if (eventId == VALUE_TIMEOUT) {
+		if (eventId == VALUE_TIMEOUT) {
 			// Пришло событие таймаута
 			if (settingTimeOutDisplay != 0) {
 				setTimeout(value);
 			}
-		} else if (eventId == VALUE_DAMAGE_MIN_FROM_PERS) {
-			// Минимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, str1);
-		} else if (eventId == VALUE_DAMAGE_MAX_FROM_PERS) {
-			// Максимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, str1);
-		} else if (eventId == VALUE_THINGS_DROP_COUNT) {
-			// Количество упавших вещей
-			updateValue(VALUE_THINGS_DROP_COUNT, str1);
-			// Последняя упавшая вещь
-			if (PluginCore::instance()->getTextValue(VALUE_THING_DROP_LAST, &str1)) {
-				str1 = str1.left(20);
-			} else {
-				str1 = NA_TEXT;
-			}
-			updateValue(VALUE_THING_DROP_LAST, str1);
-		} else if (eventId == VALUE_FIGHTS_COUNT) {
-			updateValue(VALUE_FIGHTS_COUNT, str1);
-		}
-	} else if (valueType == TYPE_LONGLONG_FULL) {
-		if (eventId == VALUE_EXPERIENCE_DROP_COUNT) {
-			// Добавился опыт после боя
-			long long exp;
-			if (PluginCore::instance()->getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &exp)) {
-				str1 = numToStr(exp, "'");
-			} else {
-				str1 = NA_TEXT;
-			}
-			updateValue(VALUE_EXPERIENCE_DROP_COUNT, str1);
-		}
-	} else if (valueType == TYPE_STRING) {
-		// Строковые данные. За значением нужно обращаться к ядру плагина.
-		if (eventId == VALUE_LAST_GAME_JID) {
-			// Текущий игровой JID
-			if (PluginCore::instance()->getTextValue(eventId, &str1)) {
-				str1 = str1.left(20);
-			} else {
-				str1 = NA_TEXT;
-			}
-			updateValue(VALUE_LAST_GAME_JID, str1);
 		}
 	} else if (valueType == TYPE_NA) {
 		// Данные недоступны или неопределены (n/a)
 		str1 = NA_TEXT;
-		if (eventId == VALUE_DAMAGE_MIN_FROM_PERS) {
-			// Минимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MIN_FROM_PERS, str1);
-		} else if (eventId == VALUE_DAMAGE_MAX_FROM_PERS) {
-			// Максимальный урон от персонажа
-			updateValue(VALUE_DAMAGE_MAX_FROM_PERS, str1);
-		} else if (eventId == VALUE_LAST_GAME_JID) {
-			// JID игры
-			updateValue(VALUE_LAST_GAME_JID, str1);
-		} else if (eventId == VALUE_LAST_CHAT_JID) {
-			// JID чата
-			updateValue(VALUE_LAST_CHAT_JID, str1);
-		} else if (eventId == VALUE_THING_DROP_LAST) {
-			// Последняя найденная вещь
-			updateValue(VALUE_THING_DROP_LAST, str1);
-		} else if (eventId == Pers::ParamHealthCurr) {
+		if (eventId == Pers::ParamHealthCurr) {
 			// Текущее здоровье
 			healthLabel->setText(str1);
 			healthBar->setValue(0);
@@ -736,9 +625,6 @@ void SofMainWindow::valueChanged(int eventId, int valueType, int value)
 			// Максимальная энергия
 			energyBar->setRange(0, 0);
 		}
-	//} else if (valueType == TYPE_INTEGER_INC) {
-		// Данные есть в value, причем для прибавления к прошлым
-
 	}
 }
 
@@ -944,15 +830,15 @@ void SofMainWindow::loadSlotsSettings(const QDomElement &xml)
 		}
 	} else {
 		// Значения по умолчанию
-		statisticFooterPos[VALUE_LAST_GAME_JID] = 1;
-		statisticFooterPos[VALUE_FIGHTS_COUNT] = 2;
-		statisticFooterPos[VALUE_KILLED_ENEMIES] = 3;
-		statisticFooterPos[VALUE_EXPERIENCE_DROP_COUNT] = 4;
-		statisticFooterPos[VALUE_DAMAGE_MAX_FROM_PERS] = 5;
-		statisticFooterPos[VALUE_DAMAGE_MIN_FROM_PERS] = 6;
-		statisticFooterPos[VALUE_DROP_MONEYS] = 7;
-		statisticFooterPos[VALUE_THINGS_DROP_COUNT] = 8;
-		statisticFooterPos[VALUE_THING_DROP_LAST] = 9;
+		statisticFooterPos[Statistic::StatLastGameJid] = 1;
+		statisticFooterPos[Statistic::StatFightsCount] = 2;
+		statisticFooterPos[Statistic::StatKilledEnemies] = 3;
+		statisticFooterPos[Statistic::StatExperienceDropCount] = 4;
+		statisticFooterPos[Statistic::StatDamageMaxFromPers] = 5;
+		statisticFooterPos[Statistic::StatDamageMinFromPers] = 6;
+		statisticFooterPos[Statistic::StatDropMoneys] = 7;
+		statisticFooterPos[Statistic::StatThingsDropCount] = 8;
+		statisticFooterPos[Statistic::StatThingDropLast] = 9;
 	}
 	fullUpdateFooterStatistic();
 	// Меняем элементы настроек слотов
@@ -1322,22 +1208,22 @@ void SofMainWindow::activateSettingsPage()
 void SofMainWindow::resetCommonStatistic()
 {
 	PluginCore *core = PluginCore::instance();
-	core->resetStatistic(VALUE_LAST_GAME_JID);
-	core->resetStatistic(VALUE_LAST_CHAT_JID);
-	core->resetStatistic(VALUE_MESSAGES_COUNT);
+	core->resetStatistic(Statistic::StatLastGameJid);
+	core->resetStatistic(Statistic::StatLastChatJid);
+	core->resetStatistic(Statistic::StatMessagesCount);
 }
 
 void SofMainWindow::resetFightStatistic()
 {
 	PluginCore *core = PluginCore::instance();
-	core->resetStatistic(VALUE_FIGHTS_COUNT);
-	core->resetStatistic(VALUE_DAMAGE_MAX_FROM_PERS);
-	core->resetStatistic(VALUE_DAMAGE_MIN_FROM_PERS);
-	core->resetStatistic(VALUE_DROP_MONEYS);
-	core->resetStatistic(VALUE_THINGS_DROP_COUNT);
-	core->resetStatistic(VALUE_THING_DROP_LAST);
-	core->resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
-	core->resetStatistic(VALUE_KILLED_ENEMIES);
+	core->resetStatistic(Statistic::StatFightsCount);
+	core->resetStatistic(Statistic::StatDamageMaxFromPers);
+	core->resetStatistic(Statistic::StatDamageMinFromPers);
+	core->resetStatistic(Statistic::StatDropMoneys);
+	core->resetStatistic(Statistic::StatThingsDropCount);
+	core->resetStatistic(Statistic::StatThingDropLast);
+	core->resetStatistic(Statistic::StatExperienceDropCount);
+	core->resetStatistic(Statistic::StatKilledEnemies);
 }
 
 void SofMainWindow::applySettings()
@@ -1483,11 +1369,6 @@ void SofMainWindow::saveSettings()
 	settings->setSlotsData(exportSlotsSettings(xmlDoc));
 	settings->setAppearanceData(exportAppearanceSettings(xmlDoc));
 	settings->save();
-}
-
-void SofMainWindow::resetGameJid()
-{
-	PluginCore::instance()->resetStatistic(VALUE_LAST_GAME_JID);
 }
 
 void SofMainWindow::userCommandChanged()
@@ -1878,4 +1759,9 @@ void SofMainWindow::chooseFont(QAbstractButton* button)
 			fontLabelGroup[i]->setFont(fnt);
 		}
 	}
+}
+
+void SofMainWindow::updateStatistic(int type)
+{
+	updateValue(type, Statistic::instance()->toString(type));
 }

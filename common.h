@@ -39,19 +39,7 @@
 //--------------------
 #define SLOT_ITEMS_COUNT                9
 
-#define STAT_PARAMS_COUNT               11
 // Значения отправляемые окну
-#define VALUE_LAST_GAME_JID             0
-#define VALUE_LAST_CHAT_JID             1
-#define VALUE_MESSAGES_COUNT            2
-#define VALUE_DAMAGE_MAX_FROM_PERS      3
-#define VALUE_DAMAGE_MIN_FROM_PERS      4
-#define VALUE_FIGHTS_COUNT              5
-#define VALUE_DROP_MONEYS               6
-#define VALUE_THINGS_DROP_COUNT         7
-#define VALUE_THING_DROP_LAST           8
-#define VALUE_EXPERIENCE_DROP_COUNT     9
-#define VALUE_KILLED_ENEMIES            10
 
 #define VALUE_TIMEOUT                   1019
 

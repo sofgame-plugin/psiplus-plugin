@@ -38,6 +38,7 @@
 #include "aliases/aliases.h"
 #include "settings.h"
 #include "pluginhosts.h"
+#include "statistic/statistic.h"
 
 Q_DECLARE_METATYPE(Settings::SettingKey)
 
@@ -121,6 +122,7 @@ PluginCore::PluginCore()
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged()));
 	connect(pers, SIGNAL(thingsChanged()), this, SLOT(persBackpackChanged()));
 	connect(&saveStatusTimer, SIGNAL(timeout()), this, SLOT(saveStatusTimeout()));
+	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(statisticsChanged()));
 	// Разное
 	coloring = true;
 }
@@ -140,6 +142,7 @@ PluginCore::~PluginCore()
 	Pers::reset();
 	Aliases::reset();
 	Settings::reset();
+	Statistic::reset();
 	int cnt = persInfoList.size();
 	for (int i = 0; i < cnt; i++) {
 		PersInfo *pinf = persInfoList[i];
@@ -187,6 +190,8 @@ void PluginCore::changeAccountJid(const QString newJid)
 	// Сбрасываем объект персонажа
 	Pers *pers = Pers::instance();
 	pers->init();
+	// Сбрасываем модуль статистики
+	Statistic::reset();
 	// Загрузить новые данные персонажа
 	loadPersStatus();
 	// Обновить регулярки зависящие он имени персонажа
@@ -240,12 +245,9 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 		myMessage = true;
 	}
 	//--
-	if (lastGameJid != jid) {
-		lastGameJid = jid;
-		valueChanged(VALUE_LAST_GAME_JID, TYPE_STRING, 0);
-	}
-	++statMessagesCount;
-	valueChanged(VALUE_MESSAGES_COUNT, TYPE_INTEGER_FULL, statMessagesCount);
+	Statistic *stat = Statistic::instance();
+	stat->setValue(Statistic::StatLastGameJid, jid);
+	stat->setValue(Statistic::StatMessagesCount, stat->value(Statistic::StatMessagesCount).toInt() + 1);
 	// Распускаем полученное сообщение построчно
 	GameText gameText(message, false);
 	// Просматриваем данные построчно
@@ -257,9 +259,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 	bool fHealth = false; int nHealthC = 0; int nHealthF = 0;
 	bool fPower = false; int nPowerC = 0; int nPowerF = 0;
 	bool fDropMoneys = false; int nDropMoneys = 0;
-	bool fStatFightDamageMin = false; bool fStatFightDamageMax = false;
 	int nThingsDropCount = 0; QString sThingDropLast;
-	bool fExperienceDrop = false;
 	int nTimeout = -1;
 	//bool fFight = false;
 	int nCmdStatus = 0;
@@ -758,14 +758,16 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					if (parseFightStepResult(gameText)) { // Это был текст с результатами боя
 						if (fight->allyCount() == 0) { // Мин. и макс. удары считаем только когда в один в бою
 							int num1 = fight->minDamage();
-							if (statFightDamageMin == -1 || (num1 != -1 && num1 < statFightDamageMin)) {
-								fStatFightDamageMin = true;
-								statFightDamageMin = num1;
+							if (num1 != -1) {
+								if (stat->isEmpty(Statistic::StatDamageMinFromPers) || num1 < stat->value(Statistic::StatDamageMinFromPers).toInt()) {
+									// Записываем минимальный удар в статистику
+									stat->setValue(Statistic::StatDamageMinFromPers, num1);
+								}
 							}
 							num1 = fight->maxDamage();
-							if (num1 > statFightDamageMax) {
-								fStatFightDamageMax = true;
-								statFightDamageMax = num1;
+							if (num1 > stat->value(Statistic::StatDamageMaxFromPers).toInt()) {
+								// Записываем максимальный удар в статистику
+								stat->setValue(Statistic::StatDamageMaxFromPers, num1);
 							}
 						}
 						sMessage = gameText.currentLine().trimmed();
@@ -801,8 +803,9 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 								sMessage = gameText.currentLine().trimmed();
 								if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 									// Берем опыт, который дали в конце боя
-									statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
-									fExperienceDrop = true;
+									long long experienceDropCount = experienceDropReg.cap(1).toLongLong();
+									stat->setValue(Statistic::StatExperienceDropCount,
+										stat->value(Statistic::StatExperienceDropCount).toLongLong() + experienceDropCount);
 								}
 							}
 							break; // Блокируем дальнейший анализ
@@ -856,14 +859,17 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					}
 				}
 			} else if (nPersStatus == Pers::StatusSecretGet || nPersStatus == Pers::StatusTake || nPersStatus == Pers::StatusNotKnow) {
+				long long expDropCount = 0;
 				if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 					// Берем опыт, который дали в тайнике
-					statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
-					fExperienceDrop = true;
+					expDropCount = experienceDropReg.cap(1).toLongLong();
 				} else if (experienceDropReg2.indexIn(sMessage, 0) != -1) {
 					// Берем опыт, который дали в тайнике
-					statExperienceDropCount += experienceDropReg2.cap(1).toLongLong();
-					fExperienceDrop = true;
+					expDropCount = experienceDropReg2.cap(1).toLongLong();
+				}
+				if (expDropCount > 0) {
+					stat->setValue(Statistic::StatExperienceDropCount,
+						stat->value(Statistic::StatExperienceDropCount).toLongLong() + expDropCount);
 				}
 			} else if (nPersStatus == Pers::StatusTroll) {
 				if (sMessage.contains(QString::fromUtf8("вот вам осколок"), Qt::CaseInsensitive)) {
@@ -876,8 +882,9 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 			} else if (nPersStatus != Pers::StatusFightFinish) {
 				if (experienceDropReg.indexIn(sMessage, 0) != -1) {
 					// Найден опыт, но не в бою (У Элементаля например)
-					statExperienceDropCount += experienceDropReg.cap(1).toLongLong();
-					fExperienceDrop = true;
+					long long expDropCount = experienceDropReg.cap(1).toLongLong();
+					stat->setValue(Statistic::StatExperienceDropCount,
+						stat->value(Statistic::StatExperienceDropCount).toLongLong() + expDropCount);
 				}
 			}
 			searchHorseshoe(sMessage);
@@ -982,9 +989,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 	// Сохраняем и отправляем текущий статус персонажа
 	if (persStatus != nPersStatus) {
 		if (nPersStatus == Pers::StatusFightFinish) {
-			statFightsCount = statFightsCount + 1;
-			valueChanged(VALUE_FIGHTS_COUNT, TYPE_INTEGER_FULL, statFightsCount);
-			statisticsChanged();
+			stat->setValue(Statistic::StatFightsCount, stat->value(Statistic::StatFightsCount).toInt() + 1);
 		}
 		persStatus = nPersStatus;
 		pers->setPersParams(Pers::ParamPersStatus, TYPE_INTEGER_FULL, nPersStatus);
@@ -1000,31 +1005,12 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 	}
 	// Отправляем упавшие деньги
 	if (fDropMoneys) {
-		statMoneysDropCount += nDropMoneys;
-		valueChanged(VALUE_DROP_MONEYS, TYPE_INTEGER_FULL, statMoneysDropCount);
-		statisticsChanged();
-	}
-	// Отправляем минимальный удар
-	if (fStatFightDamageMin) {
-		valueChanged(VALUE_DAMAGE_MIN_FROM_PERS, TYPE_INTEGER_FULL, statFightDamageMin);
-		statisticsChanged();
-	}
-	// Отправляем максимальный удар
-	if (fStatFightDamageMax) {
-		valueChanged(VALUE_DAMAGE_MAX_FROM_PERS, TYPE_INTEGER_FULL, statFightDamageMax);
-		statisticsChanged();
+		stat->setValue(Statistic::StatDropMoneys, stat->value(Statistic::StatDropMoneys).toInt() + nDropMoneys);
 	}
 	// Отправляем количество найденных вещей
 	if (nThingsDropCount > 0) {
-		statThingsDropCount += nThingsDropCount;
-		statThingDropLast = sThingDropLast;
-		valueChanged(VALUE_THINGS_DROP_COUNT, TYPE_INTEGER_FULL, statThingsDropCount);
-		statisticsChanged();
-	}
-	// Отправляем упавший опыт
-	if (fExperienceDrop) {
-		valueChanged(VALUE_EXPERIENCE_DROP_COUNT, TYPE_LONGLONG_FULL, 0);
-		statisticsChanged();
+		stat->setValue(Statistic::StatThingsDropCount, stat->value(Statistic::StatThingsDropCount).toInt() + nThingsDropCount);
+		stat->setValue(Statistic::StatThingDropLast, sThingDropLast);
 	}
 	// Отправляем значение таймаута
 	if (nTimeout >= 0) {
@@ -1148,117 +1134,9 @@ void PluginCore::setConsoleText(const GameText &gameText, int type, bool switch_
 	}
 }
 
-bool PluginCore::getIntValue(int valueId, int* valuePtr)
+void PluginCore::resetStatistic(int valueId) // TODO Может убрать?
 {
-	if (valueId == VALUE_DROP_MONEYS) {
-		*valuePtr = statMoneysDropCount;
-		return true;
-	}
-	if (valueId == VALUE_MESSAGES_COUNT) {
-		*valuePtr = statMessagesCount;
-		return true;
-	}
-	if (valueId == VALUE_DAMAGE_MIN_FROM_PERS) {
-		if (statFightDamageMin == -1) {
-			return false;
-		}
-		*valuePtr = statFightDamageMin;
-		return true;
-	}
-	if (valueId == VALUE_DAMAGE_MAX_FROM_PERS) {
-		if (statFightDamageMax == -1) {
-			return false;
-		}
-		*valuePtr = statFightDamageMax;
-		return true;
-	}
-	if (valueId == VALUE_THINGS_DROP_COUNT) {
-		*valuePtr = statThingsDropCount;
-		return true;
-	}
-	if (valueId == VALUE_FIGHTS_COUNT) {
-		*valuePtr = statFightsCount;
-		return true;
-	}
-	if (valueId == VALUE_KILLED_ENEMIES) {
-		*valuePtr = statKilledEnemies;
-		return true;
-	}
-	return false;
-}
-
-bool PluginCore::getLongValue(int valueId, long long *valuePtr) const
-{
-	if (valueId == VALUE_EXPERIENCE_DROP_COUNT) {
-		*valuePtr = statExperienceDropCount;
-	} else {
-		return false;
-	}
-	return true;
-}
-
-bool PluginCore::getTextValue(int valueId, QString* valuePtr)
-{
-	if (valueId == VALUE_LAST_GAME_JID) {
-		if (lastGameJid.length() == 0) {
-			return false;
-		}
-		*valuePtr = lastGameJid;
-		return true;
-	}
-	if (valueId == VALUE_THING_DROP_LAST) {
-		if (statThingDropLast.length() == 0) {
-			return false;
-		}
-		*valuePtr = statThingDropLast;
-		return true;
-	}
-	if (valueId == VALUE_LAST_CHAT_JID) {
-		if (lastChatJid.length() == 0) {
-			return false;
-		}
-		*valuePtr = lastChatJid;
-		return true;
-	}
-	return false;
-}
-
-void PluginCore::resetStatistic(int valueId)
-{
-	if (valueId == VALUE_DROP_MONEYS) {
-		statMoneysDropCount = 0;
-		valueChanged(VALUE_DROP_MONEYS, TYPE_INTEGER_FULL, statMoneysDropCount);
-	} else if (valueId == VALUE_MESSAGES_COUNT) {
-		statMessagesCount = 0;
-		valueChanged(VALUE_MESSAGES_COUNT, TYPE_INTEGER_FULL, statMessagesCount);
-	} else if (valueId == VALUE_DAMAGE_MIN_FROM_PERS) {
-		statFightDamageMin = -1;
-		valueChanged(VALUE_DAMAGE_MIN_FROM_PERS, TYPE_NA, 0);
-	} else if (valueId == VALUE_DAMAGE_MAX_FROM_PERS) {
-		statFightDamageMax = -1;
-		valueChanged(VALUE_DAMAGE_MAX_FROM_PERS, TYPE_NA, 0);
-	} else if (valueId == VALUE_THINGS_DROP_COUNT) {
-		statThingsDropCount = 0;
-		valueChanged(VALUE_THINGS_DROP_COUNT, TYPE_INTEGER_FULL, statThingsDropCount);
-	} else if (valueId == VALUE_FIGHTS_COUNT) {
-		statFightsCount = 0;
-		valueChanged(VALUE_FIGHTS_COUNT, TYPE_INTEGER_FULL, statFightsCount);
-	} else if (valueId == VALUE_LAST_GAME_JID) {
-		lastGameJid = "";
-		valueChanged(VALUE_LAST_GAME_JID, TYPE_NA, 0);
-	} else if (valueId == VALUE_THING_DROP_LAST) {
-		statThingDropLast = "";
-		valueChanged(VALUE_THING_DROP_LAST, TYPE_NA, 0);
-	} else if (valueId == VALUE_LAST_CHAT_JID) {
-		lastChatJid = "";
-		valueChanged(VALUE_LAST_CHAT_JID, TYPE_NA, 0);
-	} else if (valueId == VALUE_EXPERIENCE_DROP_COUNT) {
-		statExperienceDropCount = 0;
-		valueChanged(VALUE_EXPERIENCE_DROP_COUNT, TYPE_LONGLONG_FULL, 0);
-	} else if (valueId == VALUE_KILLED_ENEMIES) {
-		statKilledEnemies = 0;
-		valueChanged(VALUE_KILLED_ENEMIES, TYPE_INTEGER_FULL, statKilledEnemies);
-	}
+	Statistic::instance()->setValue(valueId, QVariant());
 }
 
 bool PluginCore::sendCommandToCore(qint32 commandId)
@@ -1354,59 +1232,60 @@ bool PluginCore::savePersStatus()
 		if (settings->getBoolSetting(Settings::SettingSaveStatistic)) {
 			QDomElement eStat = xmlDoc.createElement("statistic");
 			eNewAccount.appendChild(eStat);
-			if (lastGameJid.length() != 0) {
+			Statistic *stat = Statistic::instance();
+			if (!stat->isEmpty(Statistic::StatLastGameJid)) {
 				domElement = xmlDoc.createElement("last-game-jid");
-				domElement.appendChild(xmlDoc.createTextNode(lastGameJid));
+				domElement.appendChild(xmlDoc.createTextNode(stat->value(Statistic::StatLastGameJid).toString()));
 				eStat.appendChild(domElement);
 			}
-			if (lastChatJid.length() != 0) {
+			if (!stat->isEmpty(Statistic::StatLastChatJid)) {
 				domElement = xmlDoc.createElement("last-chat-jid");
-				domElement.appendChild(xmlDoc.createTextNode(lastChatJid));
+				domElement.appendChild(xmlDoc.createTextNode(stat->value(Statistic::StatLastChatJid).toString()));
 				eStat.appendChild(domElement);
 			}
-			if (statMessagesCount != 0) {
+			if (!stat->isEmpty(Statistic::StatMessagesCount)) {
 				domElement = xmlDoc.createElement("in-messages-count");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statMessagesCount)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatMessagesCount).toInt())));
 				eStat.appendChild(domElement);
 			}
-			if (statFightsCount != 0) {
+			if (!stat->isEmpty(Statistic::StatFightsCount)) {
 				domElement = xmlDoc.createElement("fights-count");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightsCount)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatFightsCount).toInt())));
 				eStat.appendChild(domElement);
 			}
-			if (statFightDamageMax != -1) {
+			if (!stat->isEmpty(Statistic::StatDamageMaxFromPers)) {
 				domElement = xmlDoc.createElement("pers-fight-damage-max");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightDamageMax)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatDamageMaxFromPers).toInt())));
 				eStat.appendChild(domElement);
 			}
-			if (statFightDamageMin != -1) {
+			if (!stat->isEmpty(Statistic::StatDamageMinFromPers)) {
 				domElement = xmlDoc.createElement("pers-fight-damage-min");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statFightDamageMin)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatDamageMinFromPers).toInt())));
 				eStat.appendChild(domElement);
 			}
-			if (statMoneysDropCount != 0) {
+			if (!stat->isEmpty(Statistic::StatDropMoneys)) {
 				domElement = xmlDoc.createElement("moneys-drop-count");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statMoneysDropCount)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatDropMoneys).toInt())));
 				eStat.appendChild(domElement);
 			}
-			if (statThingsDropCount != 0) {
+			if (!stat->isEmpty(Statistic::StatThingsDropCount)) {
 				domElement = xmlDoc.createElement("fings-drop-count");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statThingsDropCount)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatThingsDropCount).toInt())));
 				eStat.appendChild(domElement);
 			}
-			if (statThingDropLast.length() != 0) {
+			if (!stat->isEmpty(Statistic::StatThingDropLast)) {
 				domElement = xmlDoc.createElement("fing-drop-last");
-				domElement.appendChild(xmlDoc.createTextNode(statThingDropLast));
+				domElement.appendChild(xmlDoc.createTextNode(stat->value(Statistic::StatThingDropLast).toString()));
 				eStat.appendChild(domElement);
 			}
-			if (statExperienceDropCount != 0) {
+			if (!stat->isEmpty(Statistic::StatExperienceDropCount)) {
 				domElement = xmlDoc.createElement("experience-drop-count");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statExperienceDropCount)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatExperienceDropCount).toLongLong())));
 				eStat.appendChild(domElement);
 			}
-			if (statKilledEnemies != 0) {
+			if (!stat->isEmpty(Statistic::StatKilledEnemies)) {
 				domElement = xmlDoc.createElement("killed-enemies");
-				domElement.appendChild(xmlDoc.createTextNode(QString::number(statKilledEnemies)));
+				domElement.appendChild(xmlDoc.createTextNode(QString::number(stat->value(Statistic::StatKilledEnemies).toInt())));
 				eStat.appendChild(domElement);
 			}
 		}
@@ -1442,18 +1321,18 @@ bool PluginCore::savePersStatus()
 bool PluginCore::loadPersStatus()
 {
 	// Сброс статуса персонажа
-	lastGameJid = "";
-	lastChatJid = "";
+	QVariant lastGameJid;
+	QVariant lastChatJid;
 	persStatus = Pers::StatusNotKnow;
-	statMessagesCount = 0;
-	statMoneysDropCount = 0;
-	statFightsCount = 0;
-	statFightDamageMin = -1;
-	statFightDamageMax = -1;
-	statThingsDropCount = 0;
-	statThingDropLast = "";
-	statExperienceDropCount = 0;
-	statKilledEnemies = 0;
+	QVariant msgCount;
+	QVariant moneysDropCount;
+	QVariant fightsCount;
+	QVariant fightDamageMin;
+	QVariant fightDamageMax;
+	QVariant thingsDropCount;
+	QVariant thingDropLast;
+	QVariant expDropCount;
+	QVariant killedEnemies;
 	// Загрузка статуса
 	if (accJid.isEmpty()) {
 		return false;
@@ -1512,23 +1391,23 @@ bool PluginCore::loadPersStatus()
 							} else if (sTagName == "last-chat-jid") {
 								lastChatJid = getTextFromNode(&childStatNode);
 							} else if (sTagName == "in-messages-count") {
-								statMessagesCount = getTextFromNode(&childStatNode).toInt();
+								msgCount = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "fights-count") {
-								statFightsCount = getTextFromNode(&childStatNode).toInt();
+								fightsCount = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "pers-fight-damage-max") {
-								statFightDamageMax = getTextFromNode(&childStatNode).toInt();
+								fightDamageMax = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "pers-fight-damage-min") {
-								statFightDamageMin = getTextFromNode(&childStatNode).toInt();
+								fightDamageMin = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "moneys-drop-count") {
-								statMoneysDropCount = getTextFromNode(&childStatNode).toInt();
+								moneysDropCount = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "fings-drop-count") {
-								statThingsDropCount = getTextFromNode(&childStatNode).toInt();
+								thingsDropCount = getTextFromNode(&childStatNode).toInt();
 							} else if (sTagName == "fing-drop-last") {
-								statThingDropLast = getTextFromNode(&childStatNode);
+								thingDropLast = getTextFromNode(&childStatNode);
 							} else if (sTagName == "experience-drop-count") {
-								statExperienceDropCount = getTextFromNode(&childStatNode).toLongLong();
+								expDropCount = getTextFromNode(&childStatNode).toLongLong();
 							} else if (sTagName == "killed-enemies") {
-								statKilledEnemies = getTextFromNode(&childStatNode).toInt();
+								killedEnemies = getTextFromNode(&childStatNode).toInt();
 							}
 							childStatNode = childStatNode.nextSibling();
 						}
@@ -1546,6 +1425,18 @@ bool PluginCore::loadPersStatus()
 		childStatusNode = childStatusNode.nextSibling();
 	}
 	pers->endSetPersParams();
+	Statistic *stat = Statistic::instance();
+	stat->setValue(Statistic::StatLastGameJid, lastGameJid);
+	stat->setValue(Statistic::StatLastChatJid, lastChatJid);
+	stat->setValue(Statistic::StatMessagesCount, msgCount);
+	stat->setValue(Statistic::StatDamageMaxFromPers, fightDamageMax);
+	stat->setValue(Statistic::StatDamageMinFromPers, fightDamageMin);
+	stat->setValue(Statistic::StatFightsCount, fightsCount);
+	stat->setValue(Statistic::StatDropMoneys, moneysDropCount);
+	stat->setValue(Statistic::StatThingsDropCount, thingsDropCount);
+	stat->setValue(Statistic::StatThingDropLast, thingDropLast);
+	stat->setValue(Statistic::StatExperienceDropCount, expDropCount);
+	stat->setValue(Statistic::StatKilledEnemies, killedEnemies);
 	return true;
 }
 
@@ -1717,76 +1608,34 @@ void PluginCore::getStatistics(const QString &commandPtr)
 	}
 	GameText text;
 	text.append(QString::fromUtf8("<big><strong><em>--= Статистика =--</em></strong></big>"), true);
+	Statistic *stat = Statistic::instance();
 	if (mode == 0 || mode == 1) {
 		text.append(QString::fromUtf8("<strong><em>--Общая статистика--</em></strong>"), true);
-		QString str1;
-		if (!getTextValue(VALUE_LAST_GAME_JID, &str1)) {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Jid игры: <em>%1</em>").arg(str1), true);
-		if (!getTextValue(VALUE_LAST_CHAT_JID, &str1)) {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Jid чата: <em>%1</em>").arg(str1), true);
-		int num1;
-		if (getIntValue(VALUE_MESSAGES_COUNT, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Всего сообщений: <em>%1</em>").arg(str1), true);
+		text.append(QString::fromUtf8("Jid игры: <em>%1</em>")
+			    .arg(stat->toString(Statistic::StatLastGameJid)), true);
+		text.append(QString::fromUtf8("Jid чата: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatLastChatJid)), true);
+		text.append(QString::fromUtf8("Всего сообщений: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatMessagesCount)), true);
 	}
 	if (mode == 0 || mode == 2) {
 		text.append(QString::fromUtf8("<strong><em>--Статистика боев--</em></strong>"), true);
-		int num1;
-		QString str1;
-		if (getIntValue(VALUE_FIGHTS_COUNT, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Всего боев: <em>%1</em>").arg(str1), true);
-		if (getIntValue(VALUE_DAMAGE_MAX_FROM_PERS, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Лучший удар: <em>%1</em>").arg(str1), true);
-		if (getIntValue(VALUE_DAMAGE_MIN_FROM_PERS, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Худший удар: <em>%1</em>").arg(str1), true);
-		if (getIntValue(VALUE_DROP_MONEYS, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Денег собрано: <em>%1</em>").arg(str1), true);
-		if (getIntValue(VALUE_THINGS_DROP_COUNT, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Вещей собрано: <em>%1</em>").arg(str1), true);
-		if (!getTextValue(VALUE_THING_DROP_LAST, &str1)) {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Последняя вещь: <em>%1</em>").arg(str1), true);
-		long long num2;
-		if (getLongValue(VALUE_EXPERIENCE_DROP_COUNT, &num2)) {
-			str1 = numToStr(num2, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Полученный опыт: <em>%1</em>").arg(str1), true);
-		if (getIntValue(VALUE_KILLED_ENEMIES, &num1)) {
-			str1 = numToStr(num1, "'");
-		} else {
-			str1 = NA_TEXT;
-		}
-		text.append(QString::fromUtf8("Повержено врагов: <em>%1</em>").arg(str1), true);
+		text.append(QString::fromUtf8("Всего боев: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatFightsCount)), true);
+		text.append(QString::fromUtf8("Лучший удар: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatDamageMaxFromPers)), true);
+		text.append(QString::fromUtf8("Худший удар: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatDamageMinFromPers)), true);
+		text.append(QString::fromUtf8("Денег собрано: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatDropMoneys)), true);
+		text.append(QString::fromUtf8("Вещей собрано: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatThingsDropCount)), true);
+		text.append(QString::fromUtf8("Последняя вещь: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatThingDropLast)), true);
+		text.append(QString::fromUtf8("Полученный опыт: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatExperienceDropCount)), true);
+		text.append(QString::fromUtf8("Повержено врагов: <em>%1</em>")
+			.arg(stat->toString(Statistic::StatKilledEnemies)), true);
 	}
 	if (mode == 0 || mode == 9) {
 		text.append(QString::fromUtf8("<strong><em>--Статистика зеркал игры--</em></strong>"), true);
@@ -2729,20 +2578,20 @@ void PluginCore::clearCommands(const QStringList &args)
 				level = args.at(2).toInt();
 			}
 			if (level == 0 || level == 1) {
-				resetStatistic(VALUE_LAST_GAME_JID);
-				resetStatistic(VALUE_LAST_CHAT_JID);
-				resetStatistic(VALUE_MESSAGES_COUNT);
+				resetStatistic(Statistic::StatLastGameJid);
+				resetStatistic(Statistic::StatLastChatJid);
+				resetStatistic(Statistic::StatMessagesCount);
 				text.append(QString::fromUtf8("Общая статистика сброшена"), false);
 			}
 			if (level == 0 || level == 2) {
-				resetStatistic(VALUE_FIGHTS_COUNT);
-				resetStatistic(VALUE_DAMAGE_MAX_FROM_PERS);
-				resetStatistic(VALUE_DAMAGE_MIN_FROM_PERS);
-				resetStatistic(VALUE_DROP_MONEYS);
-				resetStatistic(VALUE_THINGS_DROP_COUNT);
-				resetStatistic(VALUE_THING_DROP_LAST);
-				resetStatistic(VALUE_EXPERIENCE_DROP_COUNT);
-				resetStatistic(VALUE_KILLED_ENEMIES);
+				resetStatistic(Statistic::StatFightsCount);
+				resetStatistic(Statistic::StatDamageMaxFromPers);
+				resetStatistic(Statistic::StatDamageMinFromPers);
+				resetStatistic(Statistic::StatDropMoneys);
+				resetStatistic(Statistic::StatThingsDropCount);
+				resetStatistic(Statistic::StatThingDropLast);
+				resetStatistic(Statistic::StatExperienceDropCount);
+				resetStatistic(Statistic::StatKilledEnemies);
 				text.append(QString::fromUtf8("Статистика боев сброшена"), false);
 			}
 		}
