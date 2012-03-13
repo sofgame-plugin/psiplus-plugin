@@ -1134,11 +1134,6 @@ void PluginCore::setConsoleText(const GameText &gameText, int type, bool switch_
 	}
 }
 
-void PluginCore::resetStatistic(int valueId) // TODO Может убрать?
-{
-	Statistic::instance()->setValue(valueId, QVariant());
-}
-
 bool PluginCore::sendCommandToCore(qint32 commandId)
 {
 	if (commandId == COMMAND_SAVE_SETTINGS) {
@@ -2577,21 +2572,22 @@ void PluginCore::clearCommands(const QStringList &args)
 			if (argsCount >= 2) {
 				level = args.at(2).toInt();
 			}
+			Statistic *stat = Statistic::instance();
 			if (level == 0 || level == 1) {
-				resetStatistic(Statistic::StatLastGameJid);
-				resetStatistic(Statistic::StatLastChatJid);
-				resetStatistic(Statistic::StatMessagesCount);
+				stat->setValue(Statistic::StatLastGameJid, QVariant());
+				stat->setValue(Statistic::StatLastChatJid, QVariant());
+				stat->setValue(Statistic::StatMessagesCount, QVariant());
 				text.append(QString::fromUtf8("Общая статистика сброшена"), false);
 			}
 			if (level == 0 || level == 2) {
-				resetStatistic(Statistic::StatFightsCount);
-				resetStatistic(Statistic::StatDamageMaxFromPers);
-				resetStatistic(Statistic::StatDamageMinFromPers);
-				resetStatistic(Statistic::StatDropMoneys);
-				resetStatistic(Statistic::StatThingsDropCount);
-				resetStatistic(Statistic::StatThingDropLast);
-				resetStatistic(Statistic::StatExperienceDropCount);
-				resetStatistic(Statistic::StatKilledEnemies);
+				stat->setValue(Statistic::StatFightsCount, QVariant());
+				stat->setValue(Statistic::StatDamageMaxFromPers, QVariant());
+				stat->setValue(Statistic::StatDamageMinFromPers, QVariant());
+				stat->setValue(Statistic::StatDropMoneys, QVariant());
+				stat->setValue(Statistic::StatThingsDropCount, QVariant());
+				stat->setValue(Statistic::StatThingDropLast, QVariant());
+				stat->setValue(Statistic::StatExperienceDropCount, QVariant());
+				stat->setValue(Statistic::StatKilledEnemies, QVariant());
 				text.append(QString::fromUtf8("Статистика боев сброшена"), false);
 			}
 		}

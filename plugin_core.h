@@ -50,7 +50,6 @@ class PluginCore: public QObject
 		void updateRegExpForPersName();
 		void setAccountStatus(int status);
 		void setGameJidStatus(int, qint32);
-		void resetStatistic(int valueId);
 		bool sendCommandToCore(qint32 commandId);
 		bool sendString(const QString &str);
 		PersInfo* getPersInfo(const QString &);

@@ -1207,23 +1207,23 @@ void SofMainWindow::activateSettingsPage()
 
 void SofMainWindow::resetCommonStatistic()
 {
-	PluginCore *core = PluginCore::instance();
-	core->resetStatistic(Statistic::StatLastGameJid);
-	core->resetStatistic(Statistic::StatLastChatJid);
-	core->resetStatistic(Statistic::StatMessagesCount);
+	Statistic *stat = Statistic::instance();
+	stat->setValue(::Statistic::StatLastGameJid, QVariant());
+	stat->setValue(::Statistic::StatLastChatJid, QVariant());
+	stat->setValue(::Statistic::StatMessagesCount, QVariant());
 }
 
 void SofMainWindow::resetFightStatistic()
 {
-	PluginCore *core = PluginCore::instance();
-	core->resetStatistic(Statistic::StatFightsCount);
-	core->resetStatistic(Statistic::StatDamageMaxFromPers);
-	core->resetStatistic(Statistic::StatDamageMinFromPers);
-	core->resetStatistic(Statistic::StatDropMoneys);
-	core->resetStatistic(Statistic::StatThingsDropCount);
-	core->resetStatistic(Statistic::StatThingDropLast);
-	core->resetStatistic(Statistic::StatExperienceDropCount);
-	core->resetStatistic(Statistic::StatKilledEnemies);
+	Statistic *stat = Statistic::instance();
+	stat->setValue(::Statistic::StatFightsCount, QVariant());
+	stat->setValue(::Statistic::StatDamageMaxFromPers, QVariant());
+	stat->setValue(::Statistic::StatDamageMinFromPers, QVariant());
+	stat->setValue(::Statistic::StatDropMoneys, QVariant());
+	stat->setValue(::Statistic::StatThingsDropCount, QVariant());
+	stat->setValue(::Statistic::StatThingDropLast, QVariant());
+	stat->setValue(::Statistic::StatExperienceDropCount, QVariant());
+	stat->setValue(::Statistic::StatKilledEnemies, QVariant());
 }
 
 void SofMainWindow::applySettings()
