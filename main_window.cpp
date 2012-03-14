@@ -40,6 +40,8 @@
 #include "subclasses/textview.h"
 #include "statistic/statistic.h"
 
+#define SLOTS_COUNT 9
+
 QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
 				<< (QPair<int, QString>) {Statistic::StatLastGameJid, "last-game-jid"}
 				<< (QPair<int, QString>) {Statistic::StatLastChatJid, "last-chat-jid"}
@@ -322,36 +324,31 @@ void SofMainWindow::fillSlotCombo(QComboBox* slotCombo)
 	slotCombo->clear();
 	slotCombo->addItem(QString::fromUtf8("* Пустой *"), -1);
 	foreach (int key, statisticCapInitVal.keys()) {
-		slotCombo->addItem(statisticCapInitVal.value(key).caption, key);
+		slotCombo->addItem(statisticCapInitVal.value(key), key);
 	}
 }
 
-void SofMainWindow::initStatisticData() // TODO Проверить, возможно стоит выкинуть этот метод
+void SofMainWindow::initStatisticData()
 {
 	// Заполняем заголовки наименований элементов статистики и начальные значения
-	statisticCapInitVal[Statistic::StatLastGameJid] = (StatCapInitVal) {QString::fromUtf8("JID игры"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[Statistic::StatLastChatJid] = (StatCapInitVal) {QString::fromUtf8("JID чата"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[Statistic::StatMessagesCount] = (StatCapInitVal) {QString::fromUtf8("Сообщений"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[Statistic::StatDamageMaxFromPers] = (StatCapInitVal) {QString::fromUtf8("Лучший удар"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[Statistic::StatDamageMinFromPers] = (StatCapInitVal) {QString::fromUtf8("Худший удар"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[Statistic::StatFightsCount] = (StatCapInitVal) {QString::fromUtf8("Всего боев"), QString::fromUtf8("0")};
-	statisticCapInitVal[Statistic::StatDropMoneys] = (StatCapInitVal) {QString::fromUtf8("Денег собрано"), QString::fromUtf8("0")};
-	statisticCapInitVal[Statistic::StatThingsDropCount] = (StatCapInitVal) {QString::fromUtf8("Вещей собрано"), QString::fromUtf8("0")};
-	statisticCapInitVal[Statistic::StatThingDropLast] = (StatCapInitVal) {QString::fromUtf8("Последняя вещь"), QString::fromUtf8("n/a")};
-	statisticCapInitVal[Statistic::StatExperienceDropCount] = (StatCapInitVal) {QString::fromUtf8("Полученный опыт"), QString::fromUtf8("0")};
-	statisticCapInitVal[Statistic::StatKilledEnemies] = (StatCapInitVal) {QString::fromUtf8("Противников повержено"), QString::fromUtf8("0")};
+	statisticCapInitVal[Statistic::StatLastGameJid] = QString::fromUtf8("JID игры");
+	statisticCapInitVal[Statistic::StatLastChatJid] = QString::fromUtf8("JID чата");
+	statisticCapInitVal[Statistic::StatMessagesCount] = QString::fromUtf8("Сообщений");
+	statisticCapInitVal[Statistic::StatDamageMaxFromPers] = QString::fromUtf8("Лучший удар");
+	statisticCapInitVal[Statistic::StatDamageMinFromPers] = QString::fromUtf8("Худший удар");
+	statisticCapInitVal[Statistic::StatFightsCount] = QString::fromUtf8("Всего боев");
+	statisticCapInitVal[Statistic::StatDropMoneys] = QString::fromUtf8("Денег собрано");
+	statisticCapInitVal[Statistic::StatThingsDropCount] = QString::fromUtf8("Вещей собрано");
+	statisticCapInitVal[Statistic::StatThingDropLast] = QString::fromUtf8("Последняя вещь");
+	statisticCapInitVal[Statistic::StatExperienceDropCount] = QString::fromUtf8("Полученный опыт");
+	statisticCapInitVal[Statistic::StatKilledEnemies] = QString::fromUtf8("Противников повержено");
 }
 
 void SofMainWindow::setStatisticCaptionText()
 {
 	// Заполняем текст статистики в окне статистика
 	foreach (int statKey, statisticWidgets.keys()) {
-		QString capt;
-		if (statisticCapInitVal.contains(statKey)) {
-			capt = statisticCapInitVal.value(statKey).caption;
-		} else {
-			capt = "?";
-		}
+		QString capt = statisticCapInitVal.value(statKey, "?");
 		statisticWidgets.value(statKey).caption->setText(capt + ":");
 	}
 }
@@ -361,18 +358,13 @@ void SofMainWindow::setStatisticCaptionText()
  */
 void SofMainWindow::fullUpdateFooterStatistic()
 {
-	// TODO Сделать нормальное обновление, в том числе скрывать неиспользуемые элементы и разделители
 	QList<int> slotKeys = footerStatWidgets.keys();
 	foreach (int slot, slotKeys) {
 		QString captText;
 		QString valText;
 		int statVal = statisticFooterPos.key(slot, -1);
 		if (statVal != -1) {
-			if (statisticCapInitVal.contains(statVal)) {
-				captText = statisticCapInitVal.value(statVal).caption;
-			} else {
-				captText = "?";
-			}
+			captText = statisticCapInitVal.value(statVal, "?");
 			captText.append(":");
 			if (statisticWidgets.contains(statVal)) {
 				valText = statisticWidgets.value(statVal).value->text();
@@ -817,7 +809,7 @@ void SofMainWindow::loadSlotsSettings(const QDomElement &xml)
 			QString param = eSlot.attribute("param").toLower();
 			if (!param.isEmpty()) {
 				int slotNum = eSlot.attribute("num").toInt();
-				if (slotNum >= 1 && slotNum <= SLOT_ITEMS_COUNT) {
+				if (slotNum >= 1 && slotNum <= SLOTS_COUNT) {
 					for (int i = 0, cnt = SofMainWindow::statisticXmlStrings.size(); i < cnt; i++) {
 						if (SofMainWindow::statisticXmlStrings.at(i).second == param) {
 							statisticFooterPos[SofMainWindow::statisticXmlStrings.at(i).first] = slotNum;

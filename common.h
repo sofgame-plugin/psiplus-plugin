@@ -36,9 +36,6 @@
 #define TYPE_STRING                     5
 #define TYPE_NA                         6
 
-//--------------------
-#define SLOT_ITEMS_COUNT                9
-
 // Значения отправляемые окну
 
 #define VALUE_TIMEOUT                   1019

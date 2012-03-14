@@ -73,13 +73,9 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 			QLabel *caption;
 			QLabel *value;
 		};
-		struct StatCapInitVal {
-			QString caption;
-			QString initVal;
-		};
 		QHash<int, StatWidgets> footerStatWidgets;
 		QHash<int, int> statisticFooterPos;             // Номер позиции элемента статистики в footer-е
-		QHash<int, StatCapInitVal> statisticCapInitVal; // Название элемента статистики и начальные значения
+		QHash<int, QString> statisticCapInitVal;        // Название элемента статистики
 		QHash<int, StatWidgets> statisticWidgets;       // Для хранения указателей на элементы QLabel окна статистики
 		int  maxEventSlotId;                // Максимальный текущий идентификатор слота
 		int usedEventSlots;                 // Использовано слотов
