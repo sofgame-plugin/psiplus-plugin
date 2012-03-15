@@ -95,7 +95,7 @@ StatItem *Statistic::newStatItem(int type)
 		|| type == StatKilledEnemies) {
 		item = new StatIntZeroItem();
 	} else if (type == StatDamageMaxFromPers || type == StatDamageMinFromPers) {
-		item = new StatIntItem();
+		item = new StatIntNaItem();
 	} else if (type == StatLastGameJid || type == StatLastChatJid || type == StatThingDropLast) {
 		item = new StatStringItem();
 	} else if (type == StatExperienceDropCount) {

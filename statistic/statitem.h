@@ -56,24 +56,31 @@ protected:
 
 };
 
-class StatIntItem: public StatItem, public EmptyStringNA
+class StatIntItem: public StatItem
 {
 public:
 	StatIntItem();
 
 	QVariant value() const;
 	bool setValue(QVariant &val);
-	QString toString() const;
 
-private:
+protected:
 	int value_;
 };
 
-class StatIntZeroItem: public StatIntItem, public EmptyStringZero
+class StatIntNaItem: public StatIntItem
 {
+public:
+	QString toString() const;
 };
 
-class StatLongZeroItem: public StatItem, public EmptyStringZero
+class StatIntZeroItem: public StatIntItem
+{
+public:
+	QString toString() const;
+};
+
+class StatLongZeroItem: public StatItem
 {
 public:
 	StatLongZeroItem();
@@ -86,7 +93,7 @@ private:
 	long long value_;
 };
 
-class StatStringItem: public StatItem, public EmptyStringNA
+class StatStringItem: public StatItem
 {
 public:
 	StatStringItem();

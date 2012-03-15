@@ -68,10 +68,21 @@ bool StatIntItem::setValue(QVariant &val)
 	return true;
 }
 
-QString StatIntItem::toString() const
+//----------------------------- StatIntNaItem -------------------------
+
+QString StatIntNaItem::toString() const
 {
 	if (isEmpty())
-		return emptyStringValue();
+		return EmptyStringNA::emptyStringValue();
+	return numToStr(value_, "'");
+}
+
+//----------------------------- StatIntZeroItem -------------------------
+
+QString StatIntZeroItem::toString() const
+{
+	if (isEmpty())
+		return EmptyStringZero::emptyStringValue();
 	return numToStr(value_, "'");
 }
 
@@ -107,7 +118,7 @@ bool StatLongZeroItem::setValue(QVariant &val)
 QString StatLongZeroItem::toString() const
 {
 	if (isEmpty())
-		return emptyStringValue();
+		return EmptyStringZero::emptyStringValue();
 	return numToStr(value_, "'");
 }
 
@@ -142,6 +153,6 @@ bool StatStringItem::setValue(QVariant &val)
 QString StatStringItem::toString() const
 {
 	if (isEmpty())
-		return emptyStringValue();
+		return EmptyStringNA::emptyStringValue();
 	return value_;
 }
