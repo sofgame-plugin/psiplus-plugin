@@ -43,17 +43,17 @@
 #define SLOTS_COUNT 9
 
 QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<int, QString> >()
-				<< (QPair<int, QString>) {Statistic::StatLastGameJid, "last-game-jid"}
-				<< (QPair<int, QString>) {Statistic::StatLastChatJid, "last-chat-jid"}
-				<< (QPair<int, QString>) {Statistic::StatMessagesCount, "messages-count"}
-				<< (QPair<int, QString>) {Statistic::StatDamageMaxFromPers, "damage-max-from-pers"}
-				<< (QPair<int, QString>) {Statistic::StatDamageMinFromPers, "damage-min-from-pers"}
-				<< (QPair<int, QString>) {Statistic::StatFightsCount, "fights-count"}
-				<< (QPair<int, QString>) {Statistic::StatDropMoneys, "drop-moneys"}
-				<< (QPair<int, QString>) {Statistic::StatThingsDropCount, "fings-drop-count"}
-				<< (QPair<int, QString>) {Statistic::StatThingDropLast, "fing-drop-last"}
-				<< (QPair<int, QString>) {Statistic::StatExperienceDropCount, "experience-drop-count"}
-				<< (QPair<int, QString>) {Statistic::StatKilledEnemies, "killed-enemies"};
+				<< QPair<int, QString>(Statistic::StatLastGameJid, "last-game-jid")
+				<< QPair<int, QString>(Statistic::StatLastChatJid, "last-chat-jid")
+				<< QPair<int, QString>(Statistic::StatMessagesCount, "messages-count")
+				<< QPair<int, QString>(Statistic::StatDamageMaxFromPers, "damage-max-from-pers")
+				<< QPair<int, QString>(Statistic::StatDamageMinFromPers, "damage-min-from-pers")
+				<< QPair<int, QString>(Statistic::StatFightsCount, "fights-count")
+				<< QPair<int, QString>(Statistic::StatDropMoneys, "drop-moneys")
+				<< QPair<int, QString>(Statistic::StatThingsDropCount, "fings-drop-count")
+				<< QPair<int, QString>(Statistic::StatThingDropLast, "fing-drop-last")
+				<< QPair<int, QString>(Statistic::StatExperienceDropCount, "experience-drop-count")
+				<< QPair<int, QString>(Statistic::StatKilledEnemies, "killed-enemies");
 
 
 SofMainWindow::SofMainWindow() : QWidget(0)
