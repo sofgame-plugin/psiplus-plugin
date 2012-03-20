@@ -82,7 +82,7 @@ public:
 	int  getPriceAll(int) const;
 	int  getNoPriceCount(int) const;
 	const Thing* getThingByRow(int row, int iface) const;
-	void getThingsFiltersEx(QList<ThingFilter*>*) const;
+	const ThingFiltersList &thingsFiltersList() const;
 	void setThingsFiltersEx(QList<ThingFilter*>);
 	const QVector<price_item>* getThingsPrice() const;
 	void backpackToXml(QDomElement &eBackpack) const;
@@ -139,7 +139,7 @@ private:
 	QTime watchEnergyStartTime;
 	QTime watchEnergyStartTime2;
 	ThingsModel* things;
-	QList<ThingFilter*> thingFiltersEx;
+	ThingFiltersList thingFiltersEx;
 	QHash<int, ThingsProxyModel*> thingModels;
 	QVector<price_item> thingPrice;
 	static Pers *instance_;

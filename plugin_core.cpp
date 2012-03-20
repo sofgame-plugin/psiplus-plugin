@@ -2622,8 +2622,7 @@ void PluginCore::thingsCommands(const QStringList &args)
 			filterNum = args.at(2).toInt(&fOk);
 		}
 		if (fOk && filterNum >= 0) {
-			QList<ThingFilter*> filtersList;
-			Pers::instance()->getThingsFiltersEx(&filtersList);
+			const ThingFiltersList filtersList = Pers::instance()->thingsFiltersList();
 			if (filterNum <= filtersList.size()) {
 				int iface = Pers::instance()->getThingsInterface();
 				if (filterNum == 0) {
@@ -2668,14 +2667,12 @@ void PluginCore::thingsCommands(const QStringList &args)
 	} else if (args.at(1) == "filters") {
 		text.append(QString::fromUtf8("<strong><em>--- Фильтры вещей ---</em></strong>"), true);
 		if (argsCount == 2 && args.at(2) == "list") {
-			QList<ThingFilter*> filtersList;
-			Pers::instance()->getThingsFiltersEx(&filtersList);
+			ThingFiltersList filtersList = Pers::instance()->thingsFiltersList();
 			int cntFilters = filtersList.size();
 			if (cntFilters > 0) {
-				for (int i = 0; i < cntFilters; i++) {
-					QString str1 = QString::number(i+1) + " - ";
-					str1.append(filtersList.at(i)->isActive() ? "[+] " : "[-] ");
-					str1.append(filtersList.at(i)->name());
+				int fNum = 0;
+				foreach (ThingFilter *tf, filtersList) {
+					QString str1 = QString("%1 - [%2] %3").arg(++fNum).arg(tf->isActive() ? "+" : "-").arg(tf->name());
 					text.append(str1, false);
 				}
 				text.append(QString::fromUtf8("Всего фильтров: %1").arg(cntFilters), true);

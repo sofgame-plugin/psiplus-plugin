@@ -1688,13 +1688,10 @@ void SofMainWindow::updateThingFiltersTab()
 	while (thingsTabBar->count() > 0)
 		thingsTabBar->removeTab(0);
 	thingsTabBar->setTabData(thingsTabBar->addTab(QString::fromUtf8("Все вещи")), -1);
-	QList<ThingFilter*> filtersList;
-	Pers::instance()->getThingsFiltersEx(&filtersList);
 	int fltr_index = 0;
-	while (!filtersList.isEmpty()) {
-		ThingFilter* ff = filtersList.takeFirst();
-		if (ff->isActive()) {
-			thingsTabBar->setTabData(thingsTabBar->addTab(ff->name()), fltr_index);
+	foreach (ThingFilter* tf, Pers::instance()->thingsFiltersList()) {
+		if (tf->isActive()) {
+			thingsTabBar->setTabData(thingsTabBar->addTab(tf->name()), fltr_index);
 		}
 		fltr_index++;
 	}

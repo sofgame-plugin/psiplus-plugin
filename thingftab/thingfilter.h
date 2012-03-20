@@ -87,4 +87,13 @@ protected:
 	QList<struct thing_rule_ex> rules;
 };
 
+typedef QList<ThingFilter*> FilterList;
+
+class ThingFiltersList: public FilterList
+{
+public:
+	ThingFiltersList();
+	int  indexOf(const QString &name) const;
+};
+
 #endif // THINGFILTER_H

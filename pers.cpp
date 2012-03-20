@@ -355,13 +355,9 @@ const Thing* Pers::getThingByRow(int row, int iface) const
 /**
  * Возращает список указателей на фильтры
  */
-void Pers::getThingsFiltersEx(QList<ThingFilter*>* filtersPtr) const
+const ThingFiltersList &Pers::thingsFiltersList() const
 {
-	filtersPtr->clear();
-	int cnt = thingFiltersEx.size();
-	for (int i = 0; i < cnt; i++) {
-		filtersPtr->push_back(thingFiltersEx.at(i));
-	}
+	return thingFiltersEx;
 }
 
 /**

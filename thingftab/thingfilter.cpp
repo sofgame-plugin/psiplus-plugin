@@ -225,3 +225,18 @@ bool ThingFilter::isThingShow(const Thing* thing) const
 	}
 	return false;
 }
+
+//----------------- ThingFiltersList ------------------------
+
+ThingFiltersList::ThingFiltersList()
+{
+}
+
+int ThingFiltersList::indexOf(const QString &name) const
+{
+	for (int i = 0, cnt = size(); i < cnt; ++i) {
+		if (at(i)->name() == name)
+			return i;
+	}
+	return -1;
+}

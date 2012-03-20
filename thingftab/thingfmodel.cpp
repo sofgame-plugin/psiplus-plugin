@@ -47,11 +47,10 @@ void ThingFiltersModel::reloadFilters()
 	while (!filtersListPtr->isEmpty())
 		delete filtersListPtr->takeFirst();
 	// Грузим новые
-	QList<ThingFilter*> ffl;
-	Pers::instance()->getThingsFiltersEx(&ffl);
-	while (!ffl.isEmpty()) {
-		ThingFilter* ff = new ThingFilter(*ffl.takeFirst());
-		filtersListPtr->push_back(ff);
+	Pers *pers = Pers::instance();
+	foreach (ThingFilter *pff, pers->thingsFiltersList()) {
+		ThingFilter *mff = new ThingFilter(*pff);
+		filtersListPtr->push_back(mff);
 	}
 	reset();
 }
