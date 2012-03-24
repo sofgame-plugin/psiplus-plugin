@@ -348,6 +348,17 @@ const Thing* Pers::getThingByRow(int row, int iface) const
 }
 
 /**
+ * Возвращает цвет вещи, учитывая номер позиции и заданный интерфейс
+ */
+QColor Pers::getThingColorByRow(int row, int iface) const
+{
+	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
+	if (tpm)
+		return tpm->color(row);
+	return QColor();
+}
+
+/**
  * Возращает список указателей на фильтры
  */
 const ThingFiltersList &Pers::thingsFiltersList() const

@@ -88,8 +88,6 @@ private:
 private:
 	bool enabled;
 	QString filterName;
-
-protected:
 	QList<struct thing_rule_ex> rules;
 };
 

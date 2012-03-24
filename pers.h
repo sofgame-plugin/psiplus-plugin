@@ -82,6 +82,7 @@ public:
 	int  getPriceAll(int) const;
 	int  getNoPriceCount(int) const;
 	const Thing* getThingByRow(int row, int iface) const;
+	QColor getThingColorByRow(int row, int iface) const;
 	const ThingFiltersList &thingsFiltersList() const;
 	const ThingFiltersList &thingsSpecFiltersList() const;
 	void setThingsFiltersEx(QList<ThingFilter*>);

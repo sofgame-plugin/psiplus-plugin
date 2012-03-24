@@ -134,3 +134,20 @@ void ThingsProxyModel::setPrice(int row, int price)
 		}
 	}
 }
+
+QVariant ThingsProxyModel::data(const QModelIndex &index, int role) const
+{
+	if (role == Qt::TextColorRole) {
+		QColor c = color(index.row());
+		return c;
+	}
+	return QSortFilterProxyModel::data(index, role);
+}
+
+QColor ThingsProxyModel::color(int row) const
+{
+	const Thing* thing = getThingByRow(row);
+	if (thing && thingsFilter)
+		return thingsFilter->color(thing);
+	return QColor();
+}

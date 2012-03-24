@@ -598,17 +598,37 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					pers->setThingsInterfaceFilter(iface, fltrNum, true);
 					int i = 0;
 					while (true) {
-						const Thing *th = pers->getThingByRow(i++, iface);
+						const Thing *th = pers->getThingByRow(i, iface);
 						if (!th)
 							break;
 						if (nDressed == 0 && th->isDressed()) {
-							gameText.append(QString::fromUtf8("одеты:"), false);
+							if (coloring) {
+								gameText.append(QString::fromUtf8("<strong>одеты:</strong>"), true);
+							} else {
+								gameText.append(QString::fromUtf8("одеты:"), false);
+							}
 							nDressed = 1;
 						} else if (nDressed == 0 || (nDressed == 1 && !th->isDressed())) {
-							gameText.append(QString::fromUtf8("не одеты:"), false);
+							if (coloring) {
+								gameText.append(QString::fromUtf8("<strong>не одеты:</strong>"), true);
+							} else {
+								gameText.append(QString::fromUtf8("не одеты:"), false);
+							}
 							nDressed = 2;
 						}
-						gameText.append(th->toString(Thing::ShowAll), false);
+						QString thingStr = th->toString(Thing::ShowAll);
+						QString colorStr;
+						if (coloring) {
+							QColor c = pers->getThingColorByRow(i, iface);
+							if (c.isValid())
+								colorStr = c.name();
+						}
+						if (!colorStr.isEmpty()) {
+							gameText.append(QString("<font color=\"%1\">%2</font>").arg(colorStr).arg(thingStr), true);
+						} else {
+							gameText.append(thingStr, false);
+						}
+						++i;
 					}
 					pers->removeThingsInterface(iface);
 					gameText.append(QString::fromUtf8("N- выберете предмет. (отправьте номер вместо N)"), false);

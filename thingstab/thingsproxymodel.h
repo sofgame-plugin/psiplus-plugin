@@ -42,9 +42,15 @@ public:
 	const Thing* getThingByRow(int) const;
 	void setFilter(ThingFilter const *);
 	void setPrice(int /*row*/, int /*price*/);
+	QVariant data(const QModelIndex &index, int role) const;
+	QColor color(int row) const;
+
+private:
+
 private:
 	ThingsModel* thingsSource;
 	ThingFilter const *thingsFilter;
+
 protected:
 	virtual bool filterAcceptsColumn ( int source_column, const QModelIndex &source_parent ) const;
 	virtual bool filterAcceptsRow ( int source_row, const QModelIndex &source_parent ) const;
