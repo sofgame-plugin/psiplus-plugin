@@ -83,6 +83,7 @@ public:
 	int  getNoPriceCount(int) const;
 	const Thing* getThingByRow(int row, int iface) const;
 	const ThingFiltersList &thingsFiltersList() const;
+	const ThingFiltersList &thingsSpecFiltersList() const;
 	void setThingsFiltersEx(QList<ThingFilter*>);
 	const QVector<price_item>* getThingsPrice() const;
 	void backpackToXml(QDomElement &eBackpack) const;
@@ -97,7 +98,7 @@ public:
 	bool getStringParamValue(PersParams, QString*) const;
 	void setSetting(Settings::SettingKey, int);
 	int  getThingsInterface();
-	void setThingsInterfaceFilter(int iface, int filter_num);
+	void setThingsInterfaceFilter(int iface, int filter_num, bool special = false);
 	void removeThingsInterface(int ifaceNum);
 	QSortFilterProxyModel* getThingsModel(int ifaceNum) const;
 	QString getPersStatusString();
@@ -139,7 +140,6 @@ private:
 	QTime watchEnergyStartTime;
 	QTime watchEnergyStartTime2;
 	ThingsModel* things;
-	ThingFiltersList thingFiltersEx;
 	QHash<int, ThingsProxyModel*> thingModels;
 	QVector<price_item> thingPrice;
 	static Pers *instance_;
@@ -148,6 +148,8 @@ private:
 	QDateTime lastNegativeHealthUpdate;
 	QDateTime lastNegativeEnergyUpdate;
 	int moneys;
+	ThingFiltersList thingFiltersEx;
+	ThingFiltersList thingFiltersSpec;
 
 private:
 	Pers(QObject *parent = 0);

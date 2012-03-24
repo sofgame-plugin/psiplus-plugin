@@ -43,20 +43,10 @@ ThingFilter::~ThingFilter()
 
 }
 
-QString ThingFilter::name() const
-{
-	return filterName;
-}
-
 void ThingFilter::setName(const QString &newName)
 {
 	if (!newName.isEmpty())
 		filterName = newName;
-}
-
-bool ThingFilter::isActive() const
-{
-	return enabled;
 }
 
 void ThingFilter::setActive(bool active)
@@ -232,11 +222,32 @@ ThingFiltersList::ThingFiltersList()
 {
 }
 
-int ThingFiltersList::indexOf(const QString &name) const
+ThingFiltersList::~ThingFiltersList()
+{
+	free();
+}
+
+int ThingFiltersList::indexByName(const QString &name) const
 {
 	for (int i = 0, cnt = size(); i < cnt; ++i) {
 		if (at(i)->name() == name)
 			return i;
 	}
 	return -1;
+}
+
+bool ThingFiltersList::isActive(int fltrNum) const
+{
+	if (fltrNum >= 0 && fltrNum < size()) {
+		ThingFilter *thf = at(fltrNum);
+		return thf->isActive();
+	}
+	return false;
+}
+
+void ThingFiltersList::free()
+{
+	while (!isEmpty()) {
+		delete takeFirst();
+	}
 }

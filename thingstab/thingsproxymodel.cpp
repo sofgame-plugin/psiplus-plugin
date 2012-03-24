@@ -110,7 +110,7 @@ const Thing* ThingsProxyModel::getThingByRow(int row) const
 	return NULL;
 }
 
-void ThingsProxyModel::setFilter(ThingFilter* filter)
+void ThingsProxyModel::setFilter(ThingFilter const *filter)
 {
 	thingsFilter = filter;
 	invalidateFilter();

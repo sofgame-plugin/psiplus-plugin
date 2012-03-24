@@ -39,10 +39,10 @@ ThingFiltersView::ThingFiltersView(QWidget* parent) :
 {
 }
 
-void ThingFiltersView::init(QList<ThingFilter*>* flp)
+void ThingFiltersView::init()
 {
 	//Создаем модель и связываем модель с представлением
-	thingFiltersTableModel = new ThingFiltersModel(this, flp);
+	thingFiltersTableModel = new ThingFiltersModel(this);
 	setModel(thingFiltersTableModel);
 	thingFiltersTableModel->reloadFilters();
 	// Настройки поведения таблицы
@@ -54,11 +54,11 @@ void ThingFiltersView::init(QList<ThingFilter*>* flp)
 	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
 	// Соединения
 	connect(this, SIGNAL(clicked(const QModelIndex&)), this, SLOT(currRowChanged(const QModelIndex&)));
+	connect(this, SIGNAL(currFilterChanged(int)), thingFiltersTableModel, SLOT(changeCurrentRow(int)));
 }
 
-void ThingFiltersView::contextMenuEvent( QContextMenuEvent * e )
+void ThingFiltersView::contextMenuEvent(QContextMenuEvent *e)
 {
-	Q_UNUSED(e)
 	QMenu* popup = new QMenu(this);
 	QList<QAction *> actions;
 	actions	<< new QAction(QString::fromUtf8("Добавить"), popup)
@@ -175,18 +175,17 @@ QList<ThingFilter*> ThingFiltersView::getFilters() const
 		ThingFilter* pf = thingFiltersTableModel->getFilterByRow(i++);
 		if (!pf)
 			break;
-		resList.push_back(pf);
+		resList.append(pf);
 	}
 	return resList;
 }
 
 void ThingFiltersView::currRowChanged(const QModelIndex& index)
 {
-	if (index.isValid()) {
-		emit currFilterChanged(index.row());
-	} else {
-		emit currFilterChanged(-1);
-	}
+	int row = -1;
+	if (index.isValid())
+		row = index.row();
+	emit currFilterChanged(row);
 }
 
 //*********************************************************************************************
@@ -198,10 +197,11 @@ ThingRulesView::ThingRulesView(QWidget* parent) :
 	setEnabled(false);
 }
 
-void ThingRulesView::init(QList<ThingFilter*>* flp)
+void ThingRulesView::init(ThingFiltersView *thfv)
 {
-	//Создаем модель и связываем модель с представлением
-	thingRulesTableModel = new ThingRulesModel(this, flp);
+	// Связываем модель с представлением
+	ThingFiltersModel *parentModel = (ThingFiltersModel *)thfv->model();
+	thingRulesTableModel = parentModel->getRulesModel();
 	setModel(thingRulesTableModel);
 
 	// Настройки поведения таблицы
@@ -212,11 +212,12 @@ void ThingRulesView::init(QList<ThingFilter*>* flp)
 	horizontalHeader()->setResizeMode(3, QHeaderView::ResizeToContents);
 	verticalHeader()->setDefaultAlignment( Qt::AlignHCenter );
 	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+
+	connect(thfv, SIGNAL(currFilterChanged(int)), this, SLOT(currFilterChanged(int)));
 }
 
-void ThingRulesView::contextMenuEvent(QContextMenuEvent * e)
+void ThingRulesView::contextMenuEvent(QContextMenuEvent *e)
 {
-	Q_UNUSED(e)
 	QMenu* popup = new QMenu(this);
 	QList<QAction *> actions;
 	actions	<<new QAction(QString::fromUtf8("Добавить"), popup)

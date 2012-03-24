@@ -587,6 +587,33 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				}
 				pers->setThingsEnd();
 				nPersStatus = Pers::StatusThingsList;
+				int fltrNum = pers->thingsSpecFiltersList().indexByName("02");
+				if (pers->thingsSpecFiltersList().isActive(fltrNum)) {
+					gameText = GameText(QString::fromUtf8("Экипировка:"), false);
+					gameText.append(QString::fromUtf8("Деньги: %1 дринк")
+							.arg(numToStr(pers->moneysCount(), "'"))
+							, false);
+					int nDressed = 0;
+					int iface = pers->getThingsInterface();
+					pers->setThingsInterfaceFilter(iface, fltrNum, true);
+					int i = 0;
+					while (true) {
+						const Thing *th = pers->getThingByRow(i++, iface);
+						if (!th)
+							break;
+						if (nDressed == 0 && th->isDressed()) {
+							gameText.append(QString::fromUtf8("одеты:"), false);
+							nDressed = 1;
+						} else if (nDressed == 0 || (nDressed == 1 && !th->isDressed())) {
+							gameText.append(QString::fromUtf8("не одеты:"), false);
+							nDressed = 2;
+						}
+						gameText.append(th->toString(Thing::ShowAll), false);
+					}
+					pers->removeThingsInterface(iface);
+					gameText.append(QString::fromUtf8("N- выберете предмет. (отправьте номер вместо N)"), false);
+					gameText.append(QString::fromUtf8("0- в игру"), false);
+				}
 			} else if (sMessage.startsWith(QString::fromUtf8("Выбрана вещь: "))) {
 				// Выбрана вещь: кровавый кристалл (вещь)
 
@@ -2625,19 +2652,20 @@ void PluginCore::thingsCommands(const QStringList &args)
 			const ThingFiltersList filtersList = Pers::instance()->thingsFiltersList();
 			if (filterNum <= filtersList.size()) {
 				int iface = Pers::instance()->getThingsInterface();
+				QString sFltrName;
 				if (filterNum == 0) {
-					text.append(QString::fromUtf8("<strong><em>--- Все вещи ---</em></strong>"), true);
+					sFltrName = QString::fromUtf8("Все вещи");
 				} else {
-					QString sFltrName = "";
-					if (filterNum > 0 && filterNum <= filtersList.size()) {
-						sFltrName = filtersList.at(filterNum-1)->name().trimmed();
+					ThingFilter const *thf = filtersList.at(filterNum);
+					if (thf) {
+						sFltrName = QString::fromUtf8("Вещи из фильтра \"%1\"").arg(thf->name().trimmed());
+					} else {
+						sFltrName = QString::fromUtf8("Все вещи");
+						filterNum = -1;
 					}
-					if (sFltrName.isEmpty()) {
-						sFltrName = NA_TEXT;
-					}
-					text.append(QString::fromUtf8("<strong><em>--- Вещи из фильтра \"%1\" ---</em></strong>").arg(sFltrName), true);
 					Pers::instance()->setThingsInterfaceFilter(iface, filterNum);
 				}
+				text.append(QString::fromUtf8("<strong><em>--- %1 ---</em></strong>").arg(sFltrName), true);
 				int thingsCnt = 0;
 				while (true) {
 					const Thing* thing = Pers::instance()->getThingByRow(thingsCnt, iface);
@@ -2671,9 +2699,11 @@ void PluginCore::thingsCommands(const QStringList &args)
 			int cntFilters = filtersList.size();
 			if (cntFilters > 0) {
 				int fNum = 0;
-				foreach (ThingFilter *tf, filtersList) {
-					QString str1 = QString("%1 - [%2] %3").arg(++fNum).arg(tf->isActive() ? "+" : "-").arg(tf->name());
-					text.append(str1, false);
+				foreach (ThingFilter const *tf, filtersList) {
+					if (tf) {
+						QString str1 = QString("%1 - [%2] %3").arg(++fNum).arg(tf->isActive() ? "+" : "-").arg(tf->name());
+						text.append(str1, false);
+					}
 				}
 				text.append(QString::fromUtf8("Всего фильтров: %1").arg(cntFilters), true);
 			} else {

@@ -164,9 +164,8 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	statisticWidgets[Statistic::StatKilledEnemies] = (StatWidgets) {killedEnemiesCaption_label, killedEnemiesValue_label};
 	connect(resetFightsStatBtn, SIGNAL(released()), SLOT(resetFightStatistic()));
 	// Таблицы для настройки фильтров
-	thingFiltersTable->init(&filtersList);
-	thingRulesTable->init(&filtersList);
-	connect(thingFiltersTable, SIGNAL(currFilterChanged(int)), thingRulesTable, SLOT(currFilterChanged(int)));
+	thingFiltersTable->init();
+	thingRulesTable->init(thingFiltersTable);
 	// Настройки слотов
 	fillSlotCombo(slot1Combo);
 	fillSlotCombo(slot2Combo);
@@ -199,8 +198,6 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	healthBar->setRange(0, 0);
 	energyBar->setValue(0);
 	energyBar->setRange(0, 0);
-	// Сглаживание карты
-	//gameMapView->setRenderHint(QPainter::Antialiasing);
 	// Соединение с картой
 	gameMapView->setScene(GameMap::instance()->getGraphicsScene());
 	gameMapView->show();
@@ -228,9 +225,6 @@ SofMainWindow::~SofMainWindow()
 		delete timeoutStamp;
 	if (timeoutTimer)
 		delete timeoutTimer;
-	while (!filtersList.isEmpty()) {
-		delete filtersList.takeFirst();
-	}
 }
 
 void SofMainWindow::init()
@@ -1572,7 +1566,7 @@ void SofMainWindow::markMapElement()
  */
 void SofMainWindow::showThings(int tab_num)
 {
-	thingsTable->setFilter(thingsTabBar->tabData(tab_num).toInt() + 1);
+	thingsTable->setFilter(thingsTabBar->tabData(tab_num).toInt());
 }
 
 /**
@@ -1689,9 +1683,9 @@ void SofMainWindow::updateThingFiltersTab()
 		thingsTabBar->removeTab(0);
 	thingsTabBar->setTabData(thingsTabBar->addTab(QString::fromUtf8("Все вещи")), -1);
 	int fltr_index = 0;
-	foreach (ThingFilter* tf, Pers::instance()->thingsFiltersList()) {
-		if (tf->isActive()) {
-			thingsTabBar->setTabData(thingsTabBar->addTab(tf->name()), fltr_index);
+	foreach (ThingFilter const *thf, Pers::instance()->thingsFiltersList()) {
+		if (thf->isActive()) {
+			thingsTabBar->setTabData(thingsTabBar->addTab(thf->name()), fltr_index);
 		}
 		fltr_index++;
 	}

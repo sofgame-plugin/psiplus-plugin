@@ -31,6 +31,8 @@
 
 #include "pers.h"
 
+class ThingRulesModel;
+
 class ThingFiltersModel : public QAbstractTableModel
 {
 	Q_OBJECT
@@ -41,8 +43,9 @@ class ThingFiltersModel : public QAbstractTableModel
 			NameRole,
 			CountRole
 		};
-		ThingFiltersModel(QObject* parent, QList<ThingFilter*>*);
+		ThingFiltersModel(QObject* parent);
 		~ThingFiltersModel();
+		ThingRulesModel *getRulesModel() const {return rulesModel;};
 		void reloadFilters();
 		ThingFilter* getFilterByRow(int) const;
 		int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -66,11 +69,13 @@ class ThingFiltersModel : public QAbstractTableModel
 			QString  name;
 			int      rulesCount;
 		};
-		QList<ThingFilter*>* filtersListPtr;
 		QStringList columnNames;
 		QList<Role> roles;
+		ThingRulesModel *rulesModel;
+		ThingFiltersList filtersList;
 
-	protected:
+	public slots:
+		void changeCurrentRow(int);
 
 	private slots:
 		void filtersChanged();
@@ -99,8 +104,9 @@ class ThingRulesModel : public QAbstractTableModel
 			ValueRole,
 			ActionRole
 		};
-		ThingRulesModel(QObject* parent, QList<ThingFilter*>*);
+		ThingRulesModel(QObject* parent);
 		void reloadRules(int);
+		void setParentModel(ThingFiltersModel *parentModel) {parentModel_ = parentModel;};
 		const struct ThingFilter::thing_rule_ex* getRule(int) const;
 		int rowCount(const QModelIndex &parent = QModelIndex()) const;
 		int columnCount(const QModelIndex &parent = QModelIndex()) const;
@@ -116,18 +122,11 @@ class ThingRulesModel : public QAbstractTableModel
 
 
 	private:
-		QList<ThingFilter*> *filtersListPtr;
 		int currFilterIndex;
 		QStringList columnNames;
 		QList<Role> roles;
+		ThingFiltersModel *parentModel_;
 
-	protected:
-
-//	private slots:
-//		void currFilterChanged(const QModelIndex&);
-
-	public slots:
-		//void doAction(QWidget*, int, int);
 };
 
 #endif // THINGSMODEL2_H

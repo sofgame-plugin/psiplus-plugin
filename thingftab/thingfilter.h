@@ -66,9 +66,9 @@ public:
 	ThingFilter();
 	ThingFilter(const ThingFilter&);
 	~ThingFilter();
-	QString name() const;
+	QString name() const {return filterName;};
 	void setName(const QString &);
-	bool isActive() const;
+	bool isActive() const {return enabled;};
 	void setActive(bool);
 	int  rulesCount() const;
 	bool appendRule(ParamRole, bool, OperandRole, const QString &, ActionRole);
@@ -87,13 +87,16 @@ protected:
 	QList<struct thing_rule_ex> rules;
 };
 
-typedef QList<ThingFilter*> FilterList;
+//typedef QList<ThingFilter*> FilterList;
 
-class ThingFiltersList: public FilterList
+class ThingFiltersList: public QList<ThingFilter*>
 {
 public:
 	ThingFiltersList();
-	int  indexOf(const QString &name) const;
+	~ThingFiltersList();
+	int  indexByName(const QString &name) const;
+	bool isActive(int fltrNum) const;
+	void free();
 };
 
 #endif // THINGFILTER_H

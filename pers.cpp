@@ -67,9 +67,6 @@ Pers::Pers(QObject *parent):
 
 Pers::~Pers()
 {
-	/**
-	* Деструктор
-	*/
 	if (watchRestTimer != NULL) {
 		if (watchRestTimer->isActive())
 			watchRestTimer->stop();
@@ -93,8 +90,6 @@ Pers::~Pers()
 			delete fm;
 	}
 	// --
-	while (!thingFiltersEx.isEmpty())
-		delete thingFiltersEx.takeFirst();
 	if (things) {
 		delete things;
 	}
@@ -128,8 +123,10 @@ void Pers::init()
 			delete fm;
 	}
 	// --
-	while (!thingFiltersEx.isEmpty())
-		delete thingFiltersEx.takeFirst();
+	thingFiltersEx.free();
+	thingFiltersEx.clear();
+	thingFiltersSpec.free();
+	thingFiltersSpec.clear();
 	persStatus = StatusNotKnow;
 	persHealthCurr = QINT32_MIN;
 	persHealthMax = QINT32_MIN;
@@ -361,17 +358,28 @@ const ThingFiltersList &Pers::thingsFiltersList() const
 }
 
 /**
+ * Возращает список указателей на специальные фильтры
+ */
+const ThingFiltersList &Pers::thingsSpecFiltersList() const
+{
+	return thingFiltersSpec;
+}
+
+/**
  * Переписывает существующие фильтры фильтрами из массива
  */
 void Pers::setThingsFiltersEx(QList<ThingFilter*> newFilters)
 {
 	// Удаляем старый список фильтров
-	while (!thingFiltersEx.isEmpty())
-		delete thingFiltersEx.takeFirst();
+	thingFiltersEx.free();
+	thingFiltersEx.clear();
 	// Копируем новые фильтры
 	int cnt = newFilters.size();
-	for (int i = 0; i < cnt; i++)
-		thingFiltersEx.push_back(new ThingFilter(*newFilters.at(i)));
+	for (int i = 0; i < cnt; i++) {
+		ThingFilter *thf = newFilters.at(i);
+		if (thf)
+			thingFiltersEx.append(new ThingFilter(*thf));
+	}
 	emit filtersChanged();
 }
 
@@ -454,7 +462,9 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 	eBackpack.appendChild(eFilters);
 	int filtersCnt = thingFiltersEx.size();
 	for (int i = 0; i < filtersCnt; i++) {
-		ThingFilter* oFilter = thingFiltersEx.at(i);
+		ThingFilter* const oFilter = thingFiltersEx.at(i);
+		if (!oFilter)
+			continue;
 		QDomElement eFilter = xmlDoc.createElement("filter");
 		if (!oFilter->isActive())
 			eFilter.setAttribute("disabled", "true");
@@ -603,9 +613,10 @@ void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 {
 	// Очищаем старые настройки
-	while (!thingFiltersEx.isEmpty()) {
-		delete thingFiltersEx.takeFirst();
-	}
+	thingFiltersEx.free();
+	thingFiltersEx.clear();
+	thingFiltersSpec.free();
+	thingFiltersSpec.clear();
 	// Анализируем DOM ноду
 	QDomElement eFilters = eBackpack.firstChildElement("filters");
 	if (eFilters.isNull()) {
@@ -680,7 +691,7 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 					eRule = eRule.nextSiblingElement("rule");
 				}
 			}
-			thingFiltersEx.push_back(ffe);
+			thingFiltersEx.append(ffe);
 		}
 		eFilter = eFilter.nextSiblingElement("filter");
 	}
@@ -1261,13 +1272,18 @@ int Pers::getThingsInterface()
 	return 0;
 }
 
-void Pers::setThingsInterfaceFilter(int iface, int filter_num)
+/**
+ * Устанавливает фильтр по номеру для указанного интерфейса
+ * Передача несуществующего номера фильтра означает снятие фильтра с интерфейса
+ */
+void Pers::setThingsInterfaceFilter(int iface, int filter_num, bool special)
 {
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
 	if (tpm) {
 		ThingFilter* ff = NULL;
-		if (filter_num > 0 && filter_num <= thingFiltersEx.size())
-			ff = thingFiltersEx.at(filter_num - 1);
+		ThingFiltersList *thList = (special) ? &thingFiltersSpec : &thingFiltersEx;
+		if (filter_num >= 0 && filter_num < thList->size())
+			ff = thList->at(filter_num);
 		tpm->setFilter(ff);
 	}
 }

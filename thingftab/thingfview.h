@@ -38,7 +38,7 @@ class ThingFiltersView : public QTableView
 	public:
 		//ThingFiltersView( QWidget*, QList<FingFilter*>*);
 		ThingFiltersView(QWidget*);
-		void init(QList<ThingFilter*>*);
+		void init();
 		QList<ThingFilter*> getFilters() const;
 
 	protected:
@@ -68,7 +68,7 @@ class ThingRulesView : public QTableView
 	Q_OBJECT
 	public:
 		ThingRulesView( QWidget*);
-		void init(QList<ThingFilter*>*);
+		void init(ThingFiltersView *thfv);
 
 	protected:
 		ThingRulesModel* thingRulesTableModel;

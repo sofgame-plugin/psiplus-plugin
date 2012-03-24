@@ -122,7 +122,6 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		QTabBar* thingsTabBar;
 		QList<FontLabel*>fontLabelGroup;
 		QButtonGroup* fontButtonGroup;
-		QList<ThingFilter*> filtersList;
 		bool autoEnterMode;
 		QString lastMapForMoveElement; // Запоминается имя карты последнего переноса элемента
 		long long experienceMax; // Нужно для расчета делителя в QProgressBar
