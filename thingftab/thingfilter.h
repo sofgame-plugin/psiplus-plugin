@@ -89,14 +89,21 @@ protected:
 
 //typedef QList<ThingFilter*> FilterList;
 
-class ThingFiltersList: public QList<ThingFilter*>
+class ThingFiltersList: private QList<ThingFilter*>
 {
 public:
 	ThingFiltersList();
 	~ThingFiltersList();
 	int  indexByName(const QString &name) const;
 	bool isActive(int fltrNum) const;
-	void free();
+	void clear();
+	inline int size() const {return QList::size();};
+	inline ThingFilter *at(int i) const {return QList::at(i);};
+	inline void append(ThingFilter *fltr) {QList::append(fltr);};
+	inline void insert(int i, ThingFilter *fltr) {QList::insert(i, fltr);};
+	inline void replace(int i, ThingFilter *fltr) {QList::replace(i, fltr);};
+	inline void swap(int i, int j) {QList::swap(i, j);};
+	inline ThingFilter *takeAt(int i) {return QList::takeAt(i);};
 };
 
 #endif // THINGFILTER_H

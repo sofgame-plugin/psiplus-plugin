@@ -224,7 +224,7 @@ ThingFiltersList::ThingFiltersList()
 
 ThingFiltersList::~ThingFiltersList()
 {
-	free();
+	clear();
 }
 
 int ThingFiltersList::indexByName(const QString &name) const
@@ -245,9 +245,9 @@ bool ThingFiltersList::isActive(int fltrNum) const
 	return false;
 }
 
-void ThingFiltersList::free()
+void ThingFiltersList::clear()
 {
 	while (!isEmpty()) {
-		delete takeFirst();
+		delete takeLast();
 	}
 }

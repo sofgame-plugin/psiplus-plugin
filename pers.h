@@ -158,6 +158,7 @@ private:
 	void showRegenEvent(PersParams param);
 	QDomElement exportThingsToDomElement(QDomDocument &xmlDoc) const;
 	QDomElement exportPriceToDomElement(QDomDocument &xmlDoc) const;
+	QDomElement makeThingFilterDomElement(QDomDocument &xmlDoc, ThingFilter const *thf) const;
 
 private slots:
 	void doWatchRestTime();

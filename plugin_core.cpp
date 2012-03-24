@@ -2698,10 +2698,13 @@ void PluginCore::thingsCommands(const QStringList &args)
 			ThingFiltersList filtersList = Pers::instance()->thingsFiltersList();
 			int cntFilters = filtersList.size();
 			if (cntFilters > 0) {
-				int fNum = 0;
-				foreach (ThingFilter const *tf, filtersList) {
-					if (tf) {
-						QString str1 = QString("%1 - [%2] %3").arg(++fNum).arg(tf->isActive() ? "+" : "-").arg(tf->name());
+				for (int i = 0, cnt = filtersList.size(); i < cnt; ++i) {
+					ThingFilter const *thf = filtersList.at(i);
+					if (thf) {
+						QString str1 = QString("%1 - [%2] %3")
+							.arg(i+1)
+							.arg(thf->isActive() ? "+" : "-")
+							.arg(thf->name());
 						text.append(str1, false);
 					}
 				}

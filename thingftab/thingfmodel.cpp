@@ -43,13 +43,12 @@ ThingFiltersModel::~ThingFiltersModel()
 void ThingFiltersModel::reloadFilters()
 {
 	// Очищаем старые
-	filtersList.free();
 	filtersList.clear();
 	// Грузим новые
-	foreach (ThingFilter const *persThf, Pers::instance()->thingsFiltersList()) {
-		if (persThf) {
-			filtersList.append(new ThingFilter(*persThf));
-		}
+	const ThingFiltersList &thfList = Pers::instance()->thingsFiltersList();
+	for (int i = 0, cnt = thfList.size(); i < cnt; ++i) {
+		ThingFilter const *persThf = thfList.at(i);
+		filtersList.append(new ThingFilter(*persThf));
 	}
 	rulesModel->reloadRules(-1);
 	reset();
@@ -220,7 +219,6 @@ bool ThingFiltersModel::removeRows(int row, int count, const QModelIndex &/*pare
 void ThingFiltersModel::clear()
 {
 	rulesModel->reloadRules(-1);
-	filtersList.free();
 	filtersList.clear();
 }
 

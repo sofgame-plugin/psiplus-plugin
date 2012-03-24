@@ -123,9 +123,7 @@ void Pers::init()
 			delete fm;
 	}
 	// --
-	thingFiltersEx.free();
 	thingFiltersEx.clear();
-	thingFiltersSpec.free();
 	thingFiltersSpec.clear();
 	persStatus = StatusNotKnow;
 	persHealthCurr = QINT32_MIN;
@@ -371,7 +369,6 @@ const ThingFiltersList &Pers::thingsSpecFiltersList() const
 void Pers::setThingsFiltersEx(QList<ThingFilter*> newFilters)
 {
 	// Удаляем старый список фильтров
-	thingFiltersEx.free();
 	thingFiltersEx.clear();
 	// Копируем новые фильтры
 	int cnt = newFilters.size();
@@ -462,82 +459,93 @@ QDomElement Pers::exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const
 	eBackpack.appendChild(eFilters);
 	int filtersCnt = thingFiltersEx.size();
 	for (int i = 0; i < filtersCnt; i++) {
-		ThingFilter* const oFilter = thingFiltersEx.at(i);
-		if (!oFilter)
-			continue;
-		QDomElement eFilter = xmlDoc.createElement("filter");
-		if (!oFilter->isActive())
-			eFilter.setAttribute("disabled", "true");
-		eFilter.setAttribute("name", oFilter->name());
-		eFilters.appendChild(eFilter);
-		int rulesCnt = oFilter->rulesCount();
-		if (rulesCnt > 0) {
-			QDomElement eRules = xmlDoc.createElement("rules");
-			eFilter.appendChild(eRules);
-			int ruleIndex = 0;
-			while (true) {
-				const struct ThingFilter::thing_rule_ex* fre = oFilter->getRule(ruleIndex++);
-				if (!fre)
-					break;
-				QDomElement eRule = xmlDoc.createElement("rule");
-				QString str1 = "";
-				ThingFilter::ParamRole nParam = fre->param;
-				if (nParam == ThingFilter::NameRole) {
-					str1 = "name";
-				} else if (nParam == ThingFilter::TypeRole) {
-					str1 = "type";
-				} else if (nParam == ThingFilter::NamedRole) {
-					str1 = "named-level";
-				} else if (nParam == ThingFilter::DressedRole) {
-					str1 = "dressed";
-				} else if (nParam == ThingFilter::PriceRole) {
-					str1 = "price";
-				} else if (nParam == ThingFilter::CountRole) {
-					str1 = "count";
-				}
-				if (!str1.isEmpty())
-					eRule.setAttribute("field", str1);
-				if (fre->negative)
-					eRule.setAttribute("not", "not");
-				str1 = "";
-				ThingFilter::OperandRole nOper = fre->operand;
-				if (nOper == ThingFilter::EqualRole) {
-					str1 = "equal";
-				} else if (nOper == ThingFilter::ContainsRole) {
-					str1 = "contains";
-				} else if (nOper == ThingFilter::AboveRole) {
-					str1 = "above";
-				} else if (nOper == ThingFilter::LowRole) {
-					str1 = "low";
-				}
-				if (!str1.isEmpty())
-					eRule.setAttribute("operand", str1);
-				if (nParam == ThingFilter::TypeRole) {
-					int nValue = fre->int_value;
-					str1 = thingTypeToString(nValue);
-					if (str1.isEmpty())
-						continue;
-				} else {
-					str1 = fre->value;
-				}
-				if (!str1.isEmpty())
-					eRule.setAttribute("value", str1);
-				str1 = "";
-				ThingFilter::ActionRole nAction = fre->action;
-				if (nAction == ThingFilter::YesRole) {
-					str1 = "yes";
-				} else if (nAction == ThingFilter::NoRole) {
-					str1 = "no";
-				} else if (nAction == ThingFilter::NextRole) {
-					str1 = "next";
-				}
-				if (!str1.isEmpty())
-					eRule.setAttribute("action", str1);
-				eRules.appendChild(eRule);
-			}
+		QDomElement eFilter = makeThingFilterDomElement(xmlDoc, thingFiltersEx.at(i));
+		if (!eFilter.isNull())
+			eFilters.appendChild(eFilter);
+	}
+	filtersCnt = thingFiltersSpec.size();
+	for (int i = 0; i < filtersCnt; i++) {
+		QDomElement eFilter = makeThingFilterDomElement(xmlDoc, thingFiltersSpec.at(i));
+		if (!eFilter.isNull()) {
+			eFilter.setAttribute("special", "true");
+			eFilters.appendChild(eFilter);
 		}
 	}
 	return eBackpack;
+}
+
+QDomElement Pers::makeThingFilterDomElement(QDomDocument &xmlDoc, const ThingFilter *thf) const
+{
+	QDomElement eFilter = xmlDoc.createElement("filter");
+	if (!thf->isActive())
+		eFilter.setAttribute("disabled", "true");
+	eFilter.setAttribute("name", thf->name());
+	if (thf->rulesCount() > 0) {
+		QDomElement eRules = xmlDoc.createElement("rules");
+		eFilter.appendChild(eRules);
+		int ruleIndex = 0;
+		while (true) {
+			const struct ThingFilter::thing_rule_ex* fre = thf->getRule(ruleIndex++);
+			if (!fre)
+				break;
+			QDomElement eRule = xmlDoc.createElement("rule");
+			QString str1 = "";
+			ThingFilter::ParamRole nParam = fre->param;
+			if (nParam == ThingFilter::NameRole) {
+				str1 = "name";
+			} else if (nParam == ThingFilter::TypeRole) {
+				str1 = "type";
+			} else if (nParam == ThingFilter::NamedRole) {
+				str1 = "named-level";
+			} else if (nParam == ThingFilter::DressedRole) {
+				str1 = "dressed";
+			} else if (nParam == ThingFilter::PriceRole) {
+				str1 = "price";
+			} else if (nParam == ThingFilter::CountRole) {
+				str1 = "count";
+			}
+			if (!str1.isEmpty())
+				eRule.setAttribute("field", str1);
+			if (fre->negative)
+				eRule.setAttribute("not", "not");
+			str1 = "";
+			ThingFilter::OperandRole nOper = fre->operand;
+			if (nOper == ThingFilter::EqualRole) {
+				str1 = "equal";
+			} else if (nOper == ThingFilter::ContainsRole) {
+				str1 = "contains";
+			} else if (nOper == ThingFilter::AboveRole) {
+				str1 = "above";
+			} else if (nOper == ThingFilter::LowRole) {
+				str1 = "low";
+			}
+			if (!str1.isEmpty())
+				eRule.setAttribute("operand", str1);
+			if (nParam == ThingFilter::TypeRole) {
+				int nValue = fre->int_value;
+				str1 = thingTypeToString(nValue);
+				if (str1.isEmpty())
+					continue;
+			} else {
+				str1 = fre->value;
+			}
+			if (!str1.isEmpty())
+				eRule.setAttribute("value", str1);
+			str1 = "";
+			ThingFilter::ActionRole nAction = fre->action;
+			if (nAction == ThingFilter::YesRole) {
+				str1 = "yes";
+			} else if (nAction == ThingFilter::NoRole) {
+				str1 = "no";
+			} else if (nAction == ThingFilter::NextRole) {
+				str1 = "next";
+			}
+			if (!str1.isEmpty())
+				eRule.setAttribute("action", str1);
+			eRules.appendChild(eRule);
+		}
+	}
+	return eFilter;
 }
 
 /**
@@ -613,9 +621,7 @@ void Pers::loadThingsFromDomElement(QDomElement &eBackpack)
 void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 {
 	// Очищаем старые настройки
-	thingFiltersEx.free();
 	thingFiltersEx.clear();
-	thingFiltersSpec.free();
 	thingFiltersSpec.clear();
 	// Анализируем DOM ноду
 	QDomElement eFilters = eBackpack.firstChildElement("filters");
@@ -691,7 +697,12 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 					eRule = eRule.nextSiblingElement("rule");
 				}
 			}
-			thingFiltersEx.append(ffe);
+			if (eFilter.attribute("special").toLower() == "true") {
+				if (thingFiltersSpec.indexByName(sName) == -1)
+					thingFiltersSpec.append(ffe);
+			} else {
+				thingFiltersEx.append(ffe);
+			}
 		}
 		eFilter = eFilter.nextSiblingElement("filter");
 	}

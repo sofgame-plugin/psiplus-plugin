@@ -1683,7 +1683,9 @@ void SofMainWindow::updateThingFiltersTab()
 		thingsTabBar->removeTab(0);
 	thingsTabBar->setTabData(thingsTabBar->addTab(QString::fromUtf8("Все вещи")), -1);
 	int fltr_index = 0;
-	foreach (ThingFilter const *thf, Pers::instance()->thingsFiltersList()) {
+	const ThingFiltersList &thfList = Pers::instance()->thingsFiltersList();
+	for (int i = 0, cnt = thfList.size(); i < cnt; ++i) {
+		ThingFilter const *thf = thfList.at(i);
 		if (thf->isActive()) {
 			thingsTabBar->setTabData(thingsTabBar->addTab(thf->name()), fltr_index);
 		}
