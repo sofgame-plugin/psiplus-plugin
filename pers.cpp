@@ -534,6 +534,8 @@ QDomElement Pers::makeThingFilterDomElement(QDomDocument &xmlDoc, const ThingFil
 			str1 = "";
 			ThingFilter::ActionRole nAction = fre->action;
 			if (nAction == ThingFilter::YesRole) {
+				if (fre->color.isValid())
+					eRule.setAttribute("color", fre->color.name());
 				str1 = "yes";
 			} else if (nAction == ThingFilter::NoRole) {
 				str1 = "no";
@@ -630,14 +632,14 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 		ThingFilter *ffe = new ThingFilter();
 		ffe->setName(QString::fromUtf8("Одето"));
 		ffe->setActive(true);
-		ffe->appendRule(ThingFilter::DressedRole, false, ThingFilter::NoOperRole, QString(), ThingFilter::YesRole);
+		ffe->appendRule(ThingFilter::DressedRole, false, ThingFilter::NoOperRole, QString(), ThingFilter::YesRole, QColor());
 		thingFiltersEx.append(ffe);
 		ffe = new ThingFilter();
 		ffe->setName(QString::fromUtf8("Кристаллы и ветки"));
 		ffe->setActive(true);
-		ffe->appendRule(ThingFilter::TypeRole, true, ThingFilter::EqualRole, QString::fromUtf8("вещь"), ThingFilter::NoRole);
-		ffe->appendRule(ThingFilter::NameRole, false, ThingFilter::ContainsRole, QString::fromUtf8("кристалл"), ThingFilter::YesRole);
-		ffe->appendRule(ThingFilter::NameRole, false, ThingFilter::ContainsRole, QString::fromUtf8("ветка"), ThingFilter::YesRole);
+		ffe->appendRule(ThingFilter::TypeRole, true, ThingFilter::EqualRole, QString::fromUtf8("вещь"), ThingFilter::NoRole, QColor());
+		ffe->appendRule(ThingFilter::NameRole, false, ThingFilter::ContainsRole, QString::fromUtf8("кристалл"), ThingFilter::YesRole, QColor());
+		ffe->appendRule(ThingFilter::NameRole, false, ThingFilter::ContainsRole, QString::fromUtf8("ветка"), ThingFilter::YesRole, QColor());
 		thingFiltersEx.append(ffe);
 		return;
 	}
@@ -692,8 +694,12 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 					} else if (str1 == "next") {
 						nAction = ThingFilter::NextRole;
 					}
+					QColor color;
+					if (nAction == ThingFilter::YesRole) {
+						color.setNamedColor(eRule.attribute("color"));
+					}
 					str1 = eRule.attribute("value");
-					ffe->appendRule(nField, fNot, nOperand, str1, nAction);
+					ffe->appendRule(nField, fNot, nOperand, str1, nAction, color);
 					eRule = eRule.nextSiblingElement("rule");
 				}
 			}

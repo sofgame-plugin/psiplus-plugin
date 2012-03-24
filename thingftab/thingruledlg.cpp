@@ -88,8 +88,12 @@ ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::th
 		}
 	}
 	action->setCurrentIndex(param->findData(index));
+	// Заполняем элемент цвета
+	itemColorBtn->setColor(rulePtr->color);
+	enableColor();
 	// Сигналы и слоты
 	connect(param, SIGNAL(currentIndexChanged(int)), this, SLOT(paramChanged(int)));
+	connect(action, SIGNAL(currentIndexChanged(int)), this, SLOT(enableColor()));
 	// Удалять диалог после закрытия
 	//setAttribute(Qt::WA_DeleteOnClose);
 }
@@ -193,5 +197,15 @@ void ThingRuleEditDialog::okBtnClick()
 	savedRulePtr->int_value = val_num;
 	savedRulePtr->value = val_str;
 	savedRulePtr->action = act_num;
+	savedRulePtr->color = itemColorBtn->getColor();
 	accept();
+}
+
+void ThingRuleEditDialog::enableColor()
+{
+	bool enabl = false;
+	if (actionRoles.at(action->itemData(action->currentIndex()).toInt()) == ThingFilter::YesRole)
+			enabl = true;
+	itemColorLb->setEnabled(enabl);
+	itemColorBtn->setEnabled(enabl);
 }

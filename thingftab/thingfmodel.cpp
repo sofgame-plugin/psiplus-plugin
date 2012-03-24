@@ -355,6 +355,18 @@ QVariant ThingRulesModel::data(const QModelIndex &index, int role) const
 				}
 			}
 		}
+	} else if (role == Qt::TextColorRole) {
+		if (columnRole == ActionRole) {
+			ThingFilter *thf = parentModel_->getFilterByRow(currFilterIndex);
+			if (thf) {
+				int row = index.row();
+				if (row >= 0 && row < thf->rulesCount()) {
+					const struct ThingFilter::thing_rule_ex* rule = thf->getRule(row);
+					return rule->color;
+				}
+			}
+			return QColor(Qt::black);
+		}
 	}
 	return QVariant();
 }
@@ -371,13 +383,14 @@ QVariant ThingRulesModel::headerData(int section, Qt::Orientation orientation, i
 	return QVariant();
 }
 
-bool ThingRulesModel::appendRule(ThingFilter::ParamRole param, bool negative, ThingFilter::OperandRole operand, const QString &value, ThingFilter::ActionRole action) {
+bool ThingRulesModel::appendRule(ThingFilter::ParamRole param, bool negative, ThingFilter::OperandRole operand, const QString &value, ThingFilter::ActionRole action, const QColor &color)
+{
 	bool res = false;
 	ThingFilter *thf = parentModel_->getFilterByRow(currFilterIndex);
 	if (thf) {
 		int row = thf->rulesCount();
 		beginInsertRows(QModelIndex(), row, row);
-		res = thf->appendRule(param, negative, operand, value, action);
+		res = thf->appendRule(param, negative, operand, value, action, color);
 		endInsertRows();
 	}
 	return res;

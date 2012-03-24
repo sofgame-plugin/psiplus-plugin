@@ -27,6 +27,7 @@
 #define THINGFILTER_H
 
 #include <QtCore>
+#include <QColor>
 
 #include "../thingstab/thing.h"
 
@@ -62,6 +63,7 @@ public:
 		int          int_value;
 		QString      value;
 		ActionRole   action;
+		QColor       color;
 	};
 	ThingFilter();
 	ThingFilter(const ThingFilter&);
@@ -71,13 +73,17 @@ public:
 	bool isActive() const {return enabled;};
 	void setActive(bool);
 	int  rulesCount() const;
-	bool appendRule(ParamRole, bool, OperandRole, const QString &, ActionRole);
+	bool appendRule(ParamRole, bool, OperandRole, const QString &, ActionRole, const QColor &);
 	void modifyRule(int, const struct thing_rule_ex*);
 	void removeRule(int);
 	bool moveRuleUp(int index);
 	bool moveRuleDown(int index);
 	const struct thing_rule_ex* getRule(int) const;
 	bool isThingShow(const Thing*) const;
+	QColor color(const Thing*) const;
+
+private:
+	int matchedRule(const Thing*) const;
 
 private:
 	bool enabled;

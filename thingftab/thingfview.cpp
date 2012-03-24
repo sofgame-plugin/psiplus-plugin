@@ -241,10 +241,11 @@ void ThingRulesView::contextMenuEvent(QContextMenuEvent *e)
 					new_rule.int_value = 0;
 					new_rule.value = "";
 					new_rule.action = ThingFilter::NoActionRole;
+					new_rule.color = QColor(Qt::black);
 					ThingRuleEditDialog* dlg = new ThingRuleEditDialog(this, &new_rule);
 					if (dlg) {
 						if (dlg->exec() == QDialog::Accepted) {
-							if (thingRulesTableModel->appendRule(new_rule.param, new_rule.negative, new_rule.operand, new_rule.value, new_rule.action)) {
+							if (thingRulesTableModel->appendRule(new_rule.param, new_rule.negative, new_rule.operand, new_rule.value, new_rule.action, new_rule.color)) {
 								if (row >= 0 && row < model()->rowCount()) {
 									selectionModel()->select(model()->index(row, 0), QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 								}

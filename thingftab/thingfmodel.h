@@ -112,7 +112,7 @@ class ThingRulesModel : public QAbstractTableModel
 		int columnCount(const QModelIndex &parent = QModelIndex()) const;
 		QVariant data(const QModelIndex &index, int role) const;
 		QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-		bool appendRule(ThingFilter::ParamRole, bool, ThingFilter::OperandRole, const QString &, ThingFilter::ActionRole);
+		bool appendRule(ThingFilter::ParamRole, bool, ThingFilter::OperandRole, const QString &, ThingFilter::ActionRole, const QColor &color);
 		bool modifyRule(int, const struct ThingFilter::thing_rule_ex *);
 		bool setData (const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
 		bool upRow(int);

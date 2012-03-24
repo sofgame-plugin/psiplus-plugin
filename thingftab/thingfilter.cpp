@@ -59,7 +59,7 @@ int ThingFilter::rulesCount() const
 	return rules.size();
 }
 
-bool ThingFilter::appendRule(ParamRole param, bool negative, OperandRole operand, const QString &value, ActionRole action)
+bool ThingFilter::appendRule(ParamRole param, bool negative, OperandRole operand, const QString &value, ActionRole action, const QColor &color)
 {
 	if (param == NoParamRole || action == NoActionRole)
 		return false;
@@ -95,6 +95,7 @@ bool ThingFilter::appendRule(ParamRole param, bool negative, OperandRole operand
 		if (param != NameRole && param != PriceRole && param != NamedRole && param != CountRole)
 			return false;
 	}
+	fr.color = (color.isValid()) ? color : QColor(Qt::black);
 	rules.push_back(fr);
 	return true;
 }
@@ -139,6 +140,30 @@ const struct ThingFilter::thing_rule_ex* ThingFilter::getRule(int rule_index) co
  * Возвращает результат прохождения вещи через фильтр
  */
 bool ThingFilter::isThingShow(const Thing* thing) const
+{
+	const int ruleNum = matchedRule(thing);
+	if (ruleNum != -1) {
+		if (rules.at(ruleNum).action == YesRole)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * Возвращает цвет вещи в фильтре, если вещь отображается в этом фильтре
+ */
+QColor ThingFilter::color(const Thing *thing) const
+{
+	const int ruleNum = matchedRule(thing);
+	if (ruleNum != -1) {
+		const thing_rule_ex &rule = rules.at(ruleNum);
+		if (rule.action == YesRole)
+			return rule.color;
+	}
+	return QColor();
+}
+
+int ThingFilter::matchedRule(const Thing *thing) const // TODO Прикрутить кэш результатов проверки правила
 {
 	int cnt = rules.size();
 	bool skeepNext = false;
@@ -204,16 +229,13 @@ bool ThingFilter::isThingShow(const Thing* thing) const
 			ruleOk = !ruleOk;
 		if (nAction != NextRole) {
 			if (ruleOk) {
-				if (nAction == YesRole)
-					return true;
-				if (nAction == NoRole)
-					return false;
+				return i;
 			}
 		} else {
 			skeepNext = true;
 		}
 	}
-	return false;
+	return -1;
 }
 
 //----------------- ThingFiltersList ------------------------

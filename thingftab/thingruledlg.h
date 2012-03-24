@@ -45,6 +45,7 @@ protected:
 protected slots:
 	void paramChanged(int);
 	void okBtnClick();
+	void enableColor();
 
 };
 
