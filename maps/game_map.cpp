@@ -44,7 +44,8 @@ GameMap::GameMap(QObject *parent) : QObject(parent),
 	saveTimer(NULL),
 	autoSaveInterval(0),
 	unloadTimer(NULL),
-	autoUnloadInterval(0)
+	autoUnloadInterval(0),
+	unloading(false)
 {
 	mapScene_ = new MapScene(this);
 	connect(Pers::instance(), SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
@@ -52,6 +53,7 @@ GameMap::GameMap(QObject *parent) : QObject(parent),
 
 GameMap::~GameMap()
 {
+	unloading = true;
 	// Сохраняем карты
 	if (saveMode > 0)
 		saveMap();
@@ -419,9 +421,11 @@ bool GameMap::saveMap()
 		return false;
 	}
 	//--
-	modifiedMapsCount = 0;
-	initSaveTimer();
-	initUnloadTimer(false);
+	if (!unloading) {
+		modifiedMapsCount = 0;
+		initSaveTimer();
+		initUnloadTimer(false);
+	}
 	return true;
 }
 

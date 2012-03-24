@@ -189,6 +189,7 @@ class GameMap: public QObject
 		int autoSaveInterval;   // В минутах
 		QTimer *unloadTimer;
 		int autoUnloadInterval; // В минутах
+		bool unloading;         // Флаг вызова из деструктора
 
 	private:
 		GameMap(QObject *parent = 0);
