@@ -61,7 +61,7 @@ int ThingFilter::rulesCount() const
 
 bool ThingFilter::appendRule(ParamRole param, bool negative, OperandRole operand, const QString &value, ActionRole action, const QColor &color)
 {
-	if (param == NoParamRole || action == NoActionRole)
+	if (param == NoParamRole || action == UnknowActionRole)
 		return false;
 	struct thing_rule_ex fr;
 	fr.param = param;
@@ -95,7 +95,7 @@ bool ThingFilter::appendRule(ParamRole param, bool negative, OperandRole operand
 		if (param != NameRole && param != PriceRole && param != NamedRole && param != CountRole)
 			return false;
 	}
-	fr.color = (color.isValid()) ? color : QColor(Qt::black);
+	fr.color = color;
 	rules.push_back(fr);
 	return true;
 }
@@ -141,12 +141,7 @@ const struct ThingFilter::thing_rule_ex* ThingFilter::getRule(int rule_index) co
  */
 bool ThingFilter::isThingShow(const Thing* thing) const
 {
-	const int ruleNum = matchedRule(thing);
-	if (ruleNum != -1) {
-		if (rules.at(ruleNum).action == YesRole)
-			return true;
-	}
-	return false;
+	return implementRulesForThings(thing, NULL);
 }
 
 /**
@@ -154,22 +149,20 @@ bool ThingFilter::isThingShow(const Thing* thing) const
  */
 QColor ThingFilter::color(const Thing *thing) const
 {
-	const int ruleNum = matchedRule(thing);
-	if (ruleNum != -1) {
-		const thing_rule_ex &rule = rules.at(ruleNum);
-		if (rule.action == YesRole)
-			return rule.color;
-	}
+	QColor color;
+	if (implementRulesForThings(thing, &color))
+		return color;
 	return QColor();
 }
 
-int ThingFilter::matchedRule(const Thing *thing) const // TODO Прикрутить кэш результатов проверки правила
+bool ThingFilter::implementRulesForThings(const Thing *thing, QColor *color) const // TODO Прикрутить кэш результатов проверки правила
 {
 	int cnt = rules.size();
 	bool skeepNext = false;
 	bool ruleOk = false;
 	for (int i = 0; i < cnt; i++) {
-		ActionRole nAction = rules.at(i).action;
+		const struct thing_rule_ex &currRule = rules.at(i);
+		ActionRole nAction = currRule.action;
 		// проверка на необходимость пропустить правило
 		if (skeepNext) {
 			if (nAction == NextRole) {
@@ -183,59 +176,64 @@ int ThingFilter::matchedRule(const Thing *thing) const // TODO Прикрути�
 		}
 		// проверка правила
 		ruleOk = false;
-		ParamRole nParam = rules.at(i).param;
+		ParamRole nParam = currRule.param;
 		if (nParam == NameRole) {
-			OperandRole nOper = rules.at(i).operand;
+			OperandRole nOper = currRule.operand;
 			if (nOper == ContainsRole) {
-				ruleOk = (thing->name().contains(rules.at(i).value, Qt::CaseInsensitive));
+				ruleOk = (thing->name().contains(currRule.value, Qt::CaseInsensitive));
 			} else if (nOper == EqualRole) {
-				ruleOk = (thing->name().toLower() == rules.at(i).value.toLower());
+				ruleOk = (thing->name().toLower() == currRule.value.toLower());
 			}
 		} else if (nParam == TypeRole) {
-			if (rules.at(i).operand == EqualRole) {
-				ruleOk = (thing->type() == rules.at(i).int_value);
+			if (currRule.operand == EqualRole) {
+				ruleOk = (thing->type() == currRule.int_value);
 			}
 		} else if (nParam == NamedRole) {
-			OperandRole nOper = rules.at(i).operand;
+			OperandRole nOper = currRule.operand;
 			if (nOper == EqualRole) {
-				ruleOk = (thing->uplevel() == rules.at(i).int_value);
+				ruleOk = (thing->uplevel() == currRule.int_value);
 			} else if (nOper == AboveRole) {
-				ruleOk = (thing->uplevel() > rules.at(i).int_value);
+				ruleOk = (thing->uplevel() > currRule.int_value);
 			} else if (nOper == LowRole) {
-				ruleOk = (thing->uplevel() < rules.at(i).int_value);
+				ruleOk = (thing->uplevel() < currRule.int_value);
 			}
 		} else if (nParam == DressedRole) {
 			ruleOk = thing->isDressed();
 		} else if (nParam == PriceRole) {
-			OperandRole nOper = rules.at(i).operand;
+			OperandRole nOper = currRule.operand;
 			if (nOper == EqualRole) {
-				ruleOk = (thing->price() == rules.at(i).int_value);
+				ruleOk = (thing->price() == currRule.int_value);
 			} else if (nOper == AboveRole) {
-				ruleOk = (thing->price() > rules.at(i).int_value);
+				ruleOk = (thing->price() > currRule.int_value);
 			} else if (nOper == LowRole) {
-				ruleOk = (thing->price() < rules.at(i).int_value);
+				ruleOk = (thing->price() < currRule.int_value);
 			}
 		} else if (nParam == CountRole) {
-			OperandRole nOper = rules.at(i).operand;
+			OperandRole nOper = currRule.operand;
 			if (nOper == EqualRole) {
-				ruleOk = (thing->count() == rules.at(i).int_value);
+				ruleOk = (thing->count() == currRule.int_value);
 			} else if (nOper == AboveRole) {
-				ruleOk = (thing->count() > rules.at(i).int_value);
+				ruleOk = (thing->count() > currRule.int_value);
 			} else if (nOper == LowRole) {
-				ruleOk = (thing->count() < rules.at(i).int_value);
+				ruleOk = (thing->count() < currRule.int_value);
 			}
 		}
-		if (rules.at(i).negative)
+		if (currRule.negative)
 			ruleOk = !ruleOk;
 		if (nAction != NextRole) {
 			if (ruleOk) {
-				return i;
+				if (nAction == NoRole)
+					return false;
+				if (color && currRule.color.isValid())
+					*color = currRule.color;
+				if (nAction == YesRole)
+				return true;
 			}
 		} else {
 			skeepNext = true;
 		}
 	}
-	return -1;
+	return false;
 }
 
 //----------------- ThingFiltersList ------------------------

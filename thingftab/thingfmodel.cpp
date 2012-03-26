@@ -350,6 +350,8 @@ QVariant ThingRulesModel::data(const QModelIndex &index, int role) const
 							return QString::fromUtf8("не отображать");
 						} else if (nAction == ThingFilter::NextRole) {
 							return QString::fromUtf8("следующее");
+						} else if (nAction == ThingFilter::NullRole) {
+							return QString::fromUtf8("нет действия");
 						}
 					}
 				}
@@ -365,7 +367,7 @@ QVariant ThingRulesModel::data(const QModelIndex &index, int role) const
 					return rule->color;
 				}
 			}
-			return QColor(Qt::black);
+			return QColor();
 		}
 	}
 	return QVariant();

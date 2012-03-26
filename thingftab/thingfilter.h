@@ -51,10 +51,11 @@ public:
 		LowRole
 	};
 	enum ActionRole {
-		NoActionRole,
+		UnknowActionRole,
 		YesRole,
 		NoRole,
-		NextRole
+		NextRole,
+		NullRole
 	};
 	struct thing_rule_ex {
 		ParamRole    param;
@@ -83,7 +84,7 @@ public:
 	QColor color(const Thing*) const;
 
 private:
-	int matchedRule(const Thing*) const;
+	bool implementRulesForThings(const Thing*, QColor *color) const;
 
 private:
 	bool enabled;

@@ -240,8 +240,7 @@ void ThingRulesView::contextMenuEvent(QContextMenuEvent *e)
 					new_rule.operand = ThingFilter::NoOperRole;
 					new_rule.int_value = 0;
 					new_rule.value = "";
-					new_rule.action = ThingFilter::NoActionRole;
-					new_rule.color = QColor(Qt::black);
+					new_rule.action = ThingFilter::UnknowActionRole;
 					ThingRuleEditDialog* dlg = new ThingRuleEditDialog(this, &new_rule);
 					if (dlg) {
 						if (dlg->exec() == QDialog::Accepted) {

@@ -39,7 +39,7 @@ ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::th
 	// Заполняем массив ролей
 	paramRoles << ThingFilter::NameRole << ThingFilter::TypeRole << ThingFilter::NamedRole << ThingFilter::DressedRole << ThingFilter::PriceRole << ThingFilter::CountRole;
 	operandRoles << ThingFilter::ContainsRole << ThingFilter::EqualRole << ThingFilter::AboveRole << ThingFilter::LowRole;
-	actionRoles << ThingFilter::YesRole << ThingFilter::NoRole << ThingFilter::NextRole;
+	actionRoles << ThingFilter::YesRole << ThingFilter::NoRole << ThingFilter::NextRole << ThingFilter::NullRole;
 	// Заполняем элемент параметров вещи
 	param->clear();
 	param->addItem(QString::fromUtf8("Имя вещи"), 0);
@@ -79,6 +79,7 @@ ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::th
 	action->addItem(QString::fromUtf8("отображать"), 0);
 	action->addItem(QString::fromUtf8("не отображать"), 1);
 	action->addItem(QString::fromUtf8("следующее правило"), 2);
+	action->addItem(QString::fromUtf8("нет действия"), 3);
 	ThingFilter::ActionRole action_num = rulePtr->action;
 	index = -1;
 	for (int i = 0; i < actionRoles.size(); i++) {
@@ -89,7 +90,10 @@ ThingRuleEditDialog::ThingRuleEditDialog(QWidget* parent, struct ThingFilter::th
 	}
 	action->setCurrentIndex(param->findData(index));
 	// Заполняем элемент цвета
-	itemColorBtn->setColor(rulePtr->color);
+	if (rulePtr->color.isValid()) {
+		itemColorChb->setChecked(true);
+		itemColorBtn->setColor(rulePtr->color);
+	}
 	enableColor();
 	// Сигналы и слоты
 	connect(param, SIGNAL(currentIndexChanged(int)), this, SLOT(paramChanged(int)));
@@ -149,7 +153,7 @@ void ThingRuleEditDialog::okBtnClick()
 	ThingFilter::OperandRole oper_num = ThingFilter::NoOperRole;
 	QString val_str = "";
 	ThingFilter::ParamRole par_num = paramRoles.at(param->itemData(par_index).toInt());
-	ThingFilter::ActionRole act_num = ThingFilter::NoActionRole;
+	ThingFilter::ActionRole act_num = ThingFilter::UnknowActionRole;
 	if (par_num != ThingFilter::DressedRole) { // Кроме "одето"
 		int oper_index = operand->currentIndex();
 		if (oper_index == -1) {
@@ -197,15 +201,19 @@ void ThingRuleEditDialog::okBtnClick()
 	savedRulePtr->int_value = val_num;
 	savedRulePtr->value = val_str;
 	savedRulePtr->action = act_num;
-	savedRulePtr->color = itemColorBtn->getColor();
+	savedRulePtr->color = (itemColorBtn->isEnabled() && itemColorChb->isChecked()) ? itemColorBtn->getColor() : QColor();
 	accept();
 }
 
 void ThingRuleEditDialog::enableColor()
 {
 	bool enabl = false;
-	if (actionRoles.at(action->itemData(action->currentIndex()).toInt()) == ThingFilter::YesRole)
+	int currIndex = action->currentIndex();
+	if (currIndex != -1) {
+		int actNum = actionRoles.at(action->itemData(currIndex).toInt());
+		if (actNum == ThingFilter::YesRole || actNum == ThingFilter::NullRole)
 			enabl = true;
-	itemColorLb->setEnabled(enabl);
+	}
+	itemColorChb->setEnabled(enabl);
 	itemColorBtn->setEnabled(enabl);
 }

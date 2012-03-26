@@ -552,6 +552,10 @@ QDomElement Pers::makeThingFilterDomElement(QDomDocument &xmlDoc, const ThingFil
 				str1 = "no";
 			} else if (nAction == ThingFilter::NextRole) {
 				str1 = "next";
+			} else if (nAction == ThingFilter::NullRole) {
+				if (fre->color.isValid())
+					eRule.setAttribute("color", fre->color.name());
+				str1 = "null";
 			}
 			if (!str1.isEmpty())
 				eRule.setAttribute("action", str1);
@@ -697,16 +701,18 @@ void Pers::loadBackpackSettingsFromDomNode(const QDomElement &eBackpack)
 						nOperand = ThingFilter::LowRole;
 					}
 					str1 = eRule.attribute("action").trimmed().toLower();
-					ThingFilter::ActionRole nAction = ThingFilter::NoActionRole;
+					ThingFilter::ActionRole nAction = ThingFilter::UnknowActionRole;
 					if (str1 == "yes") {
 						nAction = ThingFilter::YesRole;
 					} else if (str1 == "no") {
 						nAction = ThingFilter::NoRole;
 					} else if (str1 == "next") {
 						nAction = ThingFilter::NextRole;
+					} else if (str1 == "null") {
+						nAction = ThingFilter::NullRole;
 					}
 					QColor color;
-					if (nAction == ThingFilter::YesRole) {
+					if (nAction == ThingFilter::YesRole || nAction == ThingFilter::NullRole) {
 						color.setNamedColor(eRule.attribute("color"));
 					}
 					str1 = eRule.attribute("value");
