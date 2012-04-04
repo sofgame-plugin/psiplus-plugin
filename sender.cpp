@@ -95,10 +95,8 @@ void Sender::changeAccount(int accIndex, const QString &accJid)
 		waitingForReceive = false;
 		sendCommandRetries = 0; // Количество попыток отправки команды
 		lastCommand = "";
-	}
-	if (currentAccJid != accJid) {
-		// Уведомляем другие модули
 		currentAccJid = accJid;
+		// Уведомляем другие модули
 		emit accountChanged(accJid);
 	}
 }

@@ -2090,7 +2090,8 @@ void GameMap::initUnloadTimer(bool update_interval)
 			}
 		}
 		if (saved_count == 0 || oldest_access.isNull()) {
-			unloadTimer->deleteLater(); // Удалиться позже
+			if (unloadTimer)
+				unloadTimer->deleteLater(); // Удалиться позже
 			unloadTimer = NULL; // А указатель очистим сейчас
 			return;
 		}
