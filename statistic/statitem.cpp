@@ -106,7 +106,7 @@ bool StatLongZeroItem::setValue(QVariant &val)
 	if (!val.isValid())
 		return reset();
 
-	long long newVal = val.toInt();
+	long long newVal = val.toLongLong();
 	if (!isEmpty() && newVal == value_)
 		return false;
 
