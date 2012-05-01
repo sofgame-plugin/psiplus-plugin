@@ -442,17 +442,15 @@ QDomElement Pers::exportThingsToDomElement(QDomDocument &xmlDoc) const
 QDomElement Pers::exportPriceToDomElement(QDomDocument &xmlDoc) const
 {
 	QDomElement ePrice;
-	int priceCnt = thingPrice.size();
-	if (priceCnt > 0) {
+	if (thingPrice.size() > 0) {
 		ePrice = xmlDoc.createElement("price");
-		for (int i = 0; i < priceCnt; i++) {
+		foreach (const price_item &pi, thingPrice) {
 			QDomElement ePriceItem = xmlDoc.createElement("item");
-			int nType = thingPrice[i].type;
-			QString sType = thingTypeToString(nType);
+			QString sType = thingTypeToString(pi.type);
 			if (!sType.isEmpty()) {
 				ePriceItem.setAttribute("type", sType);
-				ePriceItem.setAttribute("name", thingPrice[i].name);
-				ePriceItem.setAttribute("price", QString::number(thingPrice[i].price));
+				ePriceItem.setAttribute("name", pi.name);
+				ePriceItem.setAttribute("price", QString::number(pi.price));
 				ePrice.appendChild(ePriceItem);
 			}
 		}
@@ -740,31 +738,30 @@ void Pers::setThingPrice(int iface, int row, int price)
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
 	if (tpm == NULL)
 		return;
-	tpm->setPrice(row, price);
 	// Правим прайс
 	const Thing *thg = tpm->getThingByRow(row);
 	if (!thg || !thg->isValid())
 		return;
+	tpm->setPrice(row, price);
 	int n_type = thg->type();
 	QString s_name = thg->name();
 	QString s_name2 = s_name.toLower();
 	int price_cnt = thingPrice.size();
 	bool f_find = false;
 	for (int i = 0; i < price_cnt; i++) {
-		if (thingPrice[i].type == n_type) {
-			if (thingPrice[i].name.toLower() == s_name2) {
-				thingPrice[i].price = price;
-				f_find = true;
-				break;
-			}
+		const price_item &pi = thingPrice.at(i);
+		if (pi.type == n_type && pi.name.toLower() == s_name2) {
+			thingPrice[i].price = price;
+			f_find = true;
+			break;
 		}
 	}
 	if (!f_find) {
-		struct price_item p_i;
-		p_i.type = n_type;
-		p_i.name = s_name;
-		p_i.price = price;
-		thingPrice.push_back(p_i);
+		struct price_item pi;
+		pi.type = n_type;
+		pi.name = s_name;
+		pi.price = price;
+		thingPrice.push_back(pi);
 	}
 }
 
