@@ -178,6 +178,15 @@ const QString & Pers::name() const
 	return pers_name;
 }
 
+void Pers::setCitizenship(const QString &s)
+{
+	if (_citizenship != s)
+	{
+		_citizenship = s;
+		emit persParamChanged(ParamPersCitizenship, TYPE_STRING, 0);
+	}
+}
+
 void Pers::setMoneys(int moneys_)
 {
 	if (moneys != moneys_) {

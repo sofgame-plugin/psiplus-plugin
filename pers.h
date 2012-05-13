@@ -55,6 +55,7 @@ public:
 	};
 	enum PersParams {
 		ParamPersName,
+		ParamPersCitizenship,
 		ParamMoneysCount,
 		ParamPersLevel,
 		ParamPersStatus,
@@ -73,6 +74,8 @@ public:
 	void init();
 	void setName(const QString &);
 	const QString & name() const;
+	void setCitizenship(const QString &s);
+	const QString & citizenship() const {return _citizenship;};
 	int  moneysCount() const {return moneys;};
 	void setMoneys(int);
 	void setThingsStart(bool clear);
@@ -110,6 +113,7 @@ public:
 
 private:
 	QString pers_name;
+	QString _citizenship;
 	bool beginSetPersParamsFlag;
 	int  persLevelValue; int persLevelValue_; bool setPersLevelValueFlag;
 	long long  persExperienceMax; long long persExperienceMax_; bool setPersExperienceMaxFlag;

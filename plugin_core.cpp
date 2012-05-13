@@ -87,7 +87,7 @@ PluginCore::PluginCore()
 	thingElementReg.setPattern(QString::fromUtf8("^([0-9]+)- (.+)\\((\\w+)\\)((.+)\\{(.+)\\})?(И:([0-9]+)ур\\.)?(- ([0-9]+)шт\\.)?$")); // Вещь
 	persInfoReg.setPattern(QString::fromUtf8("^Характеристики (героя|героини): (\\w+)( \\{\\w+\\})?$"));
 	persInfoMainReg.setPattern(QString::fromUtf8("^Уровень:([0-9]+), Здоровье:(-?[0-9]+)/([0-9]+), Энергия:(-?[0-9]+)/([0-9]+), Опыт:([0-9]+)(\\.|, Ост. до след уровня:([0-9]+))$")); // Уровень:25, Здоровье:6051/6051, Энергия:7956/7956, Опыт:186821489, Ост. до след уровня:133178511
-	persInfoSitizenshipReg.setPattern(QString::fromUtf8("^Гражданство: (.+)$")); // Гражданство: город "Вольный"
+	persInfoCitizenshipReg.setPattern(QString::fromUtf8("^Гражданство: (.+)$")); // Гражданство: город "Вольный"
 	persInfoClanReg.setPattern(QString::fromUtf8("^Клан: (.+)$")); //  Клан: Лига Теней/ЛТ/
 	persInfoRatingReg.setPattern(QString::fromUtf8("^Рейтинг: ([0-9]+) место.$")); // Рейтинг: 5 место.
 	persInfoParamsReg.setPattern(QString::fromUtf8("^(\\w+):([0-9]+)\\[([0-9]+)\\]$")); // Сила:55[637] // Ловкость:44[517] // Интеллект:36[514]
@@ -302,7 +302,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				int nDext1 = QINT32_MIN; int nDext2 = QINT32_MIN; bool fDext = false;
 				int nIntell1 = QINT32_MIN; int nIntell2 = QINT32_MIN; bool fIntell = false;
 				int nLoss = -1; int nProtect = -1;
-				QString sSitizenship;
+				QString sCitizenship;
 				int nRating = QINT32_MIN;
 				QString sClan;
 				sMessage = gameText.nextLine().trimmed();
@@ -321,9 +321,9 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					}
 					sMessage = gameText.nextLine().trimmed();
 				}
-				if (persInfoSitizenshipReg.indexIn(sMessage, 0) != -1) {
+				if (persInfoCitizenshipReg.indexIn(sMessage, 0) != -1) {
 					// Гражданство: город "Вольный"
-					sSitizenship = persInfoSitizenshipReg.cap(1).trimmed();
+					sCitizenship = persInfoCitizenshipReg.cap(1).trimmed();
 					sMessage = gameText.nextLine().trimmed();
 				}
 				if (persInfoClanReg.indexIn(sMessage, 0) != -1) {
@@ -524,6 +524,12 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				0- в игру.
 				3- история сделок
 				*/
+				Pers *pers = Pers::instance();
+				// Если это наш персонаж, обновляем данные
+				if (pers->name() == sPersName)
+				{
+					pers->setCitizenship(sCitizenship);
+				}
 				// Ищем сохраненную информацию об персе
 				PersInfo* persInfoPtr = getPersInfo(sPersName);
 				if (!persInfoPtr) {
@@ -534,7 +540,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				if (persInfoPtr) {
 					persInfoPtr->setName(sPersName);
 					persInfoPtr->setLevel(nLevel);
-					persInfoPtr->setSitizenship(sSitizenship);
+					persInfoPtr->setCitizenship(sCitizenship);
 					persInfoPtr->setClan(sClan);
 					persInfoPtr->setRating(nRating);
 					persInfoPtr->setHealthCurr(nHealthCurr);
@@ -1233,6 +1239,11 @@ bool PluginCore::savePersStatus()
 				domElement.appendChild(xmlDoc.createTextNode(pers->name()));
 				eMain.appendChild(domElement);
 			}
+			if (!pers->citizenship().isEmpty()) {
+				domElement = xmlDoc.createElement("pers-citizenship");
+				domElement.appendChild(xmlDoc.createTextNode(pers->citizenship()));
+				eMain.appendChild(domElement);
+			}
 			int num1;
 			if (pers->getIntParamValue(Pers::ParamPersLevel, &num1)) {
 				domElement = xmlDoc.createElement("pers-level");
@@ -1405,6 +1416,8 @@ bool PluginCore::loadPersStatus()
 						while (!childMainNode.isNull()) {
 							if (childMainNode.toElement().tagName() == "pers-name") {
 								pers->setName(getTextFromNode(&childMainNode));
+							} else if (childMainNode.toElement().tagName() == "pers-citizenship") {
+								pers->setCitizenship(getTextFromNode(&childMainNode));
 							} else if (childMainNode.toElement().tagName() == "pers-level") {
 								pers->setPersParams(Pers::ParamPersLevel, TYPE_INTEGER_FULL, getTextFromNode(&childMainNode).toInt());
 							} else if (childMainNode.toElement().tagName() == "pers-experience-curr") {
@@ -2065,7 +2078,7 @@ void PluginCore::persCommands(const QStringList &args)
 				}
 				QString str2;
 				str1.append(QString::fromUtf8("\nГражданство: "));
-				if (persInfo->getSitizenship(&str2)) {
+				if (persInfo->getCitizenship(&str2)) {
 					str1.append(str2);
 				} else {
 					str1.append(NA_TEXT);

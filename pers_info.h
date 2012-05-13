@@ -82,8 +82,8 @@ class PersInfo: public QObject
 		void setName(QString);
 		void setLevel(int);
 		bool getLevel(int*) const;
-		void setSitizenship(QString);
-		bool getSitizenship(QString*) const;
+		void setCitizenship(QString);
+		bool getCitizenship(QString*) const;
 		void setClan(QString);
 		bool getClan(QString*) const;
 		void setRating(int);
@@ -124,7 +124,7 @@ class PersInfo: public QObject
 		int persRating;
 		qint64 experienceCurr;
 		qint64 experienceRemain;
-		QString sitizenship;
+		QString citizenship;
 		QString clan;
 		int healthCurr;
 		int healthMax;

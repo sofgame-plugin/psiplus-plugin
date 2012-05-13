@@ -488,6 +488,10 @@ void SofMainWindow::getAllDataFromCore() {
 	if (newStrValue.isEmpty())
 		newStrValue = NA_TEXT;
 	persNameLabel->setText(newStrValue);
+	newStrValue = pers->citizenship();
+	if (newStrValue.isEmpty())
+		newStrValue = QString::fromUtf8("без гражданства");
+	persCitizenship->setText(newStrValue);
 	if (!pers->getIntParamValue(Pers::ParamPersLevel, &newIntValue)) {
 		newStrValue = NA_TEXT;
 	} else {
@@ -1656,6 +1660,12 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			if (str1.isEmpty())
 				str1 = "n/a";
 			persNameLabel->setText(str1);
+		} else if (paramId == Pers::ParamPersCitizenship) {
+			// Гражданство
+			QString str1 = Pers::instance()->citizenship();
+			if (str1.isEmpty())
+				str1 = QString::fromUtf8("без гражданства");
+			persCitizenship->setText(str1);
 		}
 	} else if (paramType == TYPE_NA) {
 		if (paramId == Pers::ParamPersLevel) {

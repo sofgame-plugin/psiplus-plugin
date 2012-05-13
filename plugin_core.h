@@ -75,7 +75,7 @@ class PluginCore: public QObject
 		QRegExp thingElementReg;
 		QRegExp persInfoReg;
 		QRegExp persInfoMainReg;
-		QRegExp persInfoSitizenshipReg;
+		QRegExp persInfoCitizenshipReg;
 		QRegExp persInfoClanReg;
 		QRegExp persInfoRatingReg;
 		QRegExp persInfoParamsReg;
