@@ -1073,28 +1073,49 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				}
 				else {
 					QString val = fight->getAllyAuraValue(QString::fromUtf8("дух предков"));
-					if (!val.isEmpty())
+					if (val.isEmpty())
 					{
-						if ((val == "20%" && oldProtectValue != 1))
+						if (oldProtectValue != 0)
+						{
+							stat->setValue(Statistic::StatProtectAura1, QVariant());
+							stat->setValue(Statistic::StatProtectAura2, QVariant());
+						}
+					}
+					else if (val == "20%")
+					{
+						if (oldProtectValue != 1)
 						{
 							stat->setValue(Statistic::StatProtectAura1, pers->citizenship());
 							stat->setValue(Statistic::StatProtectAura2, QVariant());
 						}
-						else if ((val == "40%" && oldProtectValue != 2))
+					}
+					else if (val == "40%")
+					{
+						if (oldProtectValue != 2)
 						{
 							stat->setValue(Statistic::StatProtectAura1, pers->citizenship());
 							stat->setValue(Statistic::StatProtectAura2, pers->citizenship());
 						}
 					}
 					val = fight->getAllyAuraValue(QString::fromUtf8("кровавый призрак"));
-					if (!val.isEmpty())
+					if (val.isEmpty())
 					{
-						if ((val == "20%" && oldDamageValue != 1))
+						if (oldDamageValue != 0)
+						{
+							stat->setValue(Statistic::StatDamageAura1, QVariant());
+							stat->setValue(Statistic::StatDamageAura2, QVariant());
+						}
+					}
+					else if (val == "20%")
+					{
+						if (oldDamageValue != 1)
 						{
 							stat->setValue(Statistic::StatDamageAura1, pers->citizenship());
 							stat->setValue(Statistic::StatDamageAura2, QVariant());
 						}
-						else if ((val == "40%" && oldDamageValue != 2))
+					} else if (val == "40%")
+					{
+						if (oldDamageValue != 2)
 						{
 							stat->setValue(Statistic::StatDamageAura1, pers->citizenship());
 							stat->setValue(Statistic::StatDamageAura2, pers->citizenship());
