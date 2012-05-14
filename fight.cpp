@@ -149,6 +149,22 @@ void Fight::stopAddAllyes()
 	}
 }
 
+void Fight::startAddAllyAuras()
+{
+	if (active)
+	{
+		auraAllyList.clear();
+	}
+}
+
+void Fight::stopAddAllyAuras()
+{
+	if (active)
+	{
+		//
+	}
+}
+
 /**
  * Устанавливает присутствие персонажа в бою
  */
@@ -226,14 +242,10 @@ void Fight::setAuraEnemy(QString &auraName, QString &auraParam, int auraValue)
 	}
 }
 
-void Fight::setAuraAlly(QString &auraName, QString &auraParam, int auraValue)
+void Fight::setAuraAlly(const QString &auraName, const QString &auraParam, const QString &auraValue)
 {
-	Q_UNUSED(auraName);
-	Q_UNUSED(auraParam);
-	Q_UNUSED(auraValue);
-
 	if (active) {
-
+		auraAllyList.append(Aura(auraName, auraParam, auraValue));
 	}
 }
 
@@ -297,6 +309,16 @@ int Fight::gameHumanAllyCount()
 		return 0;
 	}
 	return humanAllyCount;
+}
+
+QString Fight::getAllyAuraValue(const QString &name) const
+{
+	foreach (const Aura &aura, auraAllyList)
+	{
+		if (aura.name == name)
+			return aura.value;
+	}
+	return QString();
 }
 
 void Fight::setTimeout(int timeout)

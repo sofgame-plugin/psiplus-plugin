@@ -1,3 +1,7 @@
 <RCC>
-    <qresource prefix="/"/>
+    <qresource prefix="/aura">
+        <file alias="shield">resorces/shield.png</file>
+        <file alias="sword">resorces/flash.png</file>
+        <file alias="pill">resorces/pill.png</file>
+    </qresource>
 </RCC>

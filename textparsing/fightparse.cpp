@@ -135,12 +135,14 @@ void PluginCore::parseFightGroups(GameText &gameText)
 				if (tmp_list.size() > 1) {
 					// Есть данные об аурах
 					pos = 0;
+					fight->startAddAllyAuras();
 					while ((pos = fightElement2Reg.indexIn(tmp_list.at(1), pos)) != -1) {
 						QString s_name = fightElement2Reg.cap(1).trimmed();
-						QString s_param = fightElement2Reg.cap(2);
-						fight->setAuraAlly(s_name, s_param, fightElement2Reg.cap(3).toInt());
+						QString s_param = fightElement2Reg.cap(2).trimmed();
+						fight->setAuraAlly(s_name, s_param, fightElement2Reg.cap(3).trimmed());
 						pos += fightElement2Reg.matchedLength();
 					}
+					fight->stopAddAllyAuras();
 					if (coloring) {
 						colorStr.append(QString::fromUtf8(" Ауры команды: "));
 						colorStr.append("<font color=\"blue\">" + Qt::escape(tmp_list.at(1)) + "</font>");

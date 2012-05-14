@@ -29,6 +29,7 @@
 #include <QWidget>
 
 #include "pers.h"
+#include "aurainfo.h"
 #include "ui_main_window.h"
 
 QT_BEGIN_NAMESPACE
@@ -127,6 +128,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		long long experienceMax; // Нужно для расчета делителя в QProgressBar
 		long long experienceCurr;
 		int settingWindowSizePos;
+		AuraInfo *auraInfo;
 
 	public slots:
 		void valueChanged(int eventId, int valueType, int value); // Приходят сообщения и событиях, часто об обновлении статистики.

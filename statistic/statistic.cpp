@@ -96,7 +96,9 @@ StatItem *Statistic::newStatItem(int type)
 		item = new StatIntZeroItem();
 	} else if (type == StatDamageMaxFromPers || type == StatDamageMinFromPers) {
 		item = new StatIntNaItem();
-	} else if (type == StatLastGameJid || type == StatLastChatJid || type == StatThingDropLast) {
+	} else if (type == StatLastGameJid || type == StatLastChatJid || type == StatThingDropLast
+		|| type == StatProtectAura1 || type == StatProtectAura2
+		|| type == StatDamageAura1 || type ==  StatDamageAura2 || type == StatRegenAura1) {
 		item = new StatStringItem();
 	} else if (type == StatExperienceDropCount) {
 		item = new StatLongZeroItem();

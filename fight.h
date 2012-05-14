@@ -59,6 +59,8 @@ class Fight: public QObject
 		void startAddEnemies();
 		void startAddAllyes();
 		void stopAddAllyes();
+		void startAddAllyAuras();
+		void stopAddAllyAuras();
 		void setMyPersInFight(bool present);
 		bool isPersInFight();
 		void setGameMobEnemy(int enemNum, QString &enemName, int enemHealth, int enemHealthMax);
@@ -66,12 +68,14 @@ class Fight: public QObject
 		void setGameMobAlly(QString &allyName, int allyHealth, int allyHealthMax);
 		void setGameHumanAlly(QString &allyName, QString &allyCountry, int allyLevel, int allyHealth, int allyHealthMax);
 		void setAuraEnemy(QString &auraName, QString &auraParam, int auraValue);
-		void setAuraAlly(QString &auraName, QString &auraParam, int auraValue);
+		void setAuraAlly(const QString &auraName, const QString &auraParam, const QString &auraValue);
 		void stopAddEnemies();
 		int  gameMobEnemyCount();
 		int  gameHumanEnemyCount();
 		int  gameMobAllyCount();
 		int  gameHumanAllyCount();
+		int  allyAurasCount() const {return auraAllyList.size();};
+		QString getAllyAuraValue(const QString &name) const;
 		void setTimeout(int);
 		int  timeout();
 		QStringList mobEnemiesList();
@@ -86,6 +90,13 @@ class Fight: public QObject
 			int     health;
 			int     healthMax;
 		};
+		struct Aura
+		{
+			QString name;
+			QString param;
+			QString value;
+			Aura(const QString &nm, const QString &par, const QString &val) : name(nm), param(par), value(val) {};
+		};
 
 		bool active;
 		int status;
@@ -98,7 +109,8 @@ class Fight: public QObject
 		int timeoutValue;
 		bool presentPers;
 		bool eventSend;
-		QList <struct Mob> gameMobEnemy;
+		QList<Mob> gameMobEnemy;
+		QList<Aura> auraAllyList;
 
 	signals:
 		void fightStart(int mode);

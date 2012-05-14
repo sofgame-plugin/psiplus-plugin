@@ -198,6 +198,10 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	healthBar->setRange(0, 0);
 	energyBar->setValue(0);
 	energyBar->setRange(0, 0);
+	// Виджет индикации аур (поля, холмы, фонтан)
+	wdgExtraInfo->setLayout(new QVBoxLayout());
+	auraInfo = new AuraInfo(wdgExtraInfo);
+	wdgExtraInfo->layout()->addWidget(auraInfo);
 	// Соединение с картой
 	gameMapView->setScene(GameMap::instance()->getGraphicsScene());
 	gameMapView->show();
@@ -278,6 +282,10 @@ void SofMainWindow::init()
 		avatarFrame->showPluginInfo();
 	// Особые враги
 	specificEnemiesTable->init();
+	// Индикатор аур
+	auraInfo->setShield(QString(), QString());
+	auraInfo->setSword(QString(), QString());
+	auraInfo->setPill(QString());
 }
 
 void SofMainWindow::setAutoEnterMode(bool mode)
@@ -575,12 +583,27 @@ void SofMainWindow::getAllDataFromCore() {
 /**
  * Обновляет значения статистики в виджетах, в том числе и в footer-е.
  */
-void SofMainWindow::updateValue(int valueId, const QString &valString) {
-
-	// Обновляем основной виджет статистики
-	setStatisticValue(valueId, valString.left(20));
-	// Обновляем footer
-	setFooterStatisticValue(valueId, valString.left(20));
+void SofMainWindow::updateValue(int valueId, const QString &valString)
+{
+	if (valueId == Statistic::StatProtectAura1 || valueId == Statistic::StatProtectAura2)
+	{
+		Statistic *stat = Statistic::instance();
+		auraInfo->setShield(stat->value(Statistic::StatProtectAura1).toString(), stat->value(Statistic::StatProtectAura2).toString());
+	}
+	else if (valueId == Statistic::StatDamageAura1 || valueId == Statistic::StatDamageAura2)
+	{
+		Statistic *stat = Statistic::instance();
+		auraInfo->setSword(stat->value(Statistic::StatDamageAura1).toString(), stat->value(Statistic::StatDamageAura2).toString());
+	} else if (valueId == Statistic::StatRegenAura1)
+	{
+		auraInfo->setPill(Statistic::instance()->value(Statistic::StatRegenAura1).toString());
+	}
+	else {
+		// Обновляем основной виджет статистики
+		setStatisticValue(valueId, valString.left(20));
+		// Обновляем footer
+		setFooterStatisticValue(valueId, valString.left(20));
+	}
 }
 
 void SofMainWindow::valueChanged(int eventId, int valueType, int value)

@@ -106,7 +106,7 @@ PluginCore::PluginCore()
 	fightOneTimeoutReg.setPattern((QString::fromUtf8("^до завершения хода№([0-9]+): ([0-9]+)мин\\.([0-9]+)сек\\.$"))); // Номер хода и таймаут
 	fightElement0Reg.setPattern(QString::fromUtf8("([^/]+)(/(.+)/)?\\[(у:([0-9]+)\\,з:)?([0-9]+)/([0-9]+)\\]")); // Боевые единицы (союзники)
 	fightElement1Reg.setPattern(QString::fromUtf8("([0-9]+)- ([^/]+)(/(.+)/)?\\[(у:([0-9]+)\\,з:)?([0-9]+)/([0-9]+)\\]")); // Боевые единицы (противники)
-	fightElement2Reg.setPattern(QString::fromUtf8("(.+)\\[(.+):(-?[0-9]+)\\]")); // Ауры в бою
+	fightElement2Reg.setPattern(QString::fromUtf8("(.+)\\[(.+):(-?[0-9]+.*)\\]")); // Ауры в бою
 	fightElement0Reg.setMinimal(true);
 	fightElement1Reg.setMinimal(true);
 	fightElement2Reg.setMinimal(true);
@@ -733,8 +733,38 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				nPersStatus = Pers::StatusServerStatistic1;
 				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Статистика по странам.")) {
+				/*
+				Статистика по странам.
+				Страна Закарта 127 граждан.
+				Восточная страна 100 граждан.
+				Вольный город 84 граждан.
+				Поле предков запад- город "Вольный"
+				Поле предков восток- город "Вольный"
+				Холм героев запад- страна Закарта
+				Холм героев восток- страна Закарта
+				Призрачный фонтан- город "Вольный"
+				0- в игру
+				*/
 				nPersStatus = Pers::StatusServerStatistic2;
-				gameText.setEnd(); // Блокируем дальнейший анализ
+				Statistic *stat = Statistic::instance();
+				while (!gameText.isEnd())
+				{
+					QString s1 = gameText.currentLine();
+					QString par = s1.section('-', 0, 0).trimmed();
+
+					if (par == QString::fromUtf8("Поле предков запад"))
+						stat->setValue(Statistic::StatProtectAura1, s1.section('-', 1).trimmed());
+					else if (par == QString::fromUtf8("Поле предков восток"))
+						stat->setValue(Statistic::StatProtectAura2, s1.section('-', 1).trimmed());
+					else if (par == QString::fromUtf8("Холм героев запад"))
+						stat->setValue(Statistic::StatDamageAura1, s1.section('-', 1).trimmed());
+					else if (par == QString::fromUtf8("Холм героев восток"))
+						stat->setValue(Statistic::StatDamageAura2, s1.section('-', 1).trimmed());
+					else if (par == QString::fromUtf8("Призрачный фонтан"))
+						stat->setValue(Statistic::StatRegenAura1, s1.section('-', 1).trimmed());
+
+					gameText.next();
+				}
 			} else if (sMessage == QString::fromUtf8("Ваша недвижимость:")) {
 				nPersStatus = Pers::StatusRealEstate;
 				gameText.setEnd(); // Блокируем дальнейший анализ
@@ -1009,6 +1039,66 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 						GameText text(QString::fromUtf8("### Очередь сброшена. Сброшено команд: %1 ###").arg(q_len), false);
 						setGameText(text, 3);
 						setConsoleText(text, 3, false);
+					}
+				}
+			}
+			else { // Должен быть не первый шаг, т.к. есть игровая бага из за которой не видны ауры на первом ударе
+				// Анализ наличия характерных аур, для отображения в статистике
+				Statistic *stat = Statistic::instance();
+				Pers *pers = Pers::instance();
+
+				int oldProtectValue = 0;
+				if (stat->value(Statistic::StatProtectAura1).toString() == pers->citizenship())
+					++oldProtectValue;
+				if (stat->value(Statistic::StatProtectAura2).toString() == pers->citizenship())
+					++oldProtectValue;
+				int oldDamageValue = 0;
+				if (stat->value(Statistic::StatDamageAura1).toString() == pers->citizenship())
+					++oldDamageValue;
+				if (stat->value(Statistic::StatDamageAura2).toString() == pers->citizenship())
+					++oldDamageValue;
+
+				if (fight->allyAurasCount() == 0)
+				{
+					if (oldProtectValue > 0)
+					{
+						stat->setValue(Statistic::StatProtectAura1, QVariant());
+						stat->setValue(Statistic::StatProtectAura2, QVariant());
+					}
+					if (oldDamageValue > 0)
+					{
+						stat->setValue(Statistic::StatDamageAura1, QVariant());
+						stat->setValue(Statistic::StatDamageAura2, QVariant());
+					}
+				}
+				else {
+					QString val = fight->getAllyAuraValue(QString::fromUtf8("дух предков"));
+					if (!val.isEmpty())
+					{
+						if ((val == "20%" && oldProtectValue != 1))
+						{
+							stat->setValue(Statistic::StatProtectAura1, pers->citizenship());
+							stat->setValue(Statistic::StatProtectAura2, QVariant());
+						}
+						else if ((val == "40%" && oldProtectValue != 2))
+						{
+							stat->setValue(Statistic::StatProtectAura1, pers->citizenship());
+							stat->setValue(Statistic::StatProtectAura2, pers->citizenship());
+						}
+					}
+					val = fight->getAllyAuraValue(QString::fromUtf8("кровавый призрак"));
+					if (!val.isEmpty())
+					{
+						if ((val == "20%" && oldDamageValue != 1))
+						{
+							stat->setValue(Statistic::StatDamageAura1, pers->citizenship());
+							stat->setValue(Statistic::StatDamageAura2, QVariant());
+						}
+						else if ((val == "40%" && oldDamageValue != 2))
+						{
+							stat->setValue(Statistic::StatDamageAura1, pers->citizenship());
+							stat->setValue(Statistic::StatDamageAura2, pers->citizenship());
+						}
 					}
 				}
 			}

@@ -1,5 +1,5 @@
 /*
- * statistic.h - Sof Game Psi plugin
+ * aurainfo.h - Sof Game Psi plugin
  * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -19,47 +19,38 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
-#ifndef STATISTIC_H
-#define STATISTIC_H
+#ifndef AURAINFO_H
+#define AURAINFO_H
 
-#include <QObject>
+#include <QWidget>
+#include <QLabel>
 
-#include "statitem.h"
-
-class Statistic : public QObject
+class AuraInfo : public QWidget
 {
 Q_OBJECT
+
 public:
-	enum {StatLastGameJid, StatLastChatJid, StatMessagesCount,
-		StatDamageMaxFromPers, StatDamageMinFromPers, StatFightsCount,
-		StatDropMoneys, StatThingsDropCount, StatThingDropLast,
-		StatExperienceDropCount, StatKilledEnemies,
-		StatProtectAura1, StatProtectAura2, StatDamageAura1, StatDamageAura2, StatRegenAura1
-	};
-
-	static Statistic *instance();
-	static void reset();
-	bool isEmpty(int type) const;
-	QVariant value(int type) const;
-	void setValue(int type, QVariant val);
-	QString toString(int type) const;
+	AuraInfo(QWidget *parent = 0);
+	void setShield(const QString &shield1, const QString &shield2);
+	void setSword(const QString &sword1, const QString &sword2);
+	void setPill(const QString &pill);
 
 private:
-	Statistic(QObject *parent = 0);
-	~Statistic();
-	static StatItem *newStatItem(int type);
+	QPixmap shieldPixmap(bool enable);
+	QPixmap swordPixmap(bool enable);
+	QPixmap pillPixmap(bool enable);
 
 private:
-	static Statistic *instance_;
-	QHash<int, StatItem *> itemsList;
-
-signals:
-	void valueChanged(int);
+	QLabel *lbShield1;
+	QLabel *lbShield2;
+	QLabel *lbSword1;
+	QLabel *lbSword2;
+	QLabel *lbPill;
 
 };
 
-#endif // STATISTIC_H
+#endif // AURAINFO_H
