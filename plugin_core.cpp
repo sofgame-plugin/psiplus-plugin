@@ -124,7 +124,7 @@ PluginCore::PluginCore()
 	connect(&saveStatusTimer, SIGNAL(timeout()), this, SLOT(saveStatusTimeout()));
 	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(statisticsChanged()));
 	// Разное
-	coloring = true;
+	fightColoring = true;
 }
 
 PluginCore::~PluginCore()
@@ -608,27 +608,27 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 						if (!th)
 							break;
 						if (nDressed == 0 && th->isDressed()) {
-							if (coloring) {
+							//if (coloring) {
 								gameText.append(QString::fromUtf8("<strong>одеты:</strong>"), true);
-							} else {
-								gameText.append(QString::fromUtf8("одеты:"), false);
-							}
+							//} else {
+							//	gameText.append(QString::fromUtf8("одеты:"), false);
+							//}
 							nDressed = 1;
 						} else if (nDressed == 0 || (nDressed == 1 && !th->isDressed())) {
-							if (coloring) {
+							//if (coloring) {
 								gameText.append(QString::fromUtf8("<strong>не одеты:</strong>"), true);
-							} else {
-								gameText.append(QString::fromUtf8("не одеты:"), false);
-							}
+							//} else {
+							//	gameText.append(QString::fromUtf8("не одеты:"), false);
+							//}
 							nDressed = 2;
 						}
 						QString thingStr = th->toString(Thing::ShowAll);
 						QString colorStr;
-						if (coloring) {
+						//if (coloring) {
 							QColor c = pers->getThingColorByRow(i, iface);
 							if (c.isValid())
 								colorStr = c.name();
-						}
+						//}
 						if (!colorStr.isEmpty()) {
 							gameText.append(QString("<font color=\"%1\">%2</font>").arg(colorStr).arg(thingStr), true);
 						} else {
@@ -711,7 +711,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Сильнейшие персонажи.")) {
 				nPersStatus = Pers::StatusTopList;
-				if (coloring) {
+				//if (coloring) {
 					gameText.replace("<big><strong><em>" + Qt::escape(gameText.currentLine()) + "</em></strong></big>", true);
 					gameText.next();
 					bool fOk = false;
@@ -727,7 +727,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 						}
 						gameText.next();
 					}
-				}
+				//}
 				gameText.setEnd(); // Блокируем дальнейший анализ
 			} else if (sMessage == QString::fromUtf8("Статистика")) {
 				nPersStatus = Pers::StatusServerStatistic1;
@@ -812,7 +812,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					}
 				}
 			} else if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
-				if (coloring)
+				if (fightColoring)
 					gameText.replace(QString::fromUtf8("<strong>Открытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightOpenBegin;
 				fight->start();
@@ -822,7 +822,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				nTimeout = fight->timeout();
 				break;
 			} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
-				if (coloring)
+				if (fightColoring)
 					gameText.replace(QString::fromUtf8("<strong>Закрытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightCloseBegin;
 				fight->start();
@@ -855,7 +855,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 						}
 						sMessage = gameText.currentLine().trimmed();
 						if (sMessage.startsWith(QString::fromUtf8("Открытый бой"))) {
-							if (coloring)
+							if (fightColoring)
 								gameText.replace(QString::fromUtf8("<strong>Открытый бой</strong>") + sMessage.mid(12), true);
 							nPersStatus = Pers::StatusFightOpenBegin;
 							if (!fight->isActive())
@@ -866,7 +866,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 							nTimeout = fight->timeout();
 							break;
 						} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"))) {
-							if (coloring)
+							if (fightColoring)
 								gameText.replace(QString::fromUtf8("<strong>Закрытый бой</strong>") + sMessage.mid(12), true);
 							nPersStatus = Pers::StatusFightCloseBegin;
 							if (!fight->isActive())
@@ -975,13 +975,13 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 		if (nPersStatus == Pers::StatusNotKnow) {
 			// Любая строка, статус еще не определен
 			if (sMessage.startsWith(QString::fromUtf8("Открытый бой"), Qt::CaseInsensitive)) {
-				if (coloring)
+				if (fightColoring)
 					gameText.replace(QString::fromUtf8("<strong>Открытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightOpenBegin;
 				fight->start();
 				fight->setMode(FIGHT_MODE_OPEN);
 			} else if (sMessage.startsWith(QString::fromUtf8("Закрытый бой"), Qt::CaseInsensitive)) {
-				if (coloring)
+				if (fightColoring)
 					gameText.replace(QString::fromUtf8("<strong>Закрытый бой</strong>") + sMessage.mid(12), true);
 				nPersStatus = Pers::StatusFightCloseBegin;
 				fight->start();
@@ -3038,6 +3038,6 @@ void PluginCore::saveStatusTimeout()
 void PluginCore::updateSetting(Settings::SettingKey key)
 {
 	if (key == Settings::SettingGameTextColoring) {
-		coloring = Settings::instance()->getBoolSetting(key);
+		fightColoring = Settings::instance()->getBoolSetting(key);
 	}
 }

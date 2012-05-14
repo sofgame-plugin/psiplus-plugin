@@ -106,7 +106,7 @@ class PluginCore: public QObject
 		QRegExp fightDamageFromPersReg3;
 		QRegExp fightDropMoneyReg1;
 		QRegExp fightDropThingReg1;
-		bool coloring;
+		bool fightColoring;
 
 	private:
 		PluginCore();

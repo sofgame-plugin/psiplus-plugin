@@ -88,7 +88,7 @@ void PluginCore::parseFightGroups(GameText &gameText)
 		Pers *pers = Pers::instance();
 		QString str1 = gameText.currentLine().trimmed();
 		if (str1 == QString::fromUtf8("ваша команда:")) {
-			if (coloring)
+			if (fightColoring)
 				gameText.replace("<strong>" + str1 + "</strong>", true);
 			// Анализируем нашу команду
 			gameText.next();
@@ -125,7 +125,7 @@ void PluginCore::parseFightGroups(GameText &gameText)
 							fight->setGameHumanAlly(s_name, s_country, n_level, n_health_curr, n_health_max);
 						}
 					}
-					if (coloring) {
+					if (fightColoring) {
 						colorStr.append(" <font color=\"" + healthColoring(n_health_curr, n_health_max) + "\">" + Qt::escape(fightElement0Reg.cap(0)) + "</font>.");
 					}
 					pos += fightElement0Reg.matchedLength();
@@ -143,19 +143,19 @@ void PluginCore::parseFightGroups(GameText &gameText)
 						pos += fightElement2Reg.matchedLength();
 					}
 					fight->stopAddAllyAuras();
-					if (coloring) {
+					if (fightColoring) {
 						colorStr.append(QString::fromUtf8(" Ауры команды: "));
 						colorStr.append("<font color=\"blue\">" + Qt::escape(tmp_list.at(1)) + "</font>");
 					}
 				}
-				if (coloring)
+				if (fightColoring)
 					gameText.replace(colorStr, true);
 				fight->stopAddAllyes();
 			}
 			gameText.next();
 			str1 = gameText.currentLine().trimmed();
 			if (!gameText.isEnd() && str1.startsWith(QString::fromUtf8("противник:"))) {
-				if (coloring)
+				if (fightColoring)
 					gameText.replace("<strong>" + str1 + "</strong>", true);
 				// Строчка наших врагов
 				gameText.next();
@@ -179,7 +179,7 @@ void PluginCore::parseFightGroups(GameText &gameText)
 							QString s_country = fightElement1Reg.cap(4).trimmed();
 							fight->setHumanEnemy(n_index, s_name, s_country, fightElement1Reg.cap(6).toInt(), n_health_curr, n_health_max);
 						}
-						if (coloring) {
+						if (fightColoring) {
 							colorStr.append(" <font color=\"" + healthColoring(n_health_curr, n_health_max) + "\">" + Qt::escape(fightElement1Reg.cap(0)) + "</font>.");
 						}
 						pos += fightElement1Reg.matchedLength();
@@ -194,12 +194,12 @@ void PluginCore::parseFightGroups(GameText &gameText)
 							fight->setAuraEnemy(s_name, s_param, fightElement2Reg.cap(3).toInt());
 							pos += fightElement2Reg.matchedLength();
 						}
-						if (coloring) {
+						if (fightColoring) {
 							colorStr.append(QString::fromUtf8(" Ауры команды: "));
 							colorStr.append("<font color=\"blue\">" + Qt::escape(tmp_list.at(1)) + "</font>");
 						}
 					}
-					if (coloring)
+					if (fightColoring)
 						gameText.replace(colorStr, true);
 					fight->stopAddEnemies();
 					gameText.next();
@@ -214,7 +214,7 @@ void PluginCore::parseFightGroups(GameText &gameText)
 			pers->setPersParams(Pers::ParamEnergyCurr, TYPE_INTEGER_FULL, nEnergyCurr);
 			pers->setPersParams(Pers::ParamEnergyMax, TYPE_INTEGER_FULL, nEnergyMax);
 			pers->endSetPersParams();
-			if (coloring)
+			if (fightColoring)
 				gameText.replace("<font color=\"" + healthColoring(nEnergyCurr, nEnergyMax) + "\">" + parPersPower1Reg.cap(0) + "</font>", true);
 			// Следующая строчка - выбор умения. Пока тупо пропускаем.
 			gameText.next();
