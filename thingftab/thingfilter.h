@@ -92,9 +92,9 @@ private:
 	QList<struct thing_rule_ex> rules;
 };
 
-//typedef QList<ThingFilter*> FilterList;
+typedef QList<ThingFilter*> FiltersList;
 
-class ThingFiltersList: private QList<ThingFilter*>
+class ThingFiltersList: private FiltersList
 {
 public:
 	ThingFiltersList();
@@ -102,13 +102,13 @@ public:
 	int  indexByName(const QString &name) const;
 	bool isActive(int fltrNum) const;
 	void clear();
-	inline int size() const {return QList::size();};
-	inline ThingFilter *at(int i) const {return QList::at(i);};
-	inline void append(ThingFilter *fltr) {QList::append(fltr);};
-	inline void insert(int i, ThingFilter *fltr) {QList::insert(i, fltr);};
-	inline void replace(int i, ThingFilter *fltr) {QList::replace(i, fltr);};
-	inline void swap(int i, int j) {QList::swap(i, j);};
-	inline ThingFilter *takeAt(int i) {return QList::takeAt(i);};
+	inline int size() const {return FiltersList::size();};
+	inline ThingFilter *at(int i) const {return FiltersList::at(i);};
+	inline void append(ThingFilter *fltr) {FiltersList::append(fltr);};
+	inline void insert(int i, ThingFilter *fltr) {FiltersList::insert(i, fltr);};
+	inline void replace(int i, ThingFilter *fltr) {FiltersList::replace(i, fltr);};
+	inline void swap(int i, int j) {FiltersList::swap(i, j);};
+	inline ThingFilter *takeAt(int i) {return FiltersList::takeAt(i);};
 };
 
 #endif // THINGFILTER_H
