@@ -203,7 +203,6 @@ void PluginCore::changeAccountJid(const QString newJid)
 	// Уведомить окно о переключении персонажа
 	if (mainWindow)
 		mainWindow->init();
-	return;
 }
 
 void PluginCore::setAccountStatus(int status)
@@ -1057,7 +1056,6 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					++oldDamageValue;
 				if (stat->value(Statistic::StatDamageAura2).toString() == pers->citizenship())
 					++oldDamageValue;
-
 				if (fight->allyAurasCount() == 0)
 				{
 					if (oldProtectValue > 0)
@@ -1081,7 +1079,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 							stat->setValue(Statistic::StatProtectAura2, QVariant());
 						}
 					}
-					else if (val == "20%")
+					else if (val == "20%" && fight->gameHumanAllyCount() == 0)
 					{
 						if (oldProtectValue != 1)
 						{
@@ -1089,7 +1087,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 							stat->setValue(Statistic::StatProtectAura2, QVariant());
 						}
 					}
-					else if (val == "40%")
+					else if (val == "40%" && fight->gameHumanAllyCount() == 0)
 					{
 						if (oldProtectValue != 2)
 						{
@@ -1106,14 +1104,14 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 							stat->setValue(Statistic::StatDamageAura2, QVariant());
 						}
 					}
-					else if (val == "20%")
+					else if (val == "20%" && fight->gameHumanAllyCount() == 0)
 					{
 						if (oldDamageValue != 1)
 						{
 							stat->setValue(Statistic::StatDamageAura1, pers->citizenship());
 							stat->setValue(Statistic::StatDamageAura2, QVariant());
 						}
-					} else if (val == "40%")
+					} else if (val == "40%" && fight->gameHumanAllyCount() == 0)
 					{
 						if (oldDamageValue != 2)
 						{
