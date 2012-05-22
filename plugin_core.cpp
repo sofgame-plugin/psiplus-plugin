@@ -1004,7 +1004,8 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 			fight->start();
 		}
 		if (fight->isActive()) {
-			if (fight->getStep() == 1) {
+			int fStep = fight->getStep();
+			if (fStep == 1) {
 				QStringList enemies = fight->mobEnemiesList();
 				bool specReset = false;
 				bool specNotMark = false;
@@ -1041,7 +1042,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					}
 				}
 			}
-			else { // Должен быть не первый шаг, т.к. есть игровая бага из за которой не видны ауры на первом ударе
+			else if (fStep > 1) { // Должен быть не первый шаг, т.к. есть игровая бага из за которой не видны ауры на первом ударе
 				// Анализ наличия характерных аур, для отображения в статистике
 				Statistic *stat = Statistic::instance();
 				Pers *pers = Pers::instance();
