@@ -2053,23 +2053,25 @@ void PluginCore::mapsCommands(const QStringList &args)
 			maps->mapsInfo(&mapsInf);
 			int currMap = mapsInf.curr_map_index;
 			GameMap::instance()->getMapsList(&mapsLst);
-			int cntMaps = mapsLst.size();
-			for (int i = 0; i < cntMaps; i++) {
-				const int idx = mapsLst.at(i).index;
+			foreach (const GameMap::maps_list2 &ml, mapsLst)
+			{
+				const int idx = ml.index;
 				QString str1 = Qt::escape(QString("%1 - %2%3%4")
 					.arg(idx)
 					.arg((idx == currMap) ? "*" : QString())
-					.arg(mapsLst.at(i).name)
-					.arg((mapsLst.at(i).loaded) ? QString::fromUtf8(" [загружена]") : QString()));
-				if (mapsLst.at(i).loaded) {
+					.arg(ml.name)
+					.arg((ml.loaded) ? QString::fromUtf8(" [загружена]") : QString()));
+				if (ml.loaded)
+				{
 					str1 = "<font color=\"green\">" + str1 + "</font>";
 				}
-				if (idx == currMap) {
+				if (idx == currMap)
+				{
 					str1 = "<strong>" + str1 + "</strong>";
 				}
 				text.append(str1, true);
 			}
-			text.append(QString::fromUtf8("Всего карт: ") + QString::number(cntMaps), false);
+			text.append(QString::fromUtf8("Всего карт: ") + QString::number(mapsLst.size()), false);
 			setConsoleText(text, 3, true);
 		}
 	} else if (cntArgs == 2) {
