@@ -2100,8 +2100,10 @@ void PluginCore::mapsCommands(const QStringList &args)
 			}
 			if (fOk) {
 				text.append(QString::fromUtf8("Выгружено"), false);
-				setConsoleText(text, 3, true);
+			} else {
+				text.append(QString::fromUtf8("Ошибка: карта не найдена"), false);
 			}
+			setConsoleText(text, 3, true);
 			return;
 		}
 	} else {

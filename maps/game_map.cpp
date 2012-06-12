@@ -588,9 +588,13 @@ int GameMap::importMaps(const QString &imp_file)
 bool GameMap::removeMap(int map_index)
 {
 	if (map_index >= 0 && map_index < mapsList.size()) {
-		if (mapsList.at(map_index).status == InMemory) {
+		const MapInfo &mi = mapsList.at(map_index);
+		if (mi.status == None)
+			return false;
+
+		if (mi.status == InMemory)
 			unloadMap(map_index);
-		}
+
 		mapsList[map_index].status = None;
 		// Если выгружаемая карта текущая
 		if (map_index == mapCurrIndex) {
