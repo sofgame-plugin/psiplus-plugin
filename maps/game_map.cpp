@@ -898,7 +898,6 @@ bool GameMap::makeMapFromDomElement(MapInfo &mapHeader, const QDomElement &mapEl
 	} else {
 		mapPtr = new QVector<struct MapElement>;
 	}
-	mapHeader.status = InMemory;
 	mapHeader.name = mapName;
 	mapHeader.old_name = QString();
 	MapRect mapRect;
