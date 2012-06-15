@@ -43,6 +43,7 @@ public:
 
 	static Statistic *instance();
 	static void reset();
+	void clear();
 	bool isEmpty(int type) const;
 	QVariant value(int type) const;
 	void setValue(int type, QVariant val);

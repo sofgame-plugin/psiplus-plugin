@@ -191,7 +191,7 @@ void PluginCore::changeAccountJid(const QString newJid)
 	Pers *pers = Pers::instance();
 	pers->init();
 	// Сбрасываем модуль статистики
-	Statistic::reset();
+	Statistic::instance()->clear();
 	// Загрузить новые данные персонажа
 	loadPersStatus();
 	// Обновить регулярки зависящие он имени персонажа

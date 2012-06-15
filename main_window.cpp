@@ -213,6 +213,8 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	// Сигнал на смену фильтров
 	connect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
+	// Соединение на обновление статистики
+	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(updateStatistic(int)));
 	// Завязки в настройках
 	connect(restPopup, SIGNAL(toggled(bool)), restDurationPopup, SLOT(setEnabled(bool)));
 	// Инициируем форму
@@ -284,8 +286,6 @@ void SofMainWindow::init()
 	auraInfo->setShield(QString(), QString());
 	auraInfo->setSword(QString(), QString());
 	auraInfo->setPill(QString());
-	// Соединение на обновление статистики
-	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(updateStatistic(int)));
 }
 
 void SofMainWindow::setAutoEnterMode(bool mode)

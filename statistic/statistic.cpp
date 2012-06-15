@@ -32,10 +32,7 @@ Statistic::Statistic(QObject *parent) :
 
 Statistic::~Statistic()
 {
-	QList<StatItem *>items = itemsList.values();
-	while (!items.isEmpty()) {
-		delete items.takeFirst();
-	}
+	clear();
 }
 
 Statistic *Statistic::instance_ = NULL;
@@ -53,6 +50,14 @@ void Statistic::reset()
 		delete Statistic::instance_;
 		Statistic::instance_ = NULL;
 	}
+}
+
+void Statistic::clear()
+{
+	QList<StatItem *>items = itemsList.values();
+	foreach (const StatItem *item, itemsList.values())
+		delete item;
+	itemsList.clear();
 }
 
 bool Statistic::isEmpty(int type) const
