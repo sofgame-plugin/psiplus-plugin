@@ -35,8 +35,8 @@
 #include "pers.h"
 
 ThingsView::ThingsView( QWidget * parent ) : QTableView(parent)
+	, ifaceNum(-1)
 {
-	ifaceNum = Pers::instance()->getThingsInterface();
 	horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(horizontalHeader(), SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(headerContentMenu(const QPoint &)));
 }
@@ -48,6 +48,7 @@ ThingsView::~ThingsView()
 
 void ThingsView::init()
 {
+	ifaceNum = Pers::instance()->getThingsInterface();
 	setModel(Pers::instance()->getThingsModel(ifaceNum));
 
 	resizeColumnsToContents();
