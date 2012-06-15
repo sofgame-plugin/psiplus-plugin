@@ -156,6 +156,7 @@ void Pers::init()
 	watchEnergyStartValue = QINT32_MIN;
 	persLevelValue = -1;
 	pers_name = "";
+	_citizenship = "";
 	Settings *settings = Settings::instance();
 	loadBackpackSettingsFromDomNode(settings->getBackpackData());
 	setSetting(Settings::SettingWatchRestHealthEnergy, settings->getIntSetting(Settings::SettingWatchRestHealthEnergy));

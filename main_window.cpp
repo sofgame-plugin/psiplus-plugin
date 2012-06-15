@@ -497,7 +497,7 @@ void SofMainWindow::getAllDataFromCore() {
 		newStrValue = NA_TEXT;
 	persNameLabel->setText(newStrValue);
 	newStrValue = pers->citizenship();
-	if (newStrValue.isEmpty())
+	if (newStrValue.isEmpty() || newStrValue == QString::fromUtf8("нет"))
 		newStrValue = QString::fromUtf8("без гражданства");
 	persCitizenship->setText(newStrValue);
 	if (!pers->getIntParamValue(Pers::ParamPersLevel, &newIntValue)) {
