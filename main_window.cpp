@@ -213,8 +213,6 @@ SofMainWindow::SofMainWindow() : QWidget(0)
 	connect(pers, SIGNAL(persParamChanged(int, int, int)), this, SLOT(persParamChanged(int, int, int)));
 	// Сигнал на смену фильтров
 	connect(pers, SIGNAL(filtersChanged()), this, SLOT(updateThingFiltersTab()));
-	// Соединение на обновление статистики
-	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(updateStatistic(int)));
 	// Завязки в настройках
 	connect(restPopup, SIGNAL(toggled(bool)), restDurationPopup, SLOT(setEnabled(bool)));
 	// Инициируем форму
@@ -286,6 +284,8 @@ void SofMainWindow::init()
 	auraInfo->setShield(QString(), QString());
 	auraInfo->setSword(QString(), QString());
 	auraInfo->setPill(QString());
+	// Соединение на обновление статистики
+	connect(Statistic::instance(), SIGNAL(valueChanged(int)), this, SLOT(updateStatistic(int)));
 }
 
 void SofMainWindow::setAutoEnterMode(bool mode)
@@ -1221,22 +1221,22 @@ void SofMainWindow::activateSettingsPage()
 void SofMainWindow::resetCommonStatistic()
 {
 	Statistic *stat = Statistic::instance();
-	stat->setValue(::Statistic::StatLastGameJid, QVariant());
-	stat->setValue(::Statistic::StatLastChatJid, QVariant());
-	stat->setValue(::Statistic::StatMessagesCount, QVariant());
+	stat->setValue(Statistic::StatLastGameJid, QVariant());
+	stat->setValue(Statistic::StatLastChatJid, QVariant());
+	stat->setValue(Statistic::StatMessagesCount, QVariant());
 }
 
 void SofMainWindow::resetFightStatistic()
 {
 	Statistic *stat = Statistic::instance();
-	stat->setValue(::Statistic::StatFightsCount, QVariant());
-	stat->setValue(::Statistic::StatDamageMaxFromPers, QVariant());
-	stat->setValue(::Statistic::StatDamageMinFromPers, QVariant());
-	stat->setValue(::Statistic::StatDropMoneys, QVariant());
-	stat->setValue(::Statistic::StatThingsDropCount, QVariant());
-	stat->setValue(::Statistic::StatThingDropLast, QVariant());
-	stat->setValue(::Statistic::StatExperienceDropCount, QVariant());
-	stat->setValue(::Statistic::StatKilledEnemies, QVariant());
+	stat->setValue(Statistic::StatFightsCount, QVariant());
+	stat->setValue(Statistic::StatDamageMaxFromPers, QVariant());
+	stat->setValue(Statistic::StatDamageMinFromPers, QVariant());
+	stat->setValue(Statistic::StatDropMoneys, QVariant());
+	stat->setValue(Statistic::StatThingsDropCount, QVariant());
+	stat->setValue(Statistic::StatThingDropLast, QVariant());
+	stat->setValue(Statistic::StatExperienceDropCount, QVariant());
+	stat->setValue(Statistic::StatKilledEnemies, QVariant());
 }
 
 void SofMainWindow::applySettings()
