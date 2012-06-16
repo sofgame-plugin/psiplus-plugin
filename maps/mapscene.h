@@ -34,39 +34,14 @@
 
 #define MAP_ELEMENT_SIZE  25.0f
 
+class MapSceneItem;
 
 class MapScene : public QGraphicsScene
 {
 Q_OBJECT
 public:
-	enum LocationStatus {
-		LocationPortal = 1,
-		LocationSecret = 2
-	};
-	typedef QFlags<LocationStatus> MapElementFeature;
-	MapScene(QObject *parent = 0);
-	void clear();
-	MapPos sceneToMapCoordinates(const QPointF &p) const;
-	QRectF mapToSceneCoordinates(const MapPos &p) const;
-	const QColor &getPersPosColor() const {return persPosColor;};
-	void setPersPosColor(const QColor &color);
-	void drawMapElement(const MapPos &pos, const MapElementFeature &feature, bool enemies, bool modif);
-	void drawMapElementPathNorth(const MapPos &pos, int type, bool avaible);
-	void drawMapElementPathSouth(const MapPos &pos, int type, bool avaible);
-	void drawMapElementPathWest(const MapPos &pos, int type, bool avaible);
-	void drawMapElementPathEast(const MapPos &pos, int type, bool avaible);
-	void drawMark(const MapPos &pos, bool enable, const QColor &color);
-	void drawPersPos(const MapPos &pos);
-	void drawOtherPersPos(const MapPos &pos, const QStringList &list);
-	void removePersPosElements();
-	void setTooltip(const MapPos &pos, const QString &tooltipStr);
-	void drawMapName(const QString &name);
-	QRectF getMapSceneRect(qreal margin) const;
-
-protected:
-
-private:
 	enum ElementType {
+		ElementLocationRect,
 		ElementLocation,
 		ElementMark,
 		ElementPathNorth,
@@ -77,6 +52,28 @@ private:
 		ElementOtherPers,
 		ElementPersPos
 	};
+	enum LocationStatus {
+		LocationPortal = 1,
+		LocationSecret = 2
+	};
+	typedef QFlags<LocationStatus> MapElementFeature;
+	MapScene(QObject *parent = 0);
+	void clear();
+	MapPos sceneToMapCoordinates(const QPointF &p) const;
+	QRectF mapToSceneCoordinates(const MapPos &p) const;
+	const QColor &getPersPosColor() const {return persPosColor;}
+	void setPersPosColor(const QColor &color);
+	void drawPersPos(const MapPos &pos);
+	void drawOtherPersPos(const MapPos &pos, const QStringList &list);
+	void removePersPosElements();
+	void drawMapName(const QString &name);
+	QRectF getMapSceneRect(qreal margin) const;
+	MapSceneItem *getMapItem(const MapPos &pos) const;
+	void setMapItem(MapSceneItem *item, bool replace = true);
+
+protected:
+
+private:
 	void init();
 	void removeSceneElement(const QRectF &rect, ElementType type);
 	QPen getPathPen(int path_type, bool can_move) const;
@@ -86,6 +83,32 @@ private:
 	QGraphicsEllipseItem *persGraphicItem;
 	QColor persPosColor;
 
+};
+
+class MapSceneItem : public QGraphicsRectItem
+{
+public:
+	MapSceneItem(const MapPos &pos);
+	const MapPos &mapPos() const {return mPos;}
+	void setExtraInfo(MapScene::MapElementFeature feature, bool enemies);
+	void setPathNorth(int type, bool avaible);
+	void setPathSouth(int type, bool avaible);
+	void setPathWest(int type, bool avaible);
+	void setPathEast(int type, bool avaible);
+	void setMark(bool enable, const QColor &color);
+	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+private:
+	static QPen getPathPen(int path_type, bool can_move);
+
+private:
+	MapPos               mPos;
+	QGraphicsEllipseItem *centralCircle;
+	QGraphicsLineItem    *northLine;
+	QGraphicsLineItem    *southLine;
+	QGraphicsLineItem    *westLine;
+	QGraphicsLineItem    *eastLine;
+	QGraphicsPathItem    *markItem;
 };
 
 #endif // MAPSCENE_H

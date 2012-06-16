@@ -1255,19 +1255,23 @@ void GameMap::setMapElementMark(int elementIndex, const QString &title, const QC
 {
 	if (mapCurrArrayPtr) {
 		if (elementIndex >= 0 && elementIndex < mapCurrArrayPtr->size()) {
-			MapElement *me = &(*mapCurrArrayPtr)[elementIndex];
-			if (me->status == 1 && (!me->mark.enabled || me->mark.title != title || me->mark.color != c)) {
-				me->mark.enabled = true;
-				me->mark.title = title;
-				me->mark.color = c;
+			MapElement &me = (*mapCurrArrayPtr)[elementIndex];
+			if (me.status == 1 && (!me.mark.enabled || me.mark.title != title || me.mark.color != c)) {
+				me.mark.enabled = true;
+				me.mark.title = title;
+				me.mark.color = c;
 				mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 				if (!mapsList.at(mapCurrIndex).modified) {
 					mapsList[mapCurrIndex].modified = true;
 					modifiedMapsCount++;
 					initSaveTimer();
 				}
-				mapScene_->drawMark(me->pos, true, c);
-				mapScene_->setTooltip(me->pos, makeTooltipForMapElement(elementIndex));
+				MapSceneItem *msi = mapScene_->getMapItem(me.pos);
+				if (msi)
+				{
+					msi->setMark(true, c);
+					msi->setToolTip(makeTooltipForMapElement(me));
+				}
 			}
 		}
 	}
@@ -1280,17 +1284,21 @@ void GameMap::removeMapElementMark(int elementIndex)
 {
 	if (mapCurrArrayPtr) {
 		if (elementIndex >= 0 && elementIndex < mapCurrArrayPtr->size()) {
-			MapElement *me = &(*mapCurrArrayPtr)[elementIndex];
-			if (me->status == 1 && me->mark.enabled) {
-				me->mark.enabled = false;
+			MapElement &me = (*mapCurrArrayPtr)[elementIndex];
+			if (me.status == 1 && me.mark.enabled) {
+				me.mark.enabled = false;
 				mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 				if (!mapsList.at(mapCurrIndex).modified) {
 					mapsList[mapCurrIndex].modified = true;
 					modifiedMapsCount++;
 					initSaveTimer();
 				}
-				mapScene_->drawMark(me->pos, false, QColor());
-				mapScene_->setTooltip(me->pos, makeTooltipForMapElement(elementIndex));
+				MapSceneItem *msi = mapScene_->getMapItem(me.pos);
+				if (msi)
+				{
+					msi->setMark(false, QColor());
+					msi->setToolTip(makeTooltipForMapElement(me));
+				}
 			}
 		}
 	}
@@ -1341,17 +1349,19 @@ void GameMap::paintMap(MapScene *scene, int mapIndex)
 {
 	const QVector<GameMap::MapElement> *mapArrayPtr = mapsList.at(mapIndex).map;
 	for (int i = 0, cnt = mapArrayPtr->size(); i < cnt; i++) {
-		const MapElement *me = &mapArrayPtr->at(i);
-		if (me->status != 0) {
-			const MapPos &pos = me->pos;
-			scene->drawMapElement(pos, me->feature, (me->enemies_max > 0), false);
-			scene->drawMapElementPathNorth(pos, me->north_type, (me->can_north != 0));
-			scene->drawMapElementPathSouth(pos, me->south_type, (me->can_south != 0));
-			scene->drawMapElementPathWest(pos, me->west_type, (me->can_west != 0));
-			scene->drawMapElementPathEast(pos, me->east_type, (me->can_east != 0));
-			if (me->mark.enabled) {
-				scene->drawMark(pos, true, me->mark.color);
+		const MapElement &me = mapArrayPtr->at(i);
+		if (me.status != 0) {
+			MapSceneItem *msi = new MapSceneItem(me.pos);
+			msi->setExtraInfo(me.feature, (me.enemies_max > 0));
+			msi->setPathNorth(me.north_type, (me.can_north != 0));
+			msi->setPathSouth(me.south_type, (me.can_south != 0));
+			msi->setPathWest(me.west_type, (me.can_west != 0));
+			msi->setPathEast(me.east_type, (me.can_east != 0));
+			if (me.mark.enabled) {
+				msi->setMark(true, me.mark.color);
 			}
+			msi->setToolTip(makeTooltipForMapElement(me)); // TODO Переписать на ссылку
+			scene->setMapItem(msi, false);
 		}
 	}
 	scene->drawMapName(mapsList.at(mapIndex).name);
@@ -1370,13 +1380,6 @@ void GameMap::redrawMap()
 		paintMap(mapScene_, mapCurrIndex);
 		// Устанавливаем позицию персонажа
 		setPersPos(persPos);
-		// Тултипы
-		for (int i = 0, cnt = mapCurrArrayPtr->size(); i < cnt; i++) {
-			const MapElement &me = mapCurrArrayPtr->at(i);
-			if (me.status != 0) {
-				mapScene_->setTooltip(me.pos, makeTooltipForMapElement(i));
-			}
-		}
 		// --
 		mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 	}
@@ -1406,9 +1409,12 @@ void GameMap::addMapElement(const MapPos &pos)
 			initSaveTimer();
 		}
 		// Рисуем элемент карты
-		mapScene_->drawMapElement(pos, me.feature, false, false);
+		MapSceneItem *msi = new MapSceneItem(pos);
+		msi->setExtraInfo(me.feature, false);
 		// Подсказки
-		mapScene_->setTooltip(pos, makeTooltipForMapElement(i));
+		msi->setToolTip(makeTooltipForMapElement(me));
+		//--
+		mapScene_->setMapItem(msi, false);
 		mapScene_->setSceneRect(mapScene_->getMapSceneRect(0.5f));
 	}
 	mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
@@ -1417,19 +1423,16 @@ void GameMap::addMapElement(const MapPos &pos)
 /**
  * Формирование строчки для всплывающей подсказки элемента карты
  */
-QString GameMap::makeTooltipForMapElement(int el_index) const
+QString GameMap::makeTooltipForMapElement(const MapElement &me) const
 {
-	// Проверять el_index не будем - предполагается что вызов метода происходит уже после проверки.
-	// mapCurrArrayPtr не проверяем по той же причине
 	QString s_res;
-	const MapElement *me = &mapCurrArrayPtr->at(el_index);
-	if (me->mark.enabled) {
+	if (me.mark.enabled) {
 		s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
 			.arg(QString::fromUtf8("Метка:"))
-			.arg((me->mark.title.isEmpty()) ? QString::fromUtf8("<em>нет&nbsp;описания</em>") : Qt::escape(me->mark.title)));
+			.arg((me.mark.title.isEmpty()) ? QString::fromUtf8("<em>нет&nbsp;описания</em>") : Qt::escape(me.mark.title)));
 	}
-	int min_enem = me->enemies_min;
-	int max_enem = me->enemies_max;
+	int min_enem = me.enemies_min;
+	int max_enem = me.enemies_max;
 	if (min_enem > 0 || max_enem != 0) {
 		QString enemStr;
 		if (min_enem == max_enem) {
@@ -1440,9 +1443,9 @@ QString GameMap::makeTooltipForMapElement(int el_index) const
 		s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
 			.arg(QString::fromUtf8("Кол-во противников:"))
 			.arg(enemStr));
-		if (me->enemies_list.size() > 0) {
+		if (me.enemies_list.size() > 0) {
 			QStringList enemList;
-			foreach (const QString &enemStr, me->enemies_list) {
+			foreach (const QString &enemStr, me.enemies_list) {
 				enemList.append(Qt::escape(enemStr).replace(" ", "&nbsp;", Qt::CaseInsensitive));
 			}
 			s_res.append(QString("<tr><td><div class=\"layer1\">%1</div></td><td><div class=\"layer2\">%2</div></td></tr>")
@@ -1450,7 +1453,7 @@ QString GameMap::makeTooltipForMapElement(int el_index) const
 				.arg(enemList.join(", "))); //escape сделано ранее
 		}
 	}
-	MapScene::MapElementFeature feature = me->feature;
+	MapScene::MapElementFeature feature = me.feature;
 	if (feature.testFlag(MapScene::LocationPortal) || feature.testFlag(MapScene::LocationSecret)) {
 		QString featureStr;
 		if (feature.testFlag(MapScene::LocationPortal)) {
@@ -1511,31 +1514,37 @@ void GameMap::setPersPos(const MapPos &pos)
 	// Перерисовываем временные маршруты, если таковые существуют
 	if (oldPersPosIndex != -1) {
 		const MapElement *me = &mapCurrArrayPtr->at(oldPersPosIndex);
-		if (me->north_type == 2) {
-			mapScene_->drawMapElementPathNorth(me->pos, me->north_type, (me->can_north != 0));
-		}
-		if (me->south_type == 2) {
-			mapScene_->drawMapElementPathSouth(me->pos, me->south_type, (me->can_south != 0));
-		}
-		if (me->west_type == 2) {
-			mapScene_->drawMapElementPathWest(me->pos, me->west_type, (me->can_west != 0));
-		}
-		if (me->east_type == 2) {
-			mapScene_->drawMapElementPathEast(me->pos, me->east_type, (me->can_east != 0));
+		if (me->north_type == 2 || me->south_type == 2 || me->west_type == 2 || me->east_type == 2)
+		{
+			MapSceneItem *msi = mapScene_->getMapItem(me->pos);
+			if (msi)
+			{
+				if (me->north_type == 2)
+					msi->setPathNorth(me->north_type, (me->can_north != 0));
+				if (me->south_type == 2)
+					msi->setPathSouth(me->south_type, (me->can_south != 0));
+				if (me->west_type == 2)
+					msi->setPathWest(me->west_type, (me->can_west != 0));
+				if (me->east_type == 2)
+					msi->setPathEast(me->east_type, (me->can_east != 0));
+			}
 		}
 	}
 	const MapElement *me = &mapCurrArrayPtr->at(pers_index);
-	if (me->north_type == 2) {
-		mapScene_->drawMapElementPathNorth(me->pos, me->north_type, (me->can_north != 0));
-	}
-	if (me->south_type == 2) {
-		mapScene_->drawMapElementPathSouth(me->pos, me->south_type, (me->can_south != 0));
-	}
-	if (me->west_type == 2) {
-		mapScene_->drawMapElementPathWest(me->pos, me->west_type, (me->can_west != 0));
-	}
-	if (me->east_type == 2) {
-		mapScene_->drawMapElementPathEast(me->pos, me->east_type, (me->can_east != 0));
+	if (me->north_type == 2 || me->south_type == 2 || me->west_type == 2 || me->east_type == 2)
+	{
+		MapSceneItem *msi = mapScene_->getMapItem(me->pos);
+		if (msi)
+		{
+			if (me->north_type == 2)
+				msi->setPathNorth(me->north_type, (me->can_north != 0));
+			if (me->south_type == 2)
+				msi->setPathSouth(me->south_type, (me->can_south != 0));
+			if (me->west_type == 2)
+				msi->setPathWest(me->west_type, (me->can_west != 0));
+			if (me->east_type == 2)
+				msi->setPathEast(me->east_type, (me->can_east != 0));
+		}
 	}
 }
 
@@ -1634,54 +1643,58 @@ void GameMap::setMapElementPaths(const MapPos &pos, int paths)
 		// Можно прорисовывать карту
 		bool modif_ = false;
 		MapElement *me = &(*mapCurrArrayPtr)[i];
-		if (me->can_north != north) {
-			if (me->north_type == 0) {
-				me->north_type = 1;
-			} else {
-				me->north_type = 2; // Непостоянный маршрут
+		if (me->can_north != north || me->can_south != south || me->can_west != west || me->can_east != east)
+		{
+			MapSceneItem *msi = mapScene_->getMapItem(me->pos);
+			if (msi)
+			{
+				if (me->can_north != north) {
+					if (me->north_type == 0) {
+						me->north_type = 1;
+					} else {
+						me->north_type = 2; // Непостоянный маршрут
+					}
+					me->can_north = north;
+					msi->setPathNorth(me->north_type, (me->can_north != 0));
+				}
+				if (me->can_south != south) {
+					if (me->south_type == 0) {
+						me->south_type = 1;
+					} else {
+						me->south_type = 2; // Непостоянный маршрут
+					}
+					me->can_south = south;
+					msi->setPathSouth(me->south_type, (me->can_south != 0));
+				}
+				if (me->can_west != west) {
+					if (me->west_type == 0) {
+						me->west_type = 1;
+					} else {
+						me->west_type = 2; // Непостоянный маршрут
+					}
+					me->can_west = west;
+					msi->setPathWest(me->west_type, (me->can_west != 0));
+				}
+			}
+			if (me->can_east != east) {
+				if (me->east_type == 0) {
+					me->east_type = 1;
+				} else {
+					me->east_type = 2; // Непостоянный маршрут
+				}
+				me->can_east = east;
+				msi->setPathEast(me->east_type, (me->can_east != 0));
 			}
 			modif_ = true;
-			me->can_north = north;
-			mapScene_->drawMapElementPathNorth(me->pos, me->north_type, (me->can_north != 0));
 		}
 		if (me->north_type == 0) {
 			me->north_type = 1;
 		}
-		if (me->can_south != south) {
-			if (me->south_type == 0) {
-				me->south_type = 1;
-			} else {
-				me->south_type = 2; // Непостоянный маршрут
-			}
-			modif_ = true;
-			me->can_south = south;
-			mapScene_->drawMapElementPathSouth(me->pos, me->south_type, (me->can_south != 0));
-		}
 		if (me->south_type == 0) {
 			me->south_type = 1;
 		}
-		if (me->can_west != west) {
-			if (me->west_type == 0) {
-				me->west_type = 1;
-			} else {
-				me->west_type = 2; // Непостоянный маршрут
-			}
-			modif_ = true;
-			me->can_west = west;
-			mapScene_->drawMapElementPathWest(me->pos, me->west_type, (me->can_west != 0));
-		}
 		if (me->west_type == 0) {
 			me->west_type = 1;
-		}
-		if (me->can_east != east) {
-			if (me->east_type == 0) {
-				me->east_type = 1;
-			} else {
-				me->east_type = 2; // Непостоянный маршрут
-			}
-			modif_ = true;
-			me->can_east = east;
-			mapScene_->drawMapElementPathEast(me->pos, me->east_type, (me->can_east != 0));
 		}
 		if (me->east_type == 0) {
 			me->east_type = 1;
@@ -1725,8 +1738,13 @@ void GameMap::setMapElementEnemies(const MapPos &pos, int count_min, int count_m
 			modifiedMapsCount++;
 			initSaveTimer();
 		}
-		mapScene_->drawMapElement(pos, me.feature, (me.enemies_max > 0), true);
-		mapScene_->setTooltip(pos, makeTooltipForMapElement(idx));
+		MapSceneItem *msi = mapScene_->getMapItem(pos);
+		if (msi)
+		{
+			msi->setExtraInfo(me.feature, (me.enemies_max > 0));
+			msi->setToolTip(makeTooltipForMapElement(me));
+		}
+		mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 	}
 }
 
@@ -1753,8 +1771,12 @@ void GameMap::setMapElementEnemiesList(const MapPos &pos, const QStringList &enL
 			modifiedMapsCount++;
 			initSaveTimer();
 		}
-		mapScene_->drawMapElement(pos, me.feature, (me.enemies_max > 0), true);
-		mapScene_->setTooltip(pos, makeTooltipForMapElement(idx));
+		MapSceneItem *msi = mapScene_->getMapItem(pos);
+		if (msi)
+		{
+			msi->setExtraInfo(me.feature, (me.enemies_max > 0));
+			msi->setToolTip(makeTooltipForMapElement(me));
+		}
 	}
 	mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 }
@@ -1774,8 +1796,12 @@ void GameMap::setMapElementType(const MapPos &pos, const MapScene::MapElementFea
 				modifiedMapsCount++;
 				initSaveTimer();
 			}
-			mapScene_->drawMapElement(pos, feature, (me.enemies_max > 0), true);
-			mapScene_->setTooltip(pos, makeTooltipForMapElement(i));
+			MapSceneItem *msi = mapScene_->getMapItem(pos);
+			if (msi)
+			{
+				msi->setExtraInfo(me.feature, (me.enemies_max > 0));
+				msi->setToolTip(makeTooltipForMapElement(me));
+			}
 		}
 		mapsList[mapCurrIndex].last_access = QDateTime::currentDateTime();
 	}

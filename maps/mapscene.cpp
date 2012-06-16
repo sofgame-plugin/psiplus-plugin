@@ -27,7 +27,7 @@
 
 #include "mapscene.h"
 
-#define ZValueParth         0.0
+#define ZValuePath          0.0
 #define ZValueLocation      3.0
 #define ZValueMark          7.0
 #define ZValueOtherPersLine 8.0
@@ -35,6 +35,7 @@
 #define ZValuePersPos       9.0
 #define ZValueMapName       10.0
 
+// ------------- MapScene ----------------------------
 MapScene::MapScene(QObject *parent) :
 	QGraphicsScene(parent)
 {
@@ -130,70 +131,6 @@ void MapScene::removeSceneElement(const QRectF &rect, MapScene::ElementType type
 }
 
 /**
- * Отрисовывает основной элемент локации (кружочек)
- * Заливает цветом зависящим от наличия особенностей и врагов
- */
-void MapScene::drawMapElement(const MapPos &pos, const MapElementFeature &feature, bool enemies, bool modif)
-{
-	if (!nullElementPos.isValid()) {
-		// Нет начальной точки отсчета
-		nullElementPos = pos;
-	}
-	// Расчитываем координаты сцены
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (modif) {
-		// Удаляем старые элементы
-		removeSceneElement(itemRect, ElementLocation);
-	}
-	QBrush brush(Qt::SolidPattern);
-	if (enemies) {
-		// На этом участке карты есть враги
-		brush.setColor(Qt::red);
-	} else {
-		if (feature.testFlag(LocationPortal) || feature.testFlag(LocationSecret)) {
-			// Есть секреты или порталы
-			brush.setColor(Qt::green);
-		} else {
-			// Нет ничего
-			brush.setColor(Qt::gray);
-		}
-	}
-	qreal ellipseSize = qFloor(itemRect.width() * 0.5f);
-	qreal margin = qFloor((itemRect.width() - ellipseSize) / 2.0f);
-	QGraphicsEllipseItem *gItem = addEllipse(margin, margin, ellipseSize, ellipseSize, QPen(Qt::black, 1.0f, Qt::SolidLine), brush);
-	gItem->setZValue(ZValueLocation);
-	gItem->setData(0, ElementLocation);
-	gItem->setPos(itemRect.x(), itemRect.y());
-}
-
-/**
- * Отрисовывает отметку на карте указанным цветом.
- * Если enable == false, то метка удаляется
- */
-void MapScene::drawMark(const MapPos &pos, bool enable, const QColor &color)
-{
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (!itemRect.isValid())
-		return;
-	removeSceneElement(itemRect, ElementMark);
-	if (enable) {
-		qreal ellipseSize = itemRect.width() / 2.0f;
-		qreal x = itemRect.x() + itemRect.width() / 4.0f;
-		qreal y = itemRect.y() + itemRect.height() / 4.0f;
-		QPainterPath markPath = QPainterPath();
-		markPath.moveTo(x + ellipseSize * 0.75f, y - 2.0f);
-		markPath.lineTo(x + ellipseSize * 0.75f, y - 2.0f + ellipseSize * 0.5f);
-		markPath.lineTo(x + ellipseSize * 1.25f, y - 2.0f);
-		QColor c = color;
-		if (!c.isValid())
-			c = QColor(Qt::blue);
-		QGraphicsPathItem *gMarkItem = addPath(markPath, QPen(c, 2.0f, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-		gMarkItem->setZValue(ZValueMark);
-		gMarkItem->setData(0, ElementMark);
-	}
-}
-
-/**
  * Отрисовывает название карты в верхней части сцены
  */
 void MapScene::drawMapName(const QString &name)
@@ -255,106 +192,6 @@ void MapScene::drawPersPos(const MapPos &pos)
 }
 
 /**
- * Непосредственно прорисовывает путь движения на карте для выбранного элемента (север)
- */
-void MapScene::drawMapElementPathNorth(const MapPos &pos, int type, bool avaible)
-{
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (!itemRect.isValid())
-		return;
-	qreal x1 = itemRect.x();
-	qreal y1 = itemRect.y();
-	qreal w = itemRect.width();
-	QRectF rect1(x1 + w / 4.0f, y1 + w / 4.0f, w / 2.0f, w / 2.0f);
-	removeSceneElement(rect1, ElementPathNorth);
-	if (avaible || type == 2) {
-		qreal x2 = w / 2.0f;
-		qreal y2 = w / 10.f; // учитываем утолщение кончика
-		qreal y3 = y2 + w / 4.0f;  // С запасом - утолщение на хвосте
-		QPen pen = getPathPen(type, avaible);
-		QGraphicsLineItem *gItem = addLine(x2, y2, x2, y3, pen);
-		gItem->setData(0, ElementPathNorth);
-		gItem->setZValue(ZValueParth);
-		gItem->setPos(x1, y1);
-	}
-}
-
-/**
- * Непосредственно прорисовывает путь движения на карте для выбранного элемента (юг)
- */
-void MapScene::drawMapElementPathSouth(const MapPos &pos, int type, bool avaible)
-{
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (!itemRect.isValid())
-		return;
-	qreal x1 = itemRect.x();
-	qreal y1 = itemRect.y();
-	qreal w = itemRect.width();
-	QRectF rect1(x1 + w / 4.0f, y1 + w / 4.0f, w / 2.0f, w / 2.0f);
-	removeSceneElement(rect1, ElementPathSouth);
-	if (avaible || type == 2) {
-		qreal x2 = w / 2.0f;
-		qreal y2 = w * 0.9f;
-		qreal y3 = y2 - w / 4.0f; // Это с запасом
-		QPen pen = getPathPen(type, avaible);
-		QGraphicsLineItem *gItem = addLine(x2, y2, x2, y3, pen);
-		gItem->setData(0, ElementPathSouth);
-		gItem->setZValue(ZValueParth);
-		gItem->setPos(x1, y1);
-	}
-}
-
-/**
- * Непосредственно прорисовывает путь движения на карте для выбранного элемента (запад)
- */
-void MapScene::drawMapElementPathWest(const MapPos &pos, int type, bool avaible)
-{
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (!itemRect.isValid())
-		return;
-	qreal x1 = itemRect.x();
-	qreal y1 = itemRect.y();
-	qreal w = itemRect.width();
-	QRectF rect1(x1 + w / 4.0f, y1 + w / 4.0f, w / 2.0f, w / 2.0f);
-	removeSceneElement(rect1, ElementPathWest);
-	if (avaible || type == 2) {
-		qreal x2 = w / 10.0f;
-		qreal y2 = w / 2.0f;
-		qreal x3 = x2 + w / 4.0f;
-		QPen pen = getPathPen(type, avaible);
-		QGraphicsLineItem *gItem = addLine(x2, y2, x3, y2, pen);
-		gItem->setData(0, ElementPathWest);
-		gItem->setZValue(ZValueParth);
-		gItem->setPos(x1, y1);
-	}
-}
-
-/**
- * Непосредственно прорисовывает путь движения на карте для выбранного элемента (восток)
- */
-void MapScene::drawMapElementPathEast(const MapPos &pos, int type, bool avaible)
-{
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (!itemRect.isValid())
-		return;
-	qreal x1 = itemRect.x();
-	qreal y1 = itemRect.y();
-	qreal w = itemRect.width();
-	QRectF rect1(x1 + w / 4.0f, y1 + w / 4.0f, w / 2.0f, w / 2.0f);
-	removeSceneElement(rect1, ElementPathEast);
-	if (avaible || type == 2) {
-		qreal x2 = w * 0.9f;
-		qreal y2 = w / 2.0f;
-		qreal x3 = x2 - w / 4.0f;
-		QPen pen = getPathPen(type, avaible);
-		QGraphicsLineItem *gItem = addLine(x2, y2, x3, y2, pen);
-		gItem->setData(0, ElementPathEast);
-		gItem->setZValue(ZValueParth);
-		gItem->setPos(x1, y1);
-	}
-}
-
-/**
  * Отмечает местоположение другого персонажа карте
  */
 void MapScene::drawOtherPersPos(const MapPos &pos, const QStringList &list)
@@ -397,22 +234,6 @@ void MapScene::removePersPosElements()
 }
 
 /**
- * Установка всплавающей подсказки для элемента карты
- */
-void MapScene::setTooltip(const MapPos &pos, const QString &tooltipStr)
-{
-	QRectF itemRect = mapToSceneCoordinates(pos);
-	if (itemRect.isValid()) {
-		foreach (QGraphicsItem *item, items(itemRect, Qt::IntersectsItemShape)) {
-			if (item->data(0).toInt() == ElementLocation) {
-				item->setToolTip(tooltipStr);
-				break;
-			}
-		}
-	}
-}
-
-/**
  * Настраивает перо, в зависимости от типа пути
  */
 QPen MapScene::getPathPen(int path_type, bool can_move) const
@@ -429,4 +250,233 @@ QPen MapScene::getPathPen(int path_type, bool can_move) const
 		pen.setWidth(MAP_ELEMENT_SIZE / 16.0f);
 	}
 	return pen;
+}
+
+/**
+ * Возвращает указатель на элемент карты для указанной позиции или NULL если не найден
+ */
+MapSceneItem *MapScene::getMapItem(const MapPos &pos) const
+{
+	QRectF itemRect = mapToSceneCoordinates(pos);
+	if (itemRect.isValid())
+	{
+		foreach (QGraphicsItem *gItem, items(itemRect, Qt::IntersectsItemShape))
+		{
+			if (gItem->data(0).toInt() == MapScene::ElementLocationRect)
+				return (MapSceneItem *)gItem;
+		}
+	}
+	return NULL;
+}
+
+void MapScene::setMapItem(MapSceneItem *item, bool replace)
+{
+	const MapPos &pos = item->mapPos();
+	if (!nullElementPos.isValid()) {
+		// Нет начальной точки отсчета
+		nullElementPos = pos;
+	}
+	// Расчитываем координаты сцены
+	QRectF itemRect = mapToSceneCoordinates(pos);
+	// Удаление старого объекта
+	if (replace)
+	{
+		MapSceneItem *oldItem = getMapItem(item->mapPos());
+		if (oldItem)
+			delete oldItem;
+	}
+	// Добавление на сцену
+	addItem(item);
+	item->setPos(itemRect.topLeft());
+}
+
+// ------------- MapSceneItem ------------------------
+
+MapSceneItem::MapSceneItem(const MapPos &pos) : QGraphicsRectItem(NULL)
+	, northLine(NULL)
+	, southLine(NULL)
+	, westLine(NULL)
+	, eastLine(NULL)
+	, markItem(NULL)
+{
+	mPos = pos;
+	setRect(0.0f, 0.0f, MAP_ELEMENT_SIZE, MAP_ELEMENT_SIZE);
+
+	qreal ellipseSize = qFloor(MAP_ELEMENT_SIZE * 0.5f);
+	qreal margin = qFloor((MAP_ELEMENT_SIZE - ellipseSize) / 2.0f);
+	centralCircle = new QGraphicsEllipseItem(0.0f, 0.0f, ellipseSize, ellipseSize, this);
+	centralCircle->setPen(QPen(Qt::black, 1.0f, Qt::SolidLine));
+	QBrush br(Qt::SolidPattern);
+	br.setColor(Qt::gray);
+	centralCircle->setBrush(br);
+	centralCircle->setZValue(ZValueLocation);
+	centralCircle->setData(0, MapScene::ElementLocation);
+	centralCircle->setPos(margin, margin);
+}
+
+void MapSceneItem::setExtraInfo(MapScene::MapElementFeature feature, bool enemies)
+{
+	QBrush br = centralCircle->brush();
+	if (enemies) {
+		// На этом участке карты есть враги
+		br.setColor(Qt::red);
+	} else {
+		if (feature.testFlag(MapScene::LocationPortal) || feature.testFlag(MapScene::LocationSecret)) {
+			// Есть секреты или порталы
+			br.setColor(Qt::green);
+		} else {
+			// Нет ничего
+			br.setColor(Qt::gray);
+		}
+	}
+	centralCircle->setBrush(br);
+}
+
+QPen MapSceneItem::getPathPen(int path_type, bool can_move)
+{
+	QPen p(Qt::gray);
+	p.setStyle(Qt::SolidLine);
+	if (can_move != 0) {
+		if (path_type == 2) {
+			p.setWidth(MAP_ELEMENT_SIZE / 8.0f);
+		} else {
+			p.setWidth(MAP_ELEMENT_SIZE / 4.0f);
+		}
+	} else if (path_type == 2) {
+		p.setWidth(MAP_ELEMENT_SIZE / 16.0f);
+	}
+	return p;
+
+}
+
+/**
+ * Непосредственно прорисовывает путь движения на карте для выбранного элемента (север)
+ */
+void MapSceneItem::setPathNorth(int type, bool avaible)
+{
+	if (northLine)
+	{
+		delete northLine;
+		northLine = NULL;
+	}
+
+	if (avaible || type == 2)
+	{
+		qreal w =  MAP_ELEMENT_SIZE;
+		qreal x1 = w / 2.0f;
+		qreal y1 = w / 10.f; // учитываем утолщение кончика
+		qreal y2 = y1 + w / 4.0f;  // С запасом - утолщение на хвосте
+		northLine = new QGraphicsLineItem(x1, y1, x1, y2, this);
+		northLine->setPen(getPathPen(type, avaible));
+		northLine->setData(0, MapScene::ElementPathNorth);
+		northLine->setZValue(ZValuePath);
+	}
+}
+
+/**
+ * Непосредственно прорисовывает путь движения на карте для выбранного элемента (юг)
+ */
+void MapSceneItem::setPathSouth(int type, bool avaible)
+{
+	if (southLine)
+	{
+		delete southLine;
+		southLine = NULL;
+	}
+
+	if (avaible || type == 2)
+	{
+		qreal w = MAP_ELEMENT_SIZE;
+		qreal x1 = w / 2.0f;
+		qreal y1 = w * 0.9f;
+		qreal y2 = y1 - w / 4.0f; // Это с запасом
+		southLine = new QGraphicsLineItem(x1, y1, x1, y2, this);
+		southLine->setPen(getPathPen(type, avaible));
+		southLine->setData(0, MapScene::ElementPathSouth);
+		southLine->setZValue(ZValuePath);
+	}
+}
+
+/**
+* Непосредственно прорисовывает путь движения на карте для выбранного элемента (запад)
+*/
+void MapSceneItem::setPathWest(int type, bool avaible)
+{
+	if (westLine)
+	{
+		delete westLine;
+		westLine = NULL;
+	}
+
+	if (avaible || type == 2)
+	{
+		qreal w = MAP_ELEMENT_SIZE;
+		qreal x1 = w / 10.0f;
+		qreal y1 = w / 2.0f;
+		qreal x2 = x1 + w / 4.0f;
+		westLine = new QGraphicsLineItem(x1, y1, x2, y1, this);
+		westLine->setPen(getPathPen(type, avaible));
+		westLine->setData(0, MapScene::ElementPathWest);
+		westLine->setZValue(ZValuePath);
+	}
+}
+
+/**
+* Непосредственно прорисовывает путь движения на карте для выбранного элемента (восток)
+*/
+void MapSceneItem::setPathEast(int type, bool avaible)
+{
+	if (eastLine)
+	{
+		delete eastLine;
+		eastLine = NULL;
+	}
+
+	if (avaible || type == 2)
+	{
+		qreal w = MAP_ELEMENT_SIZE;
+		qreal x1 = w * 0.9f;
+		qreal y1 = w / 2.0f;
+		qreal x2 = x1 - w / 4.0f;
+		eastLine = new QGraphicsLineItem(x1, y1, x2, y1, this);
+		eastLine->setPen(getPathPen(type, avaible));
+		eastLine->setData(0, MapScene::ElementPathEast);
+		eastLine->setZValue(ZValuePath);
+	}
+}
+
+/**
+ * Отрисовывает отметку на карте указанным цветом.
+ * Если enable == false, то метка удаляется
+ */
+void MapSceneItem::setMark(bool enable, const QColor &color)
+{
+	if (markItem && !enable)
+	{
+		delete markItem;
+		markItem = NULL;
+		return;
+	}
+
+	if (!markItem)
+	{
+		qreal ellipseSize = MAP_ELEMENT_SIZE / 2.0f;
+		qreal x = MAP_ELEMENT_SIZE / 4.0f;
+		qreal y = MAP_ELEMENT_SIZE / 4.0f;
+		QPainterPath markPath = QPainterPath();
+		markPath.moveTo(x + ellipseSize * 0.75f, y - 2.0f);
+		markPath.lineTo(x + ellipseSize * 0.75f, y - 2.0f + ellipseSize * 0.5f);
+		markPath.lineTo(x + ellipseSize * 1.25f, y - 2.0f);
+		markItem = new QGraphicsPathItem(markPath, this);
+		markItem->setZValue(ZValueMark);
+		markItem->setData(0, MapScene::ElementMark);
+	}
+	QColor c = color;
+	if (!c.isValid())
+		c = QColor(Qt::blue);
+	markItem->setPen(QPen(c, 2.0f, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+}
+
+void MapSceneItem::paint(QPainter */*painter*/, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
+{
 }

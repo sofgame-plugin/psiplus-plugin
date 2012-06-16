@@ -74,7 +74,7 @@ class GameMap: public QObject
 			bool	enabled;
 			QString title;
 			QColor  color;
-			MapElementMark() : enabled(false) {};
+			MapElementMark() : enabled(false) {}
 		};
 
 	public:
@@ -108,7 +108,7 @@ class GameMap: public QObject
 		void setOtherPersPos(QVector<GameMap::maps_other_pers>*);
 		int  getMapsSettingParam(ParamId) const;
 		void setMapsParam(ParamId, int);
-		int  getUnloadInterval() const {return autoUnloadInterval;};
+		int  getUnloadInterval() const {return autoUnloadInterval;}
 		void setUnloadInterval(int minutes);
 		QDomElement exportMapsSettingsToDomElement(QDomDocument &xmlDoc) const;
 		const QColor &getPersPosColor() const;
@@ -138,7 +138,7 @@ class GameMap: public QObject
 			int               enemies_max;
 			QStringList       enemies_list;
 			MapElementMark    mark;
-			MapElement() {}; // Для добавления в вектор
+			MapElement() {} // Для добавления в вектор
 			MapElement(const MapPos &pos_, MapScene::MapElementFeature feature_ = MapScene::MapElementFeature()) :
 				status(1),
 				feature(feature_),
@@ -146,7 +146,7 @@ class GameMap: public QObject
 				can_north(0), can_south(0), can_west(0), can_east(0),
 				north_type(0), south_type(0), west_type(0), east_type(0),
 				enemies_min(-1), enemies_max(0)
-			{};
+			{}
 		};
 		struct MapInfo {
 			MapStatus  status;
@@ -156,12 +156,12 @@ class GameMap: public QObject
 			QVector<struct GameMap::MapElement>* map;
 			bool       modified;
 			QDateTime  last_access;
-			MapInfo() {}; // Для добавления в вектор
+			MapInfo() {} // Для добавления в вектор
 			MapInfo(MapStatus status_, const QString &name_) :
 				status(status_), name(name_),
 				map(NULL),
 				modified(false)
-			{};
+			{}
 		};
 		struct OtherPers {
 			MapPos      pos;
@@ -171,7 +171,7 @@ class GameMap: public QObject
 			MapPos      lastPos;
 			int         lastIndex;
 			int         persPosIndex;
-			MapCache() : lastIndex(-1), persPosIndex(-1) {};
+			MapCache() : lastIndex(-1), persPosIndex(-1) {}
 		};
 
 		static GameMap *instace_;
@@ -202,7 +202,7 @@ class GameMap: public QObject
 		void selectMap(const MapPos &pos);
 		void paintMap(MapScene *scene, int mapIndex);
 		void redrawMap();
-		QString makeTooltipForMapElement(int) const;
+		QString makeTooltipForMapElement(const MapElement &me) const;
 		int  getMapElementIndex(int mapIndex, const MapPos &pos);
 		void clearOtherPersPos();
 		void initSaveTimer();
