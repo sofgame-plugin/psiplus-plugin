@@ -93,7 +93,7 @@ void GameMap::init(const QString &acc_jid)
 	currAccJid = acc_jid;
 	// Инициализация переменных
 	persPos.reset();
-	mapCache = MapCache();
+	mapCache.reset();
 	mapCurrIndex = -1;
 	mapCurrArrayPtr = NULL;
 	otherPers.clear();
@@ -599,7 +599,7 @@ bool GameMap::removeMap(int map_index)
 		// Если выгружаемая карта текущая
 		if (map_index == mapCurrIndex) {
 			// Очищаем кэши индекса карт
-			mapCache = MapCache();
+			mapCache.reset();
 			// Прописываем индекс и указатель на текущую карту
 			mapCurrIndex = -1;
 			// Перерисовываем карту
@@ -1219,7 +1219,7 @@ void GameMap::removeMapElement(int mapIndex, int elementIndex)
 	}
 	// Очищаем кэши индекса карт, т.к. вероятно, что наш перемещенный элемент сидит в кэше
 	if (mapIndex == mapCurrIndex) {
-		mapCache = MapCache();
+		mapCache.reset();
 	}
 	// Меняем время доступа
 	mapsList[mapIndex].last_access = QDateTime::currentDateTime();
@@ -1509,10 +1509,10 @@ void GameMap::setPersPos(const MapPos &pos)
 	}
 	persPos = pos;
 	mapScene_->drawPersPos(pos);
-	int oldPersPosIndex = mapCache.persPosIndex;
-	mapCache.persPosIndex = pers_index;
+	int oldPersPosIndex = mapCache.persPosIndex();
+	mapCache.setPersPosIndex(pers_index);
 	// Перерисовываем временные маршруты, если таковые существуют
-	if (oldPersPosIndex != -1) {
+	if (oldPersPosIndex != -1 && oldPersPosIndex != pers_index) {
 		const MapElement *me = &mapCurrArrayPtr->at(oldPersPosIndex);
 		if (me->north_type == 2 || me->south_type == 2 || me->west_type == 2 || me->east_type == 2)
 		{
@@ -1553,7 +1553,7 @@ void GameMap::setPersPos(const MapPos &pos)
  * Если индекс карты -1, то ищет в текущей карте
  * Если не найдено, то возвращает -1
  */
-int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos)
+int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos, bool useCache)
 {
 	if (mapIndex == -1) {
 		mapIndex = mapCurrIndex;
@@ -1564,10 +1564,13 @@ int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos)
 	if (!pos.isValid())
 		return -1;
 	// Сначала сравним с последним запросом только для текущей карты (для скорости)
-	if (mapIndex == mapCurrIndex && mapCache.lastPos == pos) {
-		return mapCache.lastIndex;
+	if (useCache && mapIndex == mapCurrIndex)
+	{
+		int i = mapCache.index(pos);
+		if (i != -1)
+			return i;
 	}
-	// В кэше не нашли, ищем в массиве тупым перебором
+	// В кэше не нашли, ищем в массиве тупым перебором. !!! TODO Оптимизировать поиск !!!
 	// Подгружаем карту, если необходимо
 	if (mapsList.at(mapIndex).status == HeaderOnly) {
 		if (!loadMap(mapIndex))
@@ -1580,8 +1583,7 @@ int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos)
 		if (me->status > 0 && me->pos == pos) {
 			if (mapIndex == mapCurrIndex) {
 				// Кэш только для текущей карты
-				mapCache.lastPos = pos;
-				mapCache.lastIndex = i;
+				mapCache.setIndex(pos, i);
 			}
 			return i;
 		}
@@ -1874,7 +1876,7 @@ bool GameMap::switchMap(int mapIndex)
 			return false;
 	}
 	// Очищаем кэши индекса карт
-	mapCache = MapCache();
+	mapCache.reset();
 	// Прописываем индекс и указатель на текущую карту
 	mapCurrIndex = mapIndex;
 	mapCurrArrayPtr = mapsList[mapIndex].map;
@@ -1907,7 +1909,7 @@ bool GameMap::unloadMap(int mapIndex)
 	// Если выгружаемая карта текущая
 	if (mapIndex == mapCurrIndex) {
 		// Очищаем кэши индекса карт
-		mapCache = MapCache();
+		mapCache.reset();
 		// Прописываем индекс и указатель на текущую карту
 		mapCurrIndex = -1;
 		// Перерисовываем карту
@@ -1930,7 +1932,7 @@ bool GameMap::clearMap(int mapIndex)
 	clearOtherPersPos();
 	if (mapIndex == mapCurrIndex) {
 		// Очищаем кэши индекса карт
-		mapCache = MapCache();
+		mapCache.reset();
 		// Перерисовываем карту
 		redrawMap();
 		// Подгоняем размер сцены

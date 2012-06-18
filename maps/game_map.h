@@ -33,6 +33,7 @@
 #include "mapscene.h"
 #include "maprect.h"
 #include "mappos.h"
+#include "mapcache.h"
 
 QT_BEGIN_NAMESPACE
 	class QGraphicsEllipseItem;
@@ -167,12 +168,6 @@ class GameMap: public QObject
 			MapPos      pos;
 			QStringList names;
 		};
-		struct MapCache {
-			MapPos      lastPos;
-			int         lastIndex;
-			int         persPosIndex;
-			MapCache() : lastIndex(-1), persPosIndex(-1) {}
-		};
 
 		static GameMap *instace_;
 		MapScene *mapScene_;
@@ -203,7 +198,7 @@ class GameMap: public QObject
 		void paintMap(MapScene *scene, int mapIndex);
 		void redrawMap();
 		QString makeTooltipForMapElement(const MapElement &me) const;
-		int  getMapElementIndex(int mapIndex, const MapPos &pos);
+		int  getMapElementIndex(int mapIndex, const MapPos &pos, bool useCache = true);
 		void clearOtherPersPos();
 		void initSaveTimer();
 		void initUnloadTimer(bool update_interval);
