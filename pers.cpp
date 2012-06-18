@@ -1385,6 +1385,7 @@ QString Pers::getPersStatusString()
 		Pers::statusStrings[StatusDealerSale]       = QString::fromUtf8("Продажа торговцу");
 		Pers::statusStrings[StatusHelpMenu]         = QString::fromUtf8("Меню по 09");
 		Pers::statusStrings[StatusTopList]          = QString::fromUtf8("Сильнейшие персонажи");
+		Pers::statusStrings[StatusRatingInfo]       = QString::fromUtf8("Рейтинг до уровня");
 		Pers::statusStrings[StatusServerStatistic1] = QString::fromUtf8("Статистика игры");
 		Pers::statusStrings[StatusServerStatistic2] = QString::fromUtf8("Статистика по странам");
 		Pers::statusStrings[StatusRealEstate]       = QString::fromUtf8("Ваша недвижимость");

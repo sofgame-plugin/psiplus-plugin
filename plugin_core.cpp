@@ -102,6 +102,7 @@ PluginCore::PluginCore()
 	dealerBuyReg.setPattern(QString::fromUtf8("^в наличии:(-?[0-9]+) дринк$")); // Первая строка при покупке у торговца
 	warehouseShelfReg.setPattern(QString::fromUtf8("^На (\\w+) полках Вы видите:$"));
 	saveStatusTimer.setSingleShot(true);
+	ratingInfoReg.setPattern(QString::fromUtf8("^Рейтинг до -?[1-9][0-9]* уровня:$")); // Рейтинг до 10 уровня:
 	// --
 	fightOneTimeoutReg.setPattern((QString::fromUtf8("^до завершения хода№([0-9]+): ([0-9]+)мин\\.([0-9]+)сек\\.$"))); // Номер хода и таймаут
 	fightElement0Reg.setPattern(QString::fromUtf8("([^/]+)(/(.+)/)?\\[(у:([0-9]+)\\,з:)?([0-9]+)/([0-9]+)\\]")); // Боевые единицы (союзники)
@@ -708,8 +709,8 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 			} else if (sMessage == QString::fromUtf8("Меню справки:")) {
 				nPersStatus = Pers::StatusHelpMenu;
 				gameText.setEnd(); // Блокируем дальнейший анализ
-			} else if (sMessage == QString::fromUtf8("Сильнейшие персонажи.")) {
-				nPersStatus = Pers::StatusTopList;
+			} else if (sMessage == QString::fromUtf8("Сильнейшие персонажи.") || ratingInfoReg.indexIn(sMessage, 0) != -1) {
+				nPersStatus = (sMessage == QString::fromUtf8("Сильнейшие персонажи.")) ? Pers::StatusTopList : Pers::StatusRatingInfo;
 				//if (coloring) {
 					gameText.replace("<big><strong><em>" + Qt::escape(gameText.currentLine()) + "</em></strong></big>", true);
 					gameText.next();

@@ -49,7 +49,7 @@ public:
 		StatusMiniforum, StatusSecretBefore, StatusSecretGet, StatusThingsList, StatusPersInform,
 		StatusFightShow, StatusOtherPersPos, StatusTakeBefore, StatusTake, StatusKillerAttack,
 		StatusYard, StatusMasterRoom1, StatusMasterRoom2, StatusMasterRoom3, StatusDealerBuy,
-		StatusDealerSale, StatusBuyOk, StatusHelpMenu, StatusTopList,
+		StatusDealerSale, StatusBuyOk, StatusHelpMenu, StatusTopList, StatusRatingInfo,
 		StatusServerStatistic1, StatusServerStatistic2, StatusRealEstate, StatusWarehouse,
 		StatusWarehouseShelf, StatusInKillersCup, StatusThingIsTaken, StatusAtHome, StatusTroll
 	};

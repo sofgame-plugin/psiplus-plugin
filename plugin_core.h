@@ -90,6 +90,7 @@ class PluginCore: public QObject
 		QRegExp dealerBuyReg;
 		QRegExp warehouseShelfReg;
 		QRegExp persInListOfTheBestReg;
+		QRegExp ratingInfoReg;
 		QVector<PersInfo*> persInfoList;
 		bool persStatusChangedFlag;
 		bool persBackpackChangedFlag;
