@@ -57,7 +57,7 @@ class PluginCore: public QObject
 
 	private:
 		static PluginCore *instance_;
-		SofMainWindow* mainWindow;
+		QList<SofMainWindow *> mainWindowList;
 		QString accJid;
 		int persStatus;
 

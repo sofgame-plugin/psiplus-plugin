@@ -64,7 +64,6 @@ PluginCore::PluginCore()
 {
 	// Начальная инициализация
 	accJid = "";
-	mainWindow = 0;
 	fight = new Fight();
 	connect(fight, SIGNAL(fightStart(int)), this, SLOT(fightStarted(int)));
 	// Сброс статусов изменений
@@ -132,8 +131,9 @@ PluginCore::~PluginCore()
 {
 	if (saveStatusTimer.isActive())
 		saveStatusTimer.stop();
-	if (mainWindow) {
-		delete mainWindow;
+	while (!mainWindowList.isEmpty())
+	{
+		delete mainWindowList.takeLast();
 	}
 	GameMap::reset();
 	if (fight) {
@@ -166,10 +166,16 @@ void PluginCore::updateRegExpForPersName()
 
 void PluginCore::doShortCut()
 {
-	if (!mainWindow) {
-		mainWindow = new SofMainWindow();
+	SofMainWindow *wnd;
+	if (mainWindowList.isEmpty())
+	{
+		wnd = new SofMainWindow();
+		mainWindowList.append(wnd);
 	}
-	mainWindow->show();
+	else {
+		wnd = mainWindowList.first();
+	}
+	wnd->show();
 }
 
 void PluginCore::changeAccountJid(const QString newJid)
@@ -201,9 +207,12 @@ void PluginCore::changeAccountJid(const QString newJid)
 	GameMap::instance()->init(accJid);
 	// Обновить алиасы
 	Aliases::instance()->init();
-	// Уведомить окно о переключении персонажа
-	if (mainWindow)
-		mainWindow->init();
+	// Уведомить главное окно о переключении персонажа
+	if (!mainWindowList.isEmpty())
+		mainWindowList.first()->init();
+	// Остальные окна закрыть
+	while (mainWindowList.size() > 1)
+		delete mainWindowList.takeLast();
 }
 
 void PluginCore::setAccountStatus(int status)
@@ -241,8 +250,13 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 //		return true;
 //	}
 	// Проверяем открыто ли окно
-	if (mainWindow && mainWindow->isVisible()) {
-		myMessage = true;
+	foreach (SofMainWindow *wnd, mainWindowList)
+	{
+		if (wnd->isVisible())
+		{
+			myMessage = true;
+			break;
+		}
 	}
 	//--
 	Statistic *stat = Statistic::instance();
@@ -1279,22 +1293,25 @@ void PluginCore::fightStarted(int mode)
 
 void PluginCore::valueChanged(int valueId, int valueType, int value)
 {
-	if (mainWindow) {
-		emit mainWindow->valueChanged(valueId, valueType, value);
+	foreach (SofMainWindow *wnd, mainWindowList)
+	{
+		emit wnd->valueChanged(valueId, valueType, value);
 	}
 }
 
 void PluginCore::setGameText(const GameText &gameText, int type)
 {
-	if (mainWindow) {
-		mainWindow->setGameText(gameText.toHtml(), type);
+	foreach (SofMainWindow *wnd, mainWindowList)
+	{
+		wnd->setGameText(gameText.toHtml(), type);
 	}
 }
 
 void PluginCore::setConsoleText(const GameText &gameText, int type, bool switch_)
 {
-	if (mainWindow) {
-		mainWindow->setConsoleText(gameText.toHtml(), type, switch_);
+	foreach (SofMainWindow *wnd, mainWindowList)
+	{
+		wnd->setConsoleText(gameText.toHtml(), type, switch_);
 	}
 }
 
@@ -1669,19 +1686,26 @@ bool PluginCore::sendString(const QString &str)
 		setGameText(text, 3);
 		setConsoleText(text, 3, false);
 	} else if (str1 == "/1+") {
-		if (mainWindow != NULL)
-			mainWindow->setAutoEnterMode(true);
+		foreach (SofMainWindow *wnd, mainWindowList)
+		{
+			wnd->setAutoEnterMode(true);
+		}
 	} else if (str1.startsWith("/1-")) {
 		if (str1.length() == 3) {
-			if (mainWindow != NULL)
-				mainWindow->setAutoEnterMode(false);
+			foreach (SofMainWindow *wnd, mainWindowList)
+			{
+				wnd->setAutoEnterMode(false);
+			}
 		} else {
 			sendString(str1.mid(3));
 		}
 	} else if (str1 == "/1") {
 		setConsoleText(GameText(str1, false), 1, false);
+		SofMainWindow *wnd = NULL;
+		if (!mainWindowList.isEmpty())
+			wnd = mainWindowList.first();
 		GameText text;
-		text.append(QString("Auto enter mode is <strong>%1</strong>").arg((mainWindow != NULL && mainWindow->getAutoEnterMode()) ? "ON" : "OFF"), true);
+		text.append(QString("Auto enter mode is <strong>%1</strong>").arg((wnd != NULL && wnd->getAutoEnterMode()) ? "ON" : "OFF"), true);
 		setGameText(text, 3);
 		setConsoleText(text, 3, false);
 	} else if (str1 == "/stat" || str1.startsWith("/stat ")) {

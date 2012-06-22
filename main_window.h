@@ -64,7 +64,7 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		~SofMainWindow();
 		void init();
 		void setGameText(const QString &, int);
-		bool getAutoEnterMode() const {return autoEnterMode;};
+		bool getAutoEnterMode() const {return autoEnterMode;}
 		void setAutoEnterMode(bool);
 		QDomElement exportAppearanceSettings(QDomDocument &xmlDoc) const;
 		QDomElement exportSlotsSettings(QDomDocument &xmlDoc) const;

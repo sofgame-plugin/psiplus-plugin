@@ -56,7 +56,7 @@ QList< QPair<int, QString> > SofMainWindow::statisticXmlStrings = QList< QPair<i
 				<< QPair<int, QString>(Statistic::StatKilledEnemies, "killed-enemies");
 
 
-SofMainWindow::SofMainWindow() : QWidget(0)
+SofMainWindow::SofMainWindow() : QWidget(NULL)
 {
 	timeoutStamp = 0;
 	timeoutTimer = 0;
@@ -779,7 +779,7 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 		if (eGeometry.attribute("mode") == "position-and-size") {
 			settingWindowSizePos = 1;
 			int posX = eGeometry.attribute("pos-x").toInt();
-				int posY = eGeometry.attribute("pos-y").toInt();
+			int posY = eGeometry.attribute("pos-y").toInt();
 			int width_ = eGeometry.attribute("width").toInt();
 			int height_ = eGeometry.attribute("height").toInt();
 			// Определяем геометрию рабочих столов (доступное пространство)
