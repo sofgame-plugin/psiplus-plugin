@@ -43,6 +43,7 @@ private:
 	QPixmap shieldPixmap(bool enable);
 	QPixmap swordPixmap(bool enable);
 	QPixmap pillPixmap(bool enable);
+	static void drawChar(QPixmap *pixmap, const QString &s);
 
 private:
 	QLabel *lbShield1;

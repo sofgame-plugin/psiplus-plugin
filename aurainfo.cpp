@@ -26,9 +26,12 @@
 #include <QHBoxLayout>
 #include <QPixmap>
 #include <QIcon>
+#include <QPainter>
 
 #include "aurainfo.h"
 #include "pers.h"
+
+#define PIXMAP_SIZE 24
 
 AuraInfo::AuraInfo(QWidget *parent) : QWidget(parent)
 {
@@ -52,14 +55,23 @@ AuraInfo::AuraInfo(QWidget *parent) : QWidget(parent)
 
 void AuraInfo::setShield(const QString &shield1, const QString &shield2)
 {
-	bool ena = (!shield1.isEmpty() && shield1 == Pers::instance()->citizenship());
-	lbShield1->setPixmap(shieldPixmap(ena));
+	const QString citizenship = Pers::instance()->citizenship();
+
+	bool ena = (!shield1.isEmpty() && shield1 == citizenship);
+	QPixmap pix = shieldPixmap(ena);
+	if (!ena)
+		drawChar(&pix, shield1);
+	lbShield1->setPixmap(pix);
 	QString tooltip = QString::fromUtf8("Поле предков запад");
 	if (!shield1.isEmpty())
 		tooltip.append("- " + shield1);
 	lbShield1->setToolTip(tooltip);
-	ena = (!shield2.isEmpty() && shield2 == Pers::instance()->citizenship());
-	lbShield2->setPixmap(shieldPixmap(ena));
+
+	ena = (!shield2.isEmpty() && shield2 == citizenship);
+	pix = shieldPixmap(ena);
+	if (!ena)
+		drawChar(&pix, shield2);
+	lbShield2->setPixmap(pix);
 	tooltip = QString::fromUtf8("Поле предков восток");
 	if (!shield2.isEmpty())
 		tooltip.append("- " + shield2);
@@ -68,14 +80,23 @@ void AuraInfo::setShield(const QString &shield1, const QString &shield2)
 
 void AuraInfo::setSword(const QString &sword1, const QString &sword2)
 {
-	bool ena = (!sword1.isEmpty() && sword1 == Pers::instance()->citizenship());
-	lbSword1->setPixmap(swordPixmap(ena));
+	const QString citizenship = Pers::instance()->citizenship();
+
+	bool ena = (!sword1.isEmpty() && sword1 == citizenship);
+	QPixmap pix = swordPixmap(ena);
+	if (!ena)
+		drawChar(&pix, sword1);
+	lbSword1->setPixmap(pix);
 	QString tooltip = QString::fromUtf8("Холм героев запад");
 	if (!sword1.isEmpty())
 		tooltip.append("- " + sword1);
 	lbSword1->setToolTip(tooltip);
-	ena = (!sword2.isEmpty() && sword2 == Pers::instance()->citizenship());
-	lbSword2->setPixmap(swordPixmap(ena));
+
+	ena = (!sword2.isEmpty() && sword2 == citizenship);
+	pix = swordPixmap(ena);
+	if (!ena)
+		drawChar(&pix, sword2);
+	lbSword2->setPixmap(pix);
 	tooltip = QString::fromUtf8("Холм героев восток");
 	if (!sword2.isEmpty())
 		tooltip.append("- " + sword2);
@@ -84,8 +105,13 @@ void AuraInfo::setSword(const QString &sword1, const QString &sword2)
 
 void AuraInfo::setPill(const QString &pill)
 {
-	bool ena = (!pill.isEmpty() && pill == Pers::instance()->citizenship());
-	lbPill->setPixmap(pillPixmap(ena));
+	const QString citizenship = Pers::instance()->citizenship();
+
+	bool ena = (!pill.isEmpty() && pill == citizenship);
+	QPixmap pix = pillPixmap(ena);
+	if (!ena)
+		drawChar(&pix, pill);
+	lbPill->setPixmap(pix);
 	QString tooltip = QString::fromUtf8("Призрачный фонтан");
 	if (!pill.isEmpty())
 		tooltip.append("- " + pill);
@@ -95,20 +121,52 @@ void AuraInfo::setPill(const QString &pill)
 QPixmap AuraInfo::shieldPixmap(bool enable)
 {
 	QIcon ico(":aura/shield");
-	QPixmap pix = ico.pixmap(QSize(24, 24), (enable) ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
+	QPixmap pix = ico.pixmap(QSize(PIXMAP_SIZE, PIXMAP_SIZE), (enable) ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
 	return pix;
 }
 
 QPixmap AuraInfo::swordPixmap(bool enable)
 {
 	QIcon ico(":aura/sword");
-	QPixmap pix = ico.pixmap(QSize(24, 24), (enable) ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
+	QPixmap pix = ico.pixmap(QSize(PIXMAP_SIZE, PIXMAP_SIZE), (enable) ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
 	return pix;
 }
 
 QPixmap AuraInfo::pillPixmap(bool enable)
 {
 	QIcon ico(":aura/pill");
-	QPixmap pix = ico.pixmap(QSize(24, 24), (enable) ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
+	QPixmap pix = ico.pixmap(QSize(PIXMAP_SIZE, PIXMAP_SIZE), (enable) ? QIcon::Normal : QIcon::Disabled, QIcon::Off);
 	return pix;
+}
+
+void AuraInfo::drawChar(QPixmap *pixmap, const QString &s)
+{
+	QString ch;
+	if (s.contains(QString::fromUtf8("Вольный")))
+	{
+		ch = QString::fromUtf8("Вл");
+	}
+	else if (s.contains(QString::fromUtf8("Восточная")))
+	{
+		ch = QString::fromUtf8("Гр");
+	}
+	else if (s.contains(QString::fromUtf8("Закарта")))
+	{
+		ch = QString::fromUtf8("Зк");
+	}
+
+	if (!ch.isEmpty())
+	{
+		QPainter painter(pixmap);
+		QPen pen = painter.pen();
+		pen.setColor(QColor(0, 0, 80, 192));
+		painter.setPen(pen);
+
+		QFont font = painter.font();
+		font.setPixelSize(PIXMAP_SIZE * 2 / 5);
+		painter.setFont(font);
+		painter.drawText(pixmap->rect(), (Qt::AlignHCenter | Qt::AlignCenter), ch);
+
+		painter.end();
+	}
 }
