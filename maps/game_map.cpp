@@ -1583,7 +1583,8 @@ int GameMap::getMapElementIndex(int mapIndex, const MapPos &pos, bool useCache)
 		if (me->status > 0 && me->pos == pos) {
 			if (mapIndex == mapCurrIndex) {
 				// Кэш только для текущей карты
-				mapCache.setIndex(pos, i);
+				if (useCache)
+					mapCache.setIndex(pos, i);
 			}
 			return i;
 		}
