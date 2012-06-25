@@ -1960,9 +1960,8 @@ int GameMap::renameMap(int mapIndex, const QString &mapNewName)
 	QString newName = mapNewName.trimmed();
 	// Проверяем наличие карты с таким же именем
 	for (int i = 0; i < mapsCount; i++) {
-		if (mapsList.at(i).status == None || mapsList.at(mapIndex).name == newName) {
+		if (mapsList.at(i).status != None && mapsList.at(mapIndex).name == newName)
 			return 2;
-		}
 	}
 	if (mapsList.at(mapIndex).status == HeaderOnly && !loadMap(mapIndex))
 		return 3;
