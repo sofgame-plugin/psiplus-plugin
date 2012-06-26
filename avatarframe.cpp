@@ -98,7 +98,8 @@ void AvatarFrameView::showContextMenu()
 
 void AvatarFrameView::loadAvatar()
 {
-	QString fileName = QFileDialog::getOpenFileName(this, QString::fromUtf8("Выберите файл с аватарой"));
+	QString fileName = QFileDialog::getOpenFileName(this, QString::fromUtf8("Выберите файл с аватарой"), QString(),
+		QString::fromUtf8("Файлы картинок (*.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.xbm *.xpm)"));
 	if (!fileName.isEmpty()) {
 		QPixmap newAva;
 		if (newAva.load(fileName)) {
