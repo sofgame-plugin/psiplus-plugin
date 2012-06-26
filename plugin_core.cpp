@@ -2957,7 +2957,8 @@ void PluginCore::aliasesCommands(const QStringList &args)
 		bool res = false;
 		if (argsCount >= 4) {
 			if (args.at(3) == "yes" || args.at(3) == "no") {
-				if (Aliases::instance()->appendAlias(args.at(2), args.at(3) == "yes", args.at(4))) {
+				QStringList aliasData = args.mid(4);
+				if (Aliases::instance()->appendAlias(args.at(2), args.at(3) == "yes", aliasData.join(" "))) {
 					text.append(QString::fromUtf8("Добавлено без сохранения"), false);
 				} else {
 					text.append(QString::fromUtf8("Ошибка!"), false);
