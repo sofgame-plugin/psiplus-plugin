@@ -57,6 +57,7 @@ void AvatarFrameView::clear()
 	avatarItem = NULL;
 	pluginInfoItem = NULL;
 	scene_->clear();
+	setSceneRect(QRectF());
 }
 
 bool AvatarFrameView::updateAvatar()
@@ -65,7 +66,14 @@ bool AvatarFrameView::updateAvatar()
 	if (pix.load(AvatarFrameView::avatarFilePath())) {
 		if (pix.height() <= height() && pix.width() <= width()) {
 			clear();
+			QPointF newPos(0.0f, 0.0f);
+			if (pix.width() < width())
+				newPos.setX((width() - pix.width()) / 2.0f);
+			if (pix.height() < height())
+				newPos.setY((height() - pix.height()) / 2.0f);
 			avatarItem = scene_->addPixmap(pix);
+			avatarItem->setPos(newPos);
+			setSceneRect(0.0f, 0.0f, width(), height());
 			return true;
 		}
 	}

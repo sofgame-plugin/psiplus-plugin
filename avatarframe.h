@@ -28,6 +28,8 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsTextItem>
 
 class AvatarFrameView : public QGraphicsView
 {
