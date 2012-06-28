@@ -316,6 +316,7 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				int nDext1 = QINT32_MIN; int nDext2 = QINT32_MIN; bool fDext = false;
 				int nIntell1 = QINT32_MIN; int nIntell2 = QINT32_MIN; bool fIntell = false;
 				int nLoss = -1; int nProtect = -1;
+				int nLossLine = -1; int nProtectLine = -1;
 				QString sCitizenship;
 				int nRating = QINT32_MIN;
 				QString sClan;
@@ -375,11 +376,13 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					if (persInfoLossReg.indexIn(sMessage, 0) != -1) {
 						// Суммарный урон экипировки: 3452
 						nLoss = persInfoLossReg.cap(1).toInt();
+						nLossLine = gameText.currentPos();
 						sMessage = gameText.nextLine().trimmed();
 					}
 					if (persInfoProtectReg.indexIn(sMessage, 0) != -1) {
 						// Суммарная защита экипировки: 3361
 						nProtect = persInfoProtectReg.cap(1).toInt();
+						nProtectLine = gameText.currentPos();
 						sMessage = gameText.nextLine().trimmed();
 					}
 				}
@@ -578,7 +581,42 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					for (int idx = 0; idx < 11; idx++)
 						persInfoPtr->setEquip(idx+1, &equipList[idx]);
 				}
-				gameText.setEnd(); // Блокируем дальнейший анализ
+				// Дописываем заточку в текст
+				if (!persInfoPtr->citizenship().isEmpty())
+				{
+					if (nLoss != -1)
+					{
+						int nEquipLoss = -1;
+						persInfoPtr->getEquipLoss1(&nEquipLoss);
+						float nSharpening = (float)nLoss / (float)nEquipLoss;
+						QString shpText;
+						if (nSharpening > 1.01f)
+						{
+							shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+						}
+						else {
+							shpText = QString::fromUtf8(" [без заточки]").arg(nSharpening);
+						}
+						gameText.replace(nLossLine, gameText.getLine(nLossLine) + shpText, false);
+					}
+					if (nProtect != -1)
+					{
+						int nEquipProtect = -1;
+						persInfoPtr->getEquipProtect1(&nEquipProtect);
+						float nSharpening = (float)nProtect / (float)nEquipProtect;
+						QString shpText;
+						if (nSharpening > 1.01f)
+						{
+							shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+						}
+						else {
+							shpText = QString::fromUtf8(" [без заточки]");
+						}
+						gameText.replace(nProtectLine, gameText.getLine(nProtectLine) + shpText, false);
+					}
+				}
+				// Блокируем дальнейший анализ
+				gameText.setEnd();
 				nPersStatus = Pers::StatusPersInform;
 			} else if (sMessage == QString::fromUtf8("Экипировка:")) {
 				// Список вещей персонажа
@@ -2217,11 +2255,10 @@ void PluginCore::persCommands(const QStringList &args)
 				}
 				QString str2;
 				str1.append(QString::fromUtf8("\nГражданство: "));
-				if (persInfo->getCitizenship(&str2)) {
-					str1.append(str2);
-				} else {
-					str1.append(NA_TEXT);
-				}
+				if (!persInfo->citizenship().isEmpty())
+					str1.append(persInfo->citizenship());
+				else
+					str1.append(QString::fromUtf8("нет"));
 				str1.append(QString::fromUtf8("\nКлан: "));
 				if (persInfo->getClan(&str2)) {
 					str1.append(str2);

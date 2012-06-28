@@ -35,19 +35,22 @@ class GameText
 public:
 	GameText();
 	GameText(const QString &text, bool html);
-	bool isEmpty() const {return textArray.isEmpty();};
-	bool isFirst() const {return (pos == 0);};
+	bool isEmpty() const {return textArray.isEmpty();}
+	bool isFirst() const {return (pos == 0);}
 	bool isEnd() const;
-	void setEnd() {pos = textArray.size();};
+	void setEnd() {pos = textArray.size();}
 	const QString &currentLine() const;
 	const QString &nextLine();
+	const QString &getLine(int i) const;
 	void prior();
 	void next();
+	int  currentPos() const {return pos;}
 	void append(const QString &text, bool html);
 	void removeLine();
 	void replace(const QString &text, bool html);
-	void savePos() {savedPos = pos;};
-	void restorePos() {pos = savedPos;};
+	void replace(int i, const QString &text, bool html);
+	void savePos() {savedPos = pos;}
+	void restorePos() {pos = savedPos;}
 	QString toHtml() const;
 
 private:

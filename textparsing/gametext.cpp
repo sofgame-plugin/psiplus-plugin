@@ -87,6 +87,16 @@ const QString &GameText::nextLine()
 }
 
 /**
+ * Возвращает указанную строку текста
+ */
+const QString &GameText::getLine(int i) const
+{
+	if (i < 0 || i >= textArray.size())
+		return emptyString;
+	return textArray.at(i).second;
+}
+
+/**
  * Перемещение указателя на предыдущую строчку
  */
 void GameText::prior()
@@ -130,7 +140,16 @@ void GameText::removeLine()
 void GameText::replace(const QString &text, bool html)
 {
 	if (!isEnd())
-		textArray.replace(pos, QPair<bool, QString>(html, text));
+		replace(pos, text, html);
+}
+
+/**
+ * Заменяет указанную строку с текстом значением из параметра text.
+ * Если html == true, то в дальнейшем текст обрабатывается как html
+ */
+void GameText::replace(int i, const QString &text, bool html)
+{
+	textArray.replace(i, QPair<bool, QString>(html, text));
 }
 
 /**

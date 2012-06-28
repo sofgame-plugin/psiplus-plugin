@@ -41,7 +41,6 @@ PersInfo::PersInfo()
 	persRating = 0;
 	experienceCurr = -1;
 	experienceRemain = -1;
-	citizenship = QString();
 	clan = QString();
 	healthCurr = QINT32_MIN;
 	healthMax = QINT32_MIN;
@@ -116,15 +115,10 @@ bool PersInfo::getLevel(int* level) const
 
 void PersInfo::setCitizenship(QString citiz)
 {
-	citizenship = citiz;
-}
-
-bool PersInfo::getCitizenship(QString* citiz) const
-{
-	if (citizenship.isEmpty())
-		return false;
-	*citiz = citizenship;
-	return true;
+	if (citiz.toLower() == QString::fromUtf8("нет"))
+		_citizenship = QString();
+	else
+		_citizenship = citiz;
 }
 
 void PersInfo::setClan(QString cl_name)
