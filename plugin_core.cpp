@@ -587,32 +587,36 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					if (nLoss != -1)
 					{
 						int nEquipLoss = -1;
-						persInfoPtr->getEquipLoss1(&nEquipLoss);
-						float nSharpening = (float)nLoss / (float)nEquipLoss;
-						QString shpText;
-						if (nSharpening > 1.01f)
+						if (persInfoPtr->getEquipLoss1(&nEquipLoss) && (nEquipLoss != 0))
 						{
-							shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							float nSharpening = (float)nLoss / (float)nEquipLoss;
+							QString shpText;
+							if (nSharpening > 1.01f)
+							{
+								shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							}
+							else {
+								shpText = QString::fromUtf8(" [без заточки]");
+							}
+							gameText.replace(nLossLine, gameText.getLine(nLossLine) + shpText, false);
 						}
-						else {
-							shpText = QString::fromUtf8(" [без заточки]").arg(nSharpening);
-						}
-						gameText.replace(nLossLine, gameText.getLine(nLossLine) + shpText, false);
 					}
 					if (nProtect != -1)
 					{
 						int nEquipProtect = -1;
-						persInfoPtr->getEquipProtect1(&nEquipProtect);
-						float nSharpening = (float)nProtect / (float)nEquipProtect;
-						QString shpText;
-						if (nSharpening > 1.01f)
+						if (persInfoPtr->getEquipProtect1(&nEquipProtect) && nEquipProtect != 0)
 						{
-							shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							float nSharpening = (float)nProtect / (float)nEquipProtect;
+							QString shpText;
+							if (nSharpening > 1.01f)
+							{
+								shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							}
+							else {
+								shpText = QString::fromUtf8(" [без заточки]");
+							}
+							gameText.replace(nProtectLine, gameText.getLine(nProtectLine) + shpText, false);
 						}
-						else {
-							shpText = QString::fromUtf8(" [без заточки]");
-						}
-						gameText.replace(nProtectLine, gameText.getLine(nProtectLine) + shpText, false);
 					}
 				}
 				// Блокируем дальнейший анализ
