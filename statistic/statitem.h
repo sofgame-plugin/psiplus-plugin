@@ -31,22 +31,23 @@
 class EmptyStringNA
 {
 public:
-	static QString emptyStringValue() {return "n/a";};
+	static QString emptyStringValue() {return "n/a";}
 };
 
 class EmptyStringZero
 {
 public:
-	static QString emptyStringValue() {return "0";};
+	static QString emptyStringValue() {return "0";}
 };
 
 class StatItem
 {
 public:
 	StatItem();
-	bool isEmpty() const {return empty;};
+	bool isEmpty() const {return empty;}
 	bool reset();
 
+	virtual ~StatItem();
 	virtual QVariant value() const = 0;
 	virtual bool setValue(QVariant &val) = 0;
 	virtual QString toString() const = 0;

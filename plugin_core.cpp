@@ -111,6 +111,8 @@ PluginCore::PluginCore()
 	fightElement1Reg.setMinimal(true);
 	fightElement2Reg.setMinimal(true);
 	parPersPower1Reg.setPattern(QString::fromUtf8("^Энергия:(-?[0-9]{1,6})/([0-9]{1,6})$"));
+	// Регулярки для формирования меню по тексту
+	textMenu1Reg.setPattern(QString::fromUtf8("([^/\\s]+)(/.+/(./)?)?\\[у:[0-9]+,з:-?[0-9]+/[0-9]+\\]")); // Игроки внутри текста
 	// Соединения
 	Settings *settings = Settings::instance();
 	qRegisterMetaType<Settings::SettingKey>("Settings::SettingKey");
@@ -587,32 +589,36 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					if (nLoss != -1)
 					{
 						int nEquipLoss = -1;
-						persInfoPtr->getEquipLoss1(&nEquipLoss);
-						float nSharpening = (float)nLoss / (float)nEquipLoss;
-						QString shpText;
-						if (nSharpening > 1.01f)
+						if (persInfoPtr->getEquipLoss1(&nEquipLoss) && (nEquipLoss != 0))
 						{
-							shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							float nSharpening = (float)nLoss / (float)nEquipLoss;
+							QString shpText;
+							if (nSharpening > 1.01f)
+							{
+								shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							}
+							else {
+								shpText = QString::fromUtf8(" [без заточки]");
+							}
+							gameText.replace(nLossLine, gameText.getLine(nLossLine) + shpText, false);
 						}
-						else {
-							shpText = QString::fromUtf8(" [без заточки]").arg(nSharpening);
-						}
-						gameText.replace(nLossLine, gameText.getLine(nLossLine) + shpText, false);
 					}
 					if (nProtect != -1)
 					{
 						int nEquipProtect = -1;
-						persInfoPtr->getEquipProtect1(&nEquipProtect);
-						float nSharpening = (float)nProtect / (float)nEquipProtect;
-						QString shpText;
-						if (nSharpening > 1.01f)
+						if (persInfoPtr->getEquipProtect1(&nEquipProtect) && nEquipProtect != 0)
 						{
-							shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							float nSharpening = (float)nProtect / (float)nEquipProtect;
+							QString shpText;
+							if (nSharpening > 1.01f)
+							{
+								shpText = QString::fromUtf8(" [заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+							}
+							else {
+								shpText = QString::fromUtf8(" [без заточки]");
+							}
+							gameText.replace(nProtectLine, gameText.getLine(nProtectLine) + shpText, false);
 						}
-						else {
-							shpText = QString::fromUtf8(" [без заточки]");
-						}
-						gameText.replace(nProtectLine, gameText.getLine(nProtectLine) + shpText, false);
 					}
 				}
 				// Блокируем дальнейший анализ
@@ -3080,6 +3086,27 @@ void PluginCore::initPopup(const QString &string, int secs)
 		QVariant enbl(false);
 		PluginHosts::psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
 	}
+}
+
+/**
+ * @brief Формирует пункты меню на основании переданного текста
+ * @param s - текст, на основе которого формируются пункты меню
+ * @return Список указателей на QAction. Вызывающий код должен сам позаботится об их удалении
+ */
+QList<QAction *> PluginCore::getActionsByText(const QString &s) const
+{
+	QList<QAction *> resList;
+	GameText gText(s, false);
+	while (!gText.isEnd())
+	{
+		QString s2 = gText.currentLine();
+		if (textMenu1Reg.indexIn(s2, 0) != -1)
+		{
+			resList.append(new QAction(QString("05 %1").arg(textMenu1Reg.cap(1)), NULL));
+		}
+		gText.next();
+	}
+	return resList;
 }
 
 void PluginCore::persParamChanged()

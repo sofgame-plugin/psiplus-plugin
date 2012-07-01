@@ -30,6 +30,10 @@ StatItem::StatItem()
 {
 }
 
+StatItem::~StatItem()
+{
+}
+
 bool StatItem::reset()
 {
 	if (!empty) {

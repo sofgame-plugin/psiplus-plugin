@@ -54,6 +54,7 @@ class PluginCore: public QObject
 		bool sendString(const QString &str);
 		PersInfo* getPersInfo(const QString &);
 		void initPopup(const QString &, int);
+		QList<QAction*> getActionsByText(const QString &s) const;
 
 	private:
 		static PluginCore *instance_;
@@ -107,6 +108,7 @@ class PluginCore: public QObject
 		QRegExp fightDamageFromPersReg3;
 		QRegExp fightDropMoneyReg1;
 		QRegExp fightDropThingReg1;
+		QRegExp textMenu1Reg;
 		bool fightColoring;
 
 	private:
