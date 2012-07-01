@@ -33,6 +33,7 @@
 
 #include "textview.h"
 #include "pluginhosts.h"
+#include "plugin_core.h"
 #include "pers.h"
 
 TextView::TextView(QWidget *parent) :
@@ -71,8 +72,27 @@ void TextView::contextMenuEvent(QContextMenuEvent *e)
 	QMenu *menu = createStandardContextMenu();
 	menu->addSeparator();
 	menu->addAction(QString::fromUtf8("Очистить"), this, SLOT(clear()));
-	menu->exec(e->globalPos());
+	// Добавляем пункты меню на основе выделенного текста
+	QTextCursor cur = textCursor();
+	QList<QAction *> aList;
+	if (cur.hasSelection())
+	{
+		aList = PluginCore::instance()->getActionsByText(cur.selection().toPlainText());
+		if (!aList.isEmpty())
+		{
+			menu->addSeparator();
+			menu->addActions(aList);
+		}
+	}
+	//--
+	QAction *resAct = menu->exec(e->globalPos());
 	delete menu;
+	if (resAct && aList.contains(resAct))
+	{
+		PluginCore::instance()->sendString(resAct->text());
+	}
+	while (!aList.isEmpty())
+		delete aList.takeLast();
 }
 
 void TextView::appendText(const QString &text, TextType type)

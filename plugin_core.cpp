@@ -111,6 +111,8 @@ PluginCore::PluginCore()
 	fightElement1Reg.setMinimal(true);
 	fightElement2Reg.setMinimal(true);
 	parPersPower1Reg.setPattern(QString::fromUtf8("^Энергия:(-?[0-9]{1,6})/([0-9]{1,6})$"));
+	// Регулярки для формирования меню по тексту
+	textMenu1Reg.setPattern(QString::fromUtf8("([^/\\s]+)(/.+/(./)?)?\\[у:[0-9]+,з:-?[0-9]+/[0-9]+\\]")); // Игроки внутри текста
 	// Соединения
 	Settings *settings = Settings::instance();
 	qRegisterMetaType<Settings::SettingKey>("Settings::SettingKey");
@@ -3084,6 +3086,27 @@ void PluginCore::initPopup(const QString &string, int secs)
 		QVariant enbl(false);
 		PluginHosts::psiOptions->setGlobalOption("options.ui.notifications.passive-popups.enabled", enbl);
 	}
+}
+
+/**
+ * @brief Формирует пункты меню на основании переданного текста
+ * @param s - текст, на основе которого формируются пункты меню
+ * @return Список указателей на QAction. Вызывающий код должен сам позаботится об их удалении
+ */
+QList<QAction *> PluginCore::getActionsByText(const QString &s) const
+{
+	QList<QAction *> resList;
+	GameText gText(s, false);
+	while (!gText.isEnd())
+	{
+		QString s2 = gText.currentLine();
+		if (textMenu1Reg.indexIn(s2, 0) != -1)
+		{
+			resList.append(new QAction(QString("05 %1").arg(textMenu1Reg.cap(1)), NULL));
+		}
+		gText.next();
+	}
+	return resList;
 }
 
 void PluginCore::persParamChanged()
