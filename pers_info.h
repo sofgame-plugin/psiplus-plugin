@@ -28,19 +28,6 @@
 
 #include <QtCore>
 
-#define PERS_INFO_EQUIP_WEAPON      1
-#define PERS_INFO_EQUIP_SHIELD      2
-#define PERS_INFO_EQUIP_HEAD        3
-#define PERS_INFO_EQUIP_NECK        4
-#define PERS_INFO_EQUIP_HAND1       5
-#define PERS_INFO_EQUIP_HAND2       6
-#define PERS_INFO_EQUIP_SHOULDERS   7
-#define PERS_INFO_EQUIP_BODY        8
-#define PERS_INFO_EQUIP_STRAP       9
-#define PERS_INFO_EQUIP_FEET        10
-#define PERS_INFO_EQUIP_SHOES       11
-
-
 struct equip_element {
 	int         status;
 	int         type;
@@ -75,91 +62,94 @@ class PersInfo: public QObject
 {
   Q_OBJECT
 
-	public:
-		PersInfo();
-		~PersInfo();
-		QString getName() const;
-		void setName(QString);
-		void setLevel(int);
-		bool getLevel(int*) const;
-		void setCitizenship(QString);
-		const QString &citizenship() const {return _citizenship;}
-		void setClan(QString);
-		bool getClan(QString*) const;
-		void setRating(int);
-		bool getRating(int*) const;
-		void setHealthCurr(int);
-		void setHealthMax(int);
-		bool getHealthMax(int*) const;
-		void setEnergyCurr(int);
-		void setEnergyMax(int);
-		bool getEnergyMax(int*) const;
-		void setExperienceCurr(qint64);
-		bool getExperienceCurr(qint64*) const;
-		void setExperienceRemain(qint64);
-		void setForce(int, int);
-		bool getForce(int*, int*) const;
-		void setDext(int, int);
-		bool getDext(int*, int*) const;
-		void setIntell(int, int);
-		bool getIntell(int*, int*) const;
-		void setEquipLoss(int);
-		bool getEquipLoss1(int*);
-		bool getEquipLoss2(int*);
-		void setEquipProtect(int);
-		bool getEquipProtect1(int*);
-		bool getEquipProtect2(int*);
-		void setEquip(int, struct equip_element*);
-		bool isEquipElement(int);
-		int  isEquipNamed(int);
-		void calculateEquipParams(int, struct params_info*);
-		float calculateEquipEfficiency(int type);
-		void calculateLoss();
-		void calculateProtect();
-		QString getEquipString(int);
+public:
+	enum {
+		EquipTypeWeapon,
+		EquipTypeShield,
+		EquipTypeHead,
+		EquipTypeNeck,
+		EquipTypeHand1,
+		EquipTypeHand2,
+		EquipTypeShoulders,
+		EquipTypeBody,
+		EquipTypeStrap,
+		EquipTypeFeet,
+		EquipTypeShoes
+	};
+	PersInfo();
+	~PersInfo();
+	QString getName() const {return persName;}
+	void setName(const QString &name) {persName = name;}
+	void setLevel(int);
+	void setCitizenship(const QString &);
+	const QString &citizenship() const {return _citizenship;}
+	void setClan(const QString &cl_name) {clan = cl_name;}
+	void setRating(int rt) {persRating = rt;}
+	void setHealthCurr(int health) {healthCurr = health;}
+	void setHealthMax(int health) {healthMax = health;}
+	void setEnergyCurr(int energy) {energyCurr = energy;}
+	void setEnergyMax(int energy) {energyMax = energy;}
+	void setExperienceCurr(qint64 experience) {experienceCurr = experience;}
+	void setExperienceRemain(qint64 experience) {experienceRemain = experience;}
+	void setForce(int, int);
+	bool getForce(int*, int*) const;
+	void setDext(int, int);
+	bool getDext(int*, int*) const;
+	void setIntell(int, int);
+	bool getIntell(int*, int*) const;
+	void setEquipLossCurr(int loss) {equipLossCurr = loss;}
+	int  getEquipLossCalc();
+	void setEquipProtectCurr(int prot) {equipProtectCurr = prot;}
+	int  getEquipProtectCalc();
+	void setEquip(int type, const equip_element &ee);
+	bool isEquipElement(int) const;
+	int  isEquipNamed(int) const;
+	void calculateEquipParams(int, struct params_info*) const;
+	float calculateEquipEfficiency(int type) const;
+	void calculateLoss();
+	void calculateProtect();
+	static void resetEquip(struct equip_element &equipEl);
+	static QString getSharpening(int calcVal, int currVal);
+	static bool getEquipFromString(const QString &, struct equip_element*);
+	QString getEquipString(int) const;
+	QString toString(int ver);
 
-	private:
-		QString persName;
-		int persLevel;
-		int persRating;
-		qint64 experienceCurr;
-		qint64 experienceRemain;
-		QString _citizenship;
-		QString clan;
-		int healthCurr;
-		int healthMax;
-		int energyCurr;
-		int energyMax;
-		int force1;
-		int force2;
-		int dext1;
-		int dext2;
-		int intell1;
-		int intell2;
-		int equipLoss;
-		int equipLoss1;
-		int equipLoss2;
-		int equipProtect;
-		int equipProtect1;
-		int equipProtect2;
-		struct equip_element weapon;
-		struct equip_element shield;
-		struct equip_element head;
-		struct equip_element neck;
-		struct equip_element shoulders;
-		struct equip_element body;
-		struct equip_element hand1;
-		struct equip_element hand2;
-		struct equip_element strap;
-		struct equip_element feet;
-		struct equip_element shoes;
-		struct equip_element* getEquipElementPointer(int);
-
-	protected:
+private:
+	QString persName;
+	int persLevel;
+	int persRating;
+	qint64 experienceCurr;
+	qint64 experienceRemain;
+	QString _citizenship;
+	QString clan;
+	int healthCurr;
+	int healthMax;
+	int energyCurr;
+	int energyMax;
+	int force1;
+	int force2;
+	int dext1;
+	int dext2;
+	int intell1;
+	int intell2;
+	int equipLossCalc;
+	int equipLossCurr;
+	int equipProtectCalc;
+	int equipProtectCurr;
+	struct equip_element weapon;
+	struct equip_element shield;
+	struct equip_element head;
+	struct equip_element neck;
+	struct equip_element shoulders;
+	struct equip_element body;
+	struct equip_element hand1;
+	struct equip_element hand2;
+	struct equip_element strap;
+	struct equip_element feet;
+	struct equip_element shoes;
+	equip_element *getEquipElementPointer(int);
+	const equip_element &getEquipElement(int) const;
 
 };
-
-void resetEquip(struct equip_element*);
-bool getEquipFromString(const QString &, struct equip_element*);
 
 #endif
