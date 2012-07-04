@@ -28,54 +28,13 @@
 
 #include <QtCore>
 
-struct equip_element {
-	int         status;
-	int         type;
-	QString     name;
-	int         up_level;
-	int         loss;
-	float       loss_mul;
-	int         protect;
-	float       protect_mul;
-	int         force;
-	float       force_mul;
-	int         dext;
-	float       dext_mul;
-	int         intell;
-	float       intell_mul;
-	int         loss_set;
-	int         protect_set;
-	int         force_set;
-	int         dext_set;
-	int         intell_set;
-};
-
-struct params_info {
-	int         force;
-	int         dext;
-	int         intell;
-	int         equip_loss;
-	int         equip_protect;
-};
+#include "equipitem.h"
 
 class PersInfo: public QObject
 {
   Q_OBJECT
 
 public:
-	enum {
-		EquipTypeWeapon,
-		EquipTypeShield,
-		EquipTypeHead,
-		EquipTypeNeck,
-		EquipTypeHand1,
-		EquipTypeHand2,
-		EquipTypeShoulders,
-		EquipTypeBody,
-		EquipTypeStrap,
-		EquipTypeFeet,
-		EquipTypeShoes
-	};
 	PersInfo();
 	~PersInfo();
 	QString getName() const {return persName;}
@@ -101,17 +60,11 @@ public:
 	int  getEquipLossCalc();
 	void setEquipProtectCurr(int prot) {equipProtectCurr = prot;}
 	int  getEquipProtectCalc();
-	void setEquip(int type, const equip_element &ee);
-	bool isEquipElement(int) const;
-	int  isEquipNamed(int) const;
-	void calculateEquipParams(int, struct params_info*) const;
-	float calculateEquipEfficiency(int type) const;
+	//WeaponEquipItem &weapon() {return _weapon;}
+	void setEquip(const EquipItem &eItem);
 	void calculateLoss();
 	void calculateProtect();
-	static void resetEquip(struct equip_element &equipEl);
 	static QString getSharpening(int calcVal, int currVal);
-	static bool getEquipFromString(const QString &, struct equip_element*);
-	QString getEquipString(int) const;
 	QString toString(int ver);
 
 private:
@@ -136,19 +89,17 @@ private:
 	int equipLossCurr;
 	int equipProtectCalc;
 	int equipProtectCurr;
-	struct equip_element weapon;
-	struct equip_element shield;
-	struct equip_element head;
-	struct equip_element neck;
-	struct equip_element shoulders;
-	struct equip_element body;
-	struct equip_element hand1;
-	struct equip_element hand2;
-	struct equip_element strap;
-	struct equip_element feet;
-	struct equip_element shoes;
-	equip_element *getEquipElementPointer(int);
-	const equip_element &getEquipElement(int) const;
+	WeaponEquipItem    _weapon;
+	ShieldEquipItem    _shield;
+	HeadEquipItem      _head;
+	NeckEquipItem      _neck;
+	ShouldersEquipItem _shoulders;
+	BodyEquipItem      _body;
+	Hand1EquipItem     _hand1;
+	Hand2EquipItem     _hand2;
+	StrapEquipItem     _strap;
+	FeetEquipItem      _feet;
+	ShoesEquipItem     _shoes;
 
 };
 

@@ -14,7 +14,8 @@ HEADERS += sofgameplugin.h \
     avatarframe.h \
     pluginhosts.h \
     specificenemiesview.h \
-    aurainfo.h
+    aurainfo.h \
+    equipitem.h
 SOURCES += sofgameplugin.cpp \
     plugin_core.cpp \
     main_window.cpp \
@@ -28,7 +29,8 @@ SOURCES += sofgameplugin.cpp \
     avatarframe.cpp \
     pluginhosts.cpp \
     specificenemiesview.cpp \
-    aurainfo.cpp
+    aurainfo.cpp \
+    equipitem.cpp
 FORMS += main_window.ui
 
 # Resources

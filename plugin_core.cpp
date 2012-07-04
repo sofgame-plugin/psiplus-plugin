@@ -419,46 +419,44 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 				Обувь: Боевые сапоги Демона(обувь) защ:11.6*ур;сила:0.9*ур;ловк:1.1*ур;инт:0.9*ур;урон:6.6*ур;{Треб:Ур18Сил77Ловк54Инт48}И:7ур.
 				*/
 				int equipCount = 0;
-				QMap<int, equip_element> equipListMap;
+				QList<EquipItem *> equipList;
 				int hand = 1;
 				while (persInfoEquipReg.indexIn(sMessage, 0) != -1) {
-
-					bool fEe = true;
-					int type = -1;
+					EquipItem *ei = NULL;
 					QString sEquipType = persInfoEquipReg.cap(1).trimmed();
 					if (sEquipType == QString::fromUtf8("Оружие")) {
-						type = PersInfo::EquipTypeWeapon;
+						ei = new WeaponEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Щит")) {
-						type = PersInfo::EquipTypeShield;
+						ei = new ShieldEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Голова")) {
-						type = PersInfo::EquipTypeHead;
+						ei = new HeadEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Шея")) {
-						type = PersInfo::EquipTypeNeck;
+						ei = new NeckEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Руки")) {
 						if (hand == 1) {
 							hand++;
-							type = PersInfo::EquipTypeHand1;
+							ei = new Hand1EquipItem();
 						} else {
-							type = PersInfo::EquipTypeHand2;
+							ei = new Hand2EquipItem();
 						}
 					} else if (sEquipType == QString::fromUtf8("Плечи")) {
-						type = PersInfo::EquipTypeShoulders;
+						ei = new ShouldersEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Корпус")) {
-						type = PersInfo::EquipTypeBody;
+						ei = new BodyEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Пояс")) {
-						type = PersInfo::EquipTypeStrap;
+						ei = new StrapEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Ноги")) {
-						type = PersInfo::EquipTypeFeet;
+						ei = new FeetEquipItem();
 					} else if (sEquipType == QString::fromUtf8("Обувь")) {
-						type = PersInfo::EquipTypeShoes;
-					} else {
-						fEe = false;
+						ei = new ShoesEquipItem();
 					}
-					if (fEe) {
-						struct equip_element ee;
-						PersInfo::resetEquip(ee);
-						PersInfo::getEquipFromString(persInfoEquipReg.cap(2).trimmed(), &ee);
-						equipListMap[type] = ee;
+					if (ei)
+					{
+						ei->loadFromString(persInfoEquipReg.cap(2).trimmed());
+						if (ei->isValid())
+							equipList.append(ei);
+						else
+							delete ei;
 					}
 
 					sMessage = gameText.nextLine().trimmed();
@@ -499,40 +497,13 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 							}
 							sMessage = gameText.nextLine().trimmed();
 							// Просматриваем экипировку, прописываем бонусы
-							foreach (int type, equipListMap.keys())
+							foreach (EquipItem *ei, equipList)
 							{
 								int pos = 0;
-								QString sName = equipListMap.value(type).name;
+								const QString &sName = ei->name();
 								while ((pos = equipNameList.indexOf(sName, pos)) != -1)
 								{
-									QStringList bonusSplit = equipBonusList.at(pos).split(":");
-									if (bonusSplit.size() == 2)
-									{
-										const QString sBonus = bonusSplit.at(0).trimmed().toLower();
-										int val = bonusSplit.at(1).toInt();
-										equip_element ee = equipListMap.value(type);
-										if (sBonus == QString::fromUtf8("урон"))
-										{
-											ee.loss_set += val;
-										}
-										else if (sBonus == QString::fromUtf8("защ"))
-										{
-											ee.protect_set += val;
-										}
-										else if (sBonus == QString::fromUtf8("сила"))
-										{
-											ee.force_set += val;
-										}
-										else if (sBonus == QString::fromUtf8("ловк"))
-										{
-											ee.dext_set += val;
-										}
-										else if (sBonus == QString::fromUtf8("инт"))
-										{
-											ee.intell_set += val;
-										}
-										equipListMap[type] = ee;
-									}
+									ei->setEquipBonus(equipBonusList.at(pos));
 									++pos;
 								}
 							}
@@ -588,9 +559,11 @@ void PluginCore::doTextParsing(const QString &jid, const QString &message)
 					}
 					persInfoPtr->setEquipLossCurr(nLoss);
 					persInfoPtr->setEquipProtectCurr(nProtect);
-					foreach (int type, equipListMap.keys())
+					while (!equipList.isEmpty())
 					{
-						persInfoPtr->setEquip(type, equipListMap.value(type));
+						EquipItem *ei = equipList.takeFirst();
+						persInfoPtr->setEquip(*ei);
+						delete ei;
 					}
 				}
 				// Дописываем заточку в текст

@@ -42,18 +42,6 @@ PersInfo::PersInfo() :
 	equipLossCalc(QINT32_MIN), equipLossCurr(QINT32_MIN),
 	equipProtectCalc(QINT32_MIN), equipProtectCurr(QINT32_MIN)
 {
-	// Начальная инициализация
-	resetEquip(weapon);
-	resetEquip(shield);
-	resetEquip(head);
-	resetEquip(neck);
-	resetEquip(shoulders);
-	resetEquip(body);
-	resetEquip(hand1);
-	resetEquip(hand2);
-	resetEquip(strap);
-	resetEquip(feet);
-	resetEquip(shoes);
 }
 
 PersInfo::~PersInfo()
@@ -84,16 +72,43 @@ void PersInfo::setForce(int f1, int f2)
 	force2 = f2;
 }
 
+bool PersInfo::getForce(int *f1, int *f2) const
+{
+	if (force1 == QINT32_MIN || force2 == QINT32_MIN)
+		return false;
+	*f1 = force1;
+	*f2 = force2;
+	return true;
+}
+
 void PersInfo::setDext(int d1, int d2)
 {
 	dext1 = d1;
 	dext2 = d2;
 }
 
+bool PersInfo::getDext(int *d1, int *d2) const
+{
+	if (dext1 == QINT32_MIN || dext2 == QINT32_MIN)
+		return false;
+	*d1 = dext1;
+	*d2 = dext2;
+	return true;
+}
+
 void PersInfo::setIntell(int i1, int i2)
 {
 	intell1 = i1;
 	intell2 = i2;
+}
+
+bool PersInfo::getIntell(int *i1, int *i2) const
+{
+	if (intell1 == QINT32_MIN || intell2 == QINT32_MIN)
+		return false;
+	*i1 = intell1;
+	*i2 = intell2;
+	return true;
 }
 
 int PersInfo::getEquipLossCalc()
@@ -112,90 +127,30 @@ int PersInfo::getEquipProtectCalc()
 	return equipProtectCalc;
 }
 
-void PersInfo::setEquip(int type, const equip_element &ee)
+void PersInfo::setEquip(const EquipItem &eItem)
 {
-	struct equip_element* eePtr = getEquipElementPointer(type);
-	if (!eePtr)
-		return;
-	if (ee.status == 1) {
-		*eePtr = ee;
-	} else {
-		eePtr->status = 0;
-	}
-	equipLossCalc = QINT32_MIN;
-	equipProtectCalc = QINT32_MIN;
-}
-
-/**
- * Проверяет существует ли элемент экипировки
- */
-bool PersInfo::isEquipElement(int type) const
-{
-	return (getEquipElement(type).status == 1);
-}
-
-/**
- * Возвращает уровень апдейта именного
- */
-int PersInfo::isEquipNamed(int type) const
-{
-	const equip_element &ee = getEquipElement(type);
-	if (ee.status == 1)
-	{
-		int level = ee.up_level;
-		if (level > 0)
-			return level;
-	}
-	return 0;
-}
-
-void PersInfo::calculateEquipParams(int type, struct params_info* par_info) const
-{
-	/**
-	* Расчитывает параметры конкретного элемента экипировки
-	**/
-	par_info->force = 0;
-	par_info->dext = 0;
-	par_info->intell = 0;
-	par_info->equip_loss = 0;
-	par_info->equip_protect = 0;
-	// Получаем указатель на структуру экипировки
-	const struct equip_element &ee = getEquipElement(type);
-	// Проверки
-	if (ee.status != 1)
-		return;
-	float lvl;
-	if (persLevel == -1)
-	{
-		lvl = 0.0f;
-	}
-	else
-	{
-		lvl = (float)persLevel;
-	}
-	// Считаем
-	par_info->force = floor(lvl * ee.force_mul + 0.01f) + (float)ee.force + (float)ee.force_set;
-	par_info->dext = floor(lvl * ee.dext_mul + 0.01f) + (float)ee.dext + (float)ee.dext_set;
-	par_info->intell = floor(lvl * ee.intell_mul + 0.01f) + (float)ee.intell + (float)ee.intell_set;
-	par_info->equip_loss = floor(lvl * ee.loss_mul + 0.01f) + (float)ee.loss + (float)ee.loss_set;
-	par_info->equip_protect = floor(lvl * ee.protect_mul + 0.01f) + (float)ee.protect + (float)ee.protect_set;
-}
-
-/**
- * Расчитывает эффективность отдельного элемента экипировки
- */
-float PersInfo::calculateEquipEfficiency(int type) const
-{
-	float res_val = 0.0f;
-	// Получаем указатель на структуру экипировки
-	const equip_element &ee = getEquipElement(type);
-	int level = ee.up_level;
-	if (level >= 7) {
-		res_val = 7 - level;
-		res_val += ee.loss_mul + ee.protect_mul + ee.force_mul * 10.0f + ee.dext_mul * 10.0f + ee.intell_mul * 10.0f;
-		res_val += (float)ee.loss_set / 25.0f + (float)ee.protect_set / 25.0f + (float)ee.force_set / 2.5f + (float)ee.dext_set / 2.5f + (float)ee.intell_set / 2.5f;
-	}
-	return res_val;
+	if (eItem.equipType() == EquipItem::EquipTypeWeapon)
+		_weapon = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeShield)
+		_shield = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeHead)
+		_head = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeNeck)
+		_neck = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeShoulders)
+		_shoulders = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeBody)
+		_body = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeHand1)
+		_hand1 = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeHand2)
+		_hand2 = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeStrap)
+		_strap = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeFeet)
+		_feet = eItem;
+	if (eItem.equipType() == EquipItem::EquipTypeShoes)
+		_shoes = eItem;
 }
 
 void PersInfo::calculateLoss()
@@ -208,51 +163,28 @@ void PersInfo::calculateLoss()
 		return;
 	}
 	float loss = 0.0f;
-	float lvl = (float)persLevel;
-	if (weapon.status == 1) {
-		loss += floor(lvl * weapon.loss_mul + 0.01f);
-		loss += weapon.loss + weapon.loss_set;
-	}
-	if (shield.status == 1) {
-		loss += floor(lvl * shield.loss_mul + 0.01f);
-		loss += shield.loss + shield.loss_set;
-	}
-	if (head.status == 1) {
-		loss += floor(lvl * head.loss_mul + 0.01f);
-		loss += head.loss + head.loss_set;
-	}
-	if (neck.status == 1) {
-		loss += floor(lvl * neck.loss_mul + 0.01f);
-		loss += neck.loss + neck.loss_set;
-	}
-	if (shoulders.status == 1) {
-		loss += floor(lvl * shoulders.loss_mul + 0.01f);
-		loss += shoulders.loss + shoulders.loss_set;
-	}
-	if (body.status == 1) {
-		loss += floor(lvl * body.loss_mul + 0.01f);
-		loss += body.loss + body.loss_set;
-	}
-	if (hand1.status == 1) {
-		loss += floor(lvl * hand1.loss_mul + 0.01f);
-		loss += hand1.loss + hand1.loss_set;
-	}
-	if (hand2.status == 1) {
-		loss += floor(lvl * hand2.loss_mul + 0.01f);
-		loss += hand2.loss + hand2.loss_set;
-	}
-	if (strap.status == 1) {
-		loss += floor(lvl * strap.loss_mul + 0.01f);
-		loss += strap.loss + strap.loss_set;
-	}
-	if (feet.status == 1) {
-		loss += floor(lvl * feet.loss_mul + 0.01f);
-		loss += feet.loss + feet.loss_set;
-	}
-	if (shoes.status == 1) {
-		loss += floor(lvl * shoes.loss_mul + 0.01f);
-		loss += shoes.loss + shoes.loss_set;
-	}
+	if (_weapon.isValid())
+		loss += _weapon.damageForLevel(persLevel);
+	if (_shield.isValid())
+		loss += _shield.damageForLevel(persLevel);
+	if (_head.isValid())
+		loss += _head.damageForLevel(persLevel);
+	if (_neck.isValid())
+		loss += _neck.damageForLevel(persLevel);
+	if (_shoulders.isValid())
+		loss += _shoulders.damageForLevel(persLevel);
+	if (_body.isValid())
+		loss += _body.damageForLevel(persLevel);
+	if (_hand1.isValid())
+		loss += _hand1.damageForLevel(persLevel);
+	if (_hand2.isValid())
+		loss += _hand2.damageForLevel(persLevel);
+	if (_strap.isValid())
+		loss += _strap.damageForLevel(persLevel);
+	if (_feet.isValid())
+		loss += _feet.damageForLevel(persLevel);
+	if (_shoes.isValid())
+		loss += _shoes.damageForLevel(persLevel);
 	equipLossCalc = (int)loss;
 }
 
@@ -266,289 +198,29 @@ void PersInfo::calculateProtect()
 		return;
 	}
 	float protect = 0.0f;
-	float lvl = (float)persLevel;
-	if (weapon.status == 1) {
-		protect += floor(lvl * weapon.protect_mul + 0.01f);
-		protect += weapon.protect + weapon.protect_set;
-	}
-	if (shield.status == 1) {
-		protect += floor(lvl * shield.protect_mul + 0.01f);
-		protect += shield.protect + shield.protect_set;
-	}
-	if (head.status == 1) {
-		protect += floor(lvl * head.protect_mul + 0.01f);
-		protect += head.protect + head.protect_set;
-	}
-	if (neck.status == 1) {
-		protect += floor(lvl * neck.protect_mul + 0.01f);
-		protect += neck.protect + neck.protect_set;
-	}
-	if (shoulders.status == 1) {
-		protect += floor(lvl * shoulders.protect_mul + 0.01f);
-		protect += shoulders.protect + shoulders.protect_set;
-	}
-	if (body.status == 1) {
-		protect += floor(lvl * body.protect_mul + 0.01f);
-		protect += body.protect + body.protect_set;
-	}
-	if (hand1.status == 1) {
-		protect += floor(lvl * hand1.protect_mul + 0.01f);
-		protect += hand1.protect + hand1.protect_set;
-	}
-	if (hand2.status == 1) {
-		protect += floor(lvl * hand2.protect_mul + 0.01f);
-		protect += hand2.protect + hand2.protect_set;
-	}
-	if (strap.status == 1) {
-		protect += floor(lvl * strap.protect_mul + 0.01f);
-		protect += strap.protect + strap.protect_set;
-	}
-	if (feet.status == 1) {
-		protect += floor(lvl * feet.protect_mul + 0.01f);
-		protect += feet.protect + feet.protect_set;
-	}
-	if (shoes.status == 1) {
-		protect += floor(lvl * shoes.protect_mul + 0.01f);
-		protect += shoes.protect + shoes.protect_set;
-	}
+	if (_weapon.isValid())
+		protect += _weapon.protectForLevel(persLevel);
+	if (_shield.isValid())
+		protect += _shield.protectForLevel(persLevel);
+	if (_head.isValid())
+		protect += _head.protectForLevel(persLevel);
+	if (_neck.isValid())
+		protect += _neck.protectForLevel(persLevel);
+	if (_shoulders.isValid())
+		protect += _shoulders.protectForLevel(persLevel);
+	if (_body.isValid())
+		protect += _body.protectForLevel(persLevel);
+	if (_hand1.isValid())
+		protect += _hand1.protectForLevel(persLevel);
+	if (_hand2.isValid())
+		protect += _hand2.protectForLevel(persLevel);
+	if (_strap.isValid())
+		protect += _strap.protectForLevel(persLevel);
+	if (_feet.isValid())
+		protect += _feet.protectForLevel(persLevel);
+	if (_shoes.isValid())
+		protect += _shoes.protectForLevel(persLevel);
 	equipProtectCalc = (int)protect;
-}
-
-QString PersInfo::getEquipString(int type) const
-{
-	/**
-	* Формирует строку элемента экипировки
-	**/
-	const equip_element &ee = getEquipElement(type);
-	QString sRes = "";
-	if (ee.status == 1) {
-		sRes.append(ee.name + QString::fromUtf8(" урон:"));
-		float mul = ee.loss_mul;
-		int abs = ee.loss;
-		if (mul != 0.0 || abs != 0) {
-			if (mul != 0.0) {
-				sRes.append(QString::number(mul) + QString::fromUtf8("*ур"));
-				if (abs != 0) {
-					sRes.append("+");
-				}
-			}
-			if (abs != 0) {
-				sRes.append(QString::number(abs));
-			}
-		} else {
-			sRes.append("0");
-		}
-		sRes.append(QString::fromUtf8("; защ:"));
-		mul = ee.protect_mul;
-		abs = ee.protect;
-		if (mul != 0.0 || abs != 0) {
-			if (mul != 0.0) {
-				sRes.append(QString::number(mul) + QString::fromUtf8("*ур"));
-				if (abs != 0) {
-					sRes.append("+");
-				}
-			}
-			if (abs != 0) {
-				sRes.append(QString::number(abs));
-			}
-		} else {
-			sRes.append("0");
-		}
-		sRes.append(QString::fromUtf8("; сила:"));
-		mul = ee.force_mul;
-		abs = ee.force;
-		if (mul != 0.0 || abs != 0) {
-			if (mul != 0.0) {
-				sRes.append(QString::number(mul) + QString::fromUtf8("*ур"));
-				if (abs != 0) {
-					sRes.append("+");
-				}
-			}
-			if (abs != 0) {
-				sRes.append(QString::number(abs));
-			}
-		} else {
-			sRes.append("0");
-		}
-		sRes.append(QString::fromUtf8("; ловк:"));
-		mul = ee.dext_mul;
-		abs = ee.dext;
-		if (mul != 0.0 || abs != 0) {
-			if (mul != 0.0) {
-				sRes.append(QString::number(mul) + QString::fromUtf8("*ур"));
-				if (abs != 0) {
-					sRes.append("+");
-				}
-			}
-			if (abs != 0) {
-				sRes.append(QString::number(abs));
-			}
-		} else {
-			sRes.append("0");
-		}
-		sRes.append(QString::fromUtf8("; инт:"));
-		mul = ee.intell_mul;
-		abs = ee.intell;
-		if (mul != 0.0 || abs != 0) {
-			if (mul != 0) {
-				sRes.append(QString::number(mul) + QString::fromUtf8("*ур"));
-				if (abs != 0) {
-					sRes.append("+");
-				}
-			}
-			if (abs != 0) {
-				sRes.append(QString::number(abs));
-			}
-		} else {
-			sRes.append("0");
-		}
-	}
-	return sRes;
-}
-
-struct equip_element *PersInfo::getEquipElementPointer(int type)
-{
-	/**
-	* Возвращает указатель на структуру элемента экипировки с указанным типом
-	**/
-	if (type == EquipTypeWeapon)
-		return &weapon;
-	if (type == EquipTypeShield)
-		return &shield;
-	if (type == EquipTypeHead)
-		return &head;
-	if (type == EquipTypeNeck)
-		return &neck;
-	if (type == EquipTypeHand1)
-		return &hand1;
-	if (type == EquipTypeHand2)
-		return &hand2;
-	if (type == EquipTypeShoulders)
-		return &shoulders;
-	if (type == EquipTypeBody)
-		return &body;
-	if (type == EquipTypeStrap)
-		return &strap;
-	if (type == EquipTypeFeet)
-		return &feet;
-	if (type == EquipTypeShoes)
-		return &shoes;
-	return 0;
-}
-
-const equip_element &PersInfo::getEquipElement(int type) const
-{
-	if (type == EquipTypeWeapon)
-		return weapon;
-	if (type == EquipTypeShield)
-		return shield;
-	if (type == EquipTypeHead)
-		return head;
-	if (type == EquipTypeNeck)
-		return neck;
-	if (type == EquipTypeHand1)
-		return hand1;
-	if (type == EquipTypeHand2)
-		return hand2;
-	if (type == EquipTypeShoulders)
-		return shoulders;
-	if (type == EquipTypeBody)
-		return body;
-	if (type == EquipTypeStrap)
-		return strap;
-	if (type == EquipTypeFeet)
-		return feet;
-	//if (type == EquipTypeShoes)
-		return shoes;
-}
-
-void PersInfo::resetEquip(struct equip_element &equipEl)
-{
-	/**
-	* Инициирует структуру экипировки начальными значениями
-	**/
-	equipEl.status = 0;
-	equipEl.type = -1;
-	equipEl.name = "";
-	equipEl.up_level = 0;
-	equipEl.loss = 0;
-	equipEl.loss_mul = 0.0f;
-	equipEl.protect = 0;
-	equipEl.protect_mul = 0.0f;
-	equipEl.force = 0;
-	equipEl.force_mul = 0.0f;
-	equipEl.dext = 0;
-	equipEl.dext_mul = 0.0f;
-	equipEl.intell = 0;
-	equipEl.intell_mul = 0.0f;
-	equipEl.loss_set = 0;
-	equipEl.protect_set = 0;
-	equipEl.force_set = 0;
-	equipEl.dext_set = 0;
-	equipEl.intell_set = 0;
-}
-
-QRegExp equipElementReg(QString::fromUtf8("^(.+)\\((\\w+)\\)(.+)\\{(.+)\\}(И:([0-9]+)ур\\.)?$"));
-QRegExp equipParamElementReg(QString::fromUtf8("^(\\w+):([0-9.]+)(\\*\\w+)?$"));
-
-bool PersInfo::getEquipFromString(const QString &thingStr, struct equip_element* equipElementPtr)
-{
-	/**
-	* Разбирает строку экипировки в структуру
-	**/
-	// Обруч ярости Демона(амулет)сила:1.8*ур;ловк:4.2*ур;инт:1.8*ур;урон:10.5*ур;защ:6.2*ур;{Треб:Ур13Сил39}И:8ур.
-	if (equipElementReg.indexIn(thingStr, 0) == -1)
-		return false;
-	struct equip_element equipEl;
-	resetEquip(equipEl);
-	equipEl.type = thingTypeFromString(equipElementReg.cap(2));
-	equipEl.name = equipElementReg.cap(1).trimmed();
-	if (!equipElementReg.cap(6).isEmpty()) {
-		equipEl.up_level = equipElementReg.cap(6).toInt();
-	} else {
-		equipEl.up_level = 0;
-	}
-	QStringList aParams = equipElementReg.cap(3).trimmed().split(";", QString::SkipEmptyParts);
-	int cnt = aParams.size();
-	for (int i = 0; i < cnt; i++) {
-		if (equipParamElementReg.indexIn(aParams[i], 0) != -1) {
-			QString sParam = equipParamElementReg.cap(1);
-			if (sParam == QString::fromUtf8("урон")) {
-				if (equipParamElementReg.cap(3).isEmpty()) {
-					equipEl.loss += equipParamElementReg.cap(2).toInt();
-				} else {
-					equipEl.loss_mul += equipParamElementReg.cap(2).toFloat();
-				}
-			} else if (sParam == QString::fromUtf8("защ")) {
-				if (equipParamElementReg.cap(3).isEmpty()) {
-					equipEl.protect += equipParamElementReg.cap(2).toInt();
-				} else {
-					equipEl.protect_mul += equipParamElementReg.cap(2).toFloat();
-				}
-			} else if (sParam == QString::fromUtf8("сила")) {
-				if (equipParamElementReg.cap(3).isEmpty()) {
-					equipEl.force += equipParamElementReg.cap(2).toInt();
-				} else {
-					equipEl.force_mul += equipParamElementReg.cap(2).toFloat();
-				}
-			} else if (sParam == QString::fromUtf8("ловк")) {
-				if (equipParamElementReg.cap(3).isEmpty()) {
-					equipEl.dext += equipParamElementReg.cap(2).toInt();
-				} else {
-					equipEl.dext_mul += equipParamElementReg.cap(2).toFloat();
-				}
-			} else if (sParam == QString::fromUtf8("инт")) {
-				if (equipParamElementReg.cap(3).isEmpty()) {
-					equipEl.intell += equipParamElementReg.cap(2).toInt();
-				} else {
-					equipEl.intell_mul += equipParamElementReg.cap(2).toFloat();
-				}
-			}
-		}
-	}
-	*equipElementPtr = equipEl;
-	equipElementPtr->status = 1;
-	return true;
 }
 
 QString PersInfo::getSharpening(int calcVal, int currVal)
@@ -651,13 +323,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nОружие: "));
-	if (isEquipElement(EquipTypeWeapon))
+	if (_weapon.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeWeapon);
+		float namedEffect = _weapon.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeWeapon) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_weapon.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeWeapon);
+		int level = _weapon.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -676,13 +348,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nЩит: "));
-	if (isEquipElement(EquipTypeShield))
+	if (_shield.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeShield);
+		float namedEffect = _shield.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeShield) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_shield.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeShield);
+		int level = _shield.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -701,13 +373,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nГолова: "));
-	if (isEquipElement(EquipTypeHead))
+	if (_head.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeHead);
+		float namedEffect = _head.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeHead) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_head.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeHead);
+		int level = _head.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -726,13 +398,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nШея: "));
-	if (isEquipElement(EquipTypeNeck))
+	if (_neck.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeNeck);
+		float namedEffect = _neck.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeNeck) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_neck.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeNeck);
+		int level = _neck.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -751,13 +423,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nПлечи: "));
-	if (isEquipElement(EquipTypeShoulders))
+	if (_shoulders.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeShoulders);
+		float namedEffect = _shoulders.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeShoulders) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_shoulders.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeShoulders);
+		int level = _shoulders.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -776,13 +448,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nРука 1: "));
-	if (isEquipElement(EquipTypeHand1))
+	if (_hand1.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeHand1);
+		float namedEffect = _hand1.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeHand1) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_hand1.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeHand1);
+		int level = _hand1.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -801,13 +473,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nРука 2: "));
-	if (isEquipElement(EquipTypeHand2))
+	if (_hand2.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeHand2);
+		float namedEffect = _hand2.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeHand2) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_hand2.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeHand2);
+		int level = _hand2.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -826,13 +498,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nКорпус: "));
-	if (isEquipElement(EquipTypeBody))
+	if (_body.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeBody);
+		float namedEffect = _body.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeBody) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_body.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeBody);
+		int level = _body.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -851,13 +523,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nПояс: "));
-	if (isEquipElement(EquipTypeStrap))
+	if (_strap.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeStrap);
+		float namedEffect = _strap.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeStrap) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_strap.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeStrap);
+		int level = _strap.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -876,13 +548,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nНоги: "));
-	if (isEquipElement(EquipTypeFeet))
+	if (_feet.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeFeet);
+		float namedEffect = _feet.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeFeet) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_feet.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeFeet);
+		int level = _feet.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -901,13 +573,13 @@ QString PersInfo::toString(int ver)
 
 	if (ver == 2)
 		resStr.append(QString::fromUtf8("\nОбувь: "));
-	if (isEquipElement(EquipTypeShoes))
+	if (_shoes.isValid())
 	{
-		float namedEffect = calculateEquipEfficiency(EquipTypeShoes);
+		float namedEffect = _shoes.efficiency();
 		if (ver == 2)
-			resStr.append(getEquipString(EquipTypeShoes) + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
+			resStr.append(_shoes.toString() + QString::fromUtf8(". Эфф: %1").arg(floor(namedEffect + 0.51f)));
 		equipCount++;
-		int level = isEquipNamed(EquipTypeShoes);
+		int level = _shoes.upLevel();
 		if (level > 0)
 		{
 			namedCount++;
@@ -939,147 +611,125 @@ QString PersInfo::toString(int ver)
 		int equip_loss_sum = 0;
 		int equip_protect_sum = 0;
 		// Оружие
-		struct params_info weaponParams;
-		calculateEquipParams(EquipTypeWeapon, &weaponParams);
-		force_sum += weaponParams.force;
-		dext_sum += weaponParams.dext;
-		intell_sum += weaponParams.intell;
-		equip_loss_sum += weaponParams.equip_loss;
-		equip_protect_sum += weaponParams.equip_protect;
+		equip_loss_sum += _weapon.damageForLevel(persLevel);
+		equip_protect_sum += _weapon.protectForLevel(persLevel);
+		force_sum += _weapon.forceForLevel(persLevel);
+		dext_sum += _weapon.dextForLevel(persLevel);
+		intell_sum += _weapon.intellForLevel(persLevel);
 		// Щит
-		struct params_info shieldParams;
-		calculateEquipParams(EquipTypeShield, &shieldParams);
-		force_sum += shieldParams.force;
-		dext_sum += shieldParams.dext;
-		intell_sum += shieldParams.intell;
-		equip_loss_sum += shieldParams.equip_loss;
-		equip_protect_sum += shieldParams.equip_protect;
+		equip_loss_sum += _shield.damageForLevel(persLevel);
+		equip_protect_sum += _shield.protectForLevel(persLevel);
+		force_sum += _shield.forceForLevel(persLevel);
+		dext_sum += _shield.dextForLevel(persLevel);
+		intell_sum += _shield.intellForLevel(persLevel);
 		// Голова
-		struct params_info headParams;
-		calculateEquipParams(EquipTypeHead, &headParams);
-		force_sum += headParams.force;
-		dext_sum += headParams.dext;
-		intell_sum += headParams.intell;
-		equip_loss_sum += headParams.equip_loss;
-		equip_protect_sum += headParams.equip_protect;
+		equip_loss_sum += _head.damageForLevel(persLevel);
+		equip_protect_sum += _head.protectForLevel(persLevel);
+		force_sum += _head.forceForLevel(persLevel);
+		dext_sum += _head.dextForLevel(persLevel);
+		intell_sum += _head.intellForLevel(persLevel);
 		// Шея
-		struct params_info neckParams;
-		calculateEquipParams(EquipTypeNeck, &neckParams);
-		force_sum += neckParams.force;
-		dext_sum += neckParams.dext;
-		intell_sum += neckParams.intell;
-		equip_loss_sum += neckParams.equip_loss;
-		equip_protect_sum += neckParams.equip_protect;
+		equip_loss_sum += _neck.damageForLevel(persLevel);
+		equip_protect_sum += _neck.protectForLevel(persLevel);
+		force_sum += _neck.forceForLevel(persLevel);
+		dext_sum += _neck.dextForLevel(persLevel);
+		intell_sum += _neck.intellForLevel(persLevel);
 		// Плечи
-		struct params_info shouldersParams;
-		calculateEquipParams(EquipTypeShoulders, &shouldersParams);
-		force_sum += shouldersParams.force;
-		dext_sum += shouldersParams.dext;
-		intell_sum += shouldersParams.intell;
-		equip_loss_sum += shouldersParams.equip_loss;
-		equip_protect_sum += shouldersParams.equip_protect;
+		equip_loss_sum += _shoulders.damageForLevel(persLevel);
+		equip_protect_sum += _shoulders.protectForLevel(persLevel);
+		force_sum += _shoulders.forceForLevel(persLevel);
+		dext_sum += _shoulders.dextForLevel(persLevel);
+		intell_sum += _shoulders.intellForLevel(persLevel);
 		// Рука 1
-		struct params_info hand1Params;
-		calculateEquipParams(EquipTypeHand1, &hand1Params);
-		force_sum += hand1Params.force;
-		dext_sum += hand1Params.dext;
-		intell_sum += hand1Params.intell;
-		equip_loss_sum += hand1Params.equip_loss;
-		equip_protect_sum += hand1Params.equip_protect;
+		equip_loss_sum += _hand1.damageForLevel(persLevel);
+		equip_protect_sum += _hand1.protectForLevel(persLevel);
+		force_sum += _hand1.forceForLevel(persLevel);
+		dext_sum += _hand1.dextForLevel(persLevel);
+		intell_sum += _hand1.intellForLevel(persLevel);
 		// Рука 2
-		struct params_info hand2Params;
-		calculateEquipParams(EquipTypeHand2, &hand2Params);
-		force_sum += hand2Params.force;
-		dext_sum += hand2Params.dext;
-		intell_sum += hand2Params.intell;
-		equip_loss_sum += hand2Params.equip_loss;
-		equip_protect_sum += hand2Params.equip_protect;
+		equip_loss_sum += _hand2.damageForLevel(persLevel);
+		equip_protect_sum += _hand2.protectForLevel(persLevel);
+		force_sum += _hand2.forceForLevel(persLevel);
+		dext_sum += _hand2.dextForLevel(persLevel);
+		intell_sum += _hand2.intellForLevel(persLevel);
 		// Корпус
-		struct params_info bodyParams;
-		calculateEquipParams(EquipTypeBody, &bodyParams);
-		force_sum += bodyParams.force;
-		dext_sum += bodyParams.dext;
-		intell_sum += bodyParams.intell;
-		equip_loss_sum += bodyParams.equip_loss;
-		equip_protect_sum += bodyParams.equip_protect;
+		equip_loss_sum += _body.damageForLevel(persLevel);
+		equip_protect_sum += _body.protectForLevel(persLevel);
+		force_sum += _body.forceForLevel(persLevel);
+		dext_sum += _body.dextForLevel(persLevel);
+		intell_sum += _body.intellForLevel(persLevel);
 		// Пояс
-		struct params_info strapParams;
-		calculateEquipParams(EquipTypeStrap, &strapParams);
-		force_sum += strapParams.force;
-		dext_sum += strapParams.dext;
-		intell_sum += strapParams.intell;
-		equip_loss_sum += strapParams.equip_loss;
-		equip_protect_sum += strapParams.equip_protect;
+		equip_loss_sum += _strap.damageForLevel(persLevel);
+		equip_protect_sum += _strap.protectForLevel(persLevel);
+		force_sum += _strap.forceForLevel(persLevel);
+		dext_sum += _strap.dextForLevel(persLevel);
+		intell_sum += _strap.intellForLevel(persLevel);
 		// Ноги
-		struct params_info feetParams;
-		calculateEquipParams(EquipTypeFeet, &feetParams);
-		force_sum += feetParams.force;
-		dext_sum += feetParams.dext;
-		intell_sum += feetParams.intell;
-		equip_loss_sum += feetParams.equip_loss;
-		equip_protect_sum += feetParams.equip_protect;
+		equip_loss_sum += _feet.damageForLevel(persLevel);
+		equip_protect_sum += _feet.protectForLevel(persLevel);
+		force_sum += _feet.forceForLevel(persLevel);
+		dext_sum += _feet.dextForLevel(persLevel);
+		intell_sum += _feet.intellForLevel(persLevel);
 		// Обувь
-		struct params_info shoesParams;
-		calculateEquipParams(EquipTypeShoes, &shoesParams);
-		force_sum += shoesParams.force;
-		dext_sum += shoesParams.dext;
-		intell_sum += shoesParams.intell;
-		equip_loss_sum += shoesParams.equip_loss;
-		equip_protect_sum += shoesParams.equip_protect;
+		equip_loss_sum += _shoes.damageForLevel(persLevel);
+		equip_protect_sum += _shoes.protectForLevel(persLevel);
+		force_sum += _shoes.forceForLevel(persLevel);
+		dext_sum += _shoes.dextForLevel(persLevel);
+		intell_sum += _shoes.intellForLevel(persLevel);
 
 		// Теперь считаем доли
 		// Урон экипировки
 		if (equip_loss_sum > 0)
 		{
 			resStr.append(QString::fromUtf8("\n- Урон экипировки -"));
-			int equip_loss = weaponParams.equip_loss;
+			int equip_loss = _weapon.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОружие: %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = shieldParams.equip_loss;
+			equip_loss = _shield.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nЩит:    %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = headParams.equip_loss;
+			equip_loss = _head.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nГолова: %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = neckParams.equip_loss;
+			equip_loss = _neck.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nШея:    %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = shouldersParams.equip_loss;
+			equip_loss = _shoulders.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПлечи:  %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = hand1Params.equip_loss;
+			equip_loss = _hand1.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 1: %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = hand2Params.equip_loss;
+			equip_loss = _hand2.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 2: %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = bodyParams.equip_loss;
+			equip_loss = _body.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nКорпус: %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = strapParams.equip_loss;
+			equip_loss = _strap.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПояс:   %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = feetParams.equip_loss;
+			equip_loss = _feet.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nНоги:   %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_loss = shoesParams.equip_loss;
+			equip_loss = _shoes.damageForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОбувь:  %1 [%2%]").arg(equip_loss).arg(floor((float)equip_loss / (float)equip_loss_sum * 1000.0f + 0.5f) / 10.0f));
 		}
 		// Защита экипировки
 		if (equip_protect_sum > 0)
 		{
 			resStr.append(QString::fromUtf8("\n- Защита экипировки -"));
-			int equip_protect = weaponParams.equip_protect;
+			int equip_protect = _weapon.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОружие: %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = shieldParams.equip_protect;
+			equip_protect = _shield.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nЩит:    %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = headParams.equip_protect;
+			equip_protect = _head.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nГолова: %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = neckParams.equip_protect;
+			equip_protect = _neck.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nШея:    %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = shouldersParams.equip_protect;
+			equip_protect = _shoulders.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПлечи:  %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = hand1Params.equip_protect;
+			equip_protect = _hand1.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 1: %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = hand2Params.equip_protect;
+			equip_protect = _hand2.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 2: %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = bodyParams.equip_protect;
+			equip_protect = _body.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nКорпус: %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = strapParams.equip_protect;
+			equip_protect = _strap.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПояс:   %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = feetParams.equip_protect;
+			equip_protect = _feet.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nНоги:   %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
-			equip_protect = shoesParams.equip_protect;
+			equip_protect = _shoes.protectForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОбувь:  %1 [%2%]").arg(equip_protect).arg(floor((float)equip_protect / (float)equip_protect_sum * 1000.0f + 0.5f) / 10.0f));
 		}
 		// Сила
@@ -1087,27 +737,27 @@ QString PersInfo::toString(int ver)
 		{
 			resStr.append(QString::fromUtf8("\n- Сила -"));
 			resStr.append(QString::fromUtf8("\nРаспределение: %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = weaponParams.force;
+			nForce = _weapon.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОружие: %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = shieldParams.force;
+			nForce = _shield.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nЩит:    %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = headParams.force;
+			nForce = _head.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nГолова: %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = neckParams.force;
+			nForce = _neck.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nШея:    %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = shouldersParams.force;
+			nForce = _shoulders.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПлечи:  %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = hand1Params.force;
+			nForce = _hand1.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 1: %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = hand2Params.force;
+			nForce = _hand2.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 2: %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = bodyParams.force;
+			nForce = _body.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nКорпус: %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = strapParams.force;
+			nForce = _strap.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПояс:   %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = feetParams.force;
+			nForce = _feet.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nНоги:   %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
-			nForce = shoesParams.force;
+			nForce = _shoes.forceForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОбувь:  %1 [%2%]").arg(nForce).arg(floor((float)nForce / (float)force_sum * 1000.0f + 0.5f) / 10.0f));
 		}
 		// Ловкость
@@ -1115,27 +765,27 @@ QString PersInfo::toString(int ver)
 		{
 			resStr.append(QString::fromUtf8("\n- Ловкость -"));
 			resStr.append(QString::fromUtf8("\nРаспределение: %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = weaponParams.dext;
+			nDext = _weapon.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОружие: %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = shieldParams.dext;
+			nDext = _shield.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nЩит:    %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = headParams.dext;
+			nDext = _head.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nГолова: %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = neckParams.dext;
+			nDext = _neck.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nШея:    %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = shouldersParams.dext;
+			nDext = _shoulders.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПлечи:  %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = hand1Params.dext;
+			nDext = _hand1.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 1: %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = hand2Params.dext;
+			nDext = _hand2.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 2: %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = bodyParams.dext;
+			nDext = _body.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nКорпус: %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = strapParams.dext;
+			nDext = _strap.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПояс:   %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = feetParams.dext;
+			nDext = _feet.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nНоги:   %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
-			nDext = shoesParams.dext;
+			nDext = _shoes.dextForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОбувь:  %1 [%2%]").arg(nDext).arg(floor((float)nDext / (float)dext_sum * 1000.0f + 0.5f) / 10.0f));
 		}
 		// Интеллект
@@ -1143,27 +793,27 @@ QString PersInfo::toString(int ver)
 		{
 			resStr.append(QString::fromUtf8("\n- Интеллект -"));
 			resStr.append(QString::fromUtf8("\nРаспределение: %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = weaponParams.intell;
+			nIntell = _weapon.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОружие: %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = shieldParams.intell;
+			nIntell = _shield.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nЩит:    %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = headParams.intell;
+			nIntell = _head.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nГолова: %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = neckParams.intell;
+			nIntell = _neck.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nШея:    %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = shouldersParams.intell;
+			nIntell = _shoulders.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПлечи:  %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = hand1Params.intell;
+			nIntell = _hand1.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 1: %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = hand2Params.intell;
+			nIntell = _hand2.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nРука 2: %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = bodyParams.intell;
+			nIntell = _body.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nКорпус: %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = strapParams.intell;
+			nIntell = _strap.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nПояс:   %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = feetParams.intell;
+			nIntell = _feet.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nНоги:   %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
-			nIntell = shoesParams.intell;
+			nIntell = _shoes.intellForLevel(persLevel);
 			resStr.append(QString::fromUtf8("\nОбувь:  %1 [%2%]").arg(nIntell).arg(floor((float)nIntell / (float)intell_sum * 1000.0f + 0.5f) / 10.0f));
 		}
 	}
