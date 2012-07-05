@@ -453,11 +453,14 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 		bool res = senderObj->doGameAsk(jid, message);
 		return res;
 	} else if (sTagName == "presence") {
-		if (stanza.attribute("type") == "unavailable") {
-			PluginCore::instance()->setGameJidStatus(i, 0);
+		const QString sType = stanza.attribute("type");
+		if (sType == "unavailable") {
+			PluginCore::instance()->setGameJidStatus(i, PluginCore::OfflineStatus);
+		} else if (sType == "error") {
+			PluginCore::instance()->setGameJidStatus(i, PluginCore::ErrorStatus);
 		} else {
 			currAccActive = true;
-			PluginCore::instance()->setGameJidStatus(i, 1);
+			PluginCore::instance()->setGameJidStatus(i, PluginCore::OnlineStatus);
 		}
 	} else if (sTagName == "iq") {
 		if (stanza.attribute("type") == "result" && stanza.attribute("id") == "sofgame_plugin") {
@@ -469,9 +472,9 @@ bool SofGamePlugin::incomingStanza(int account, const QDomElement &stanza)
 				if (fOk) {
 					if (secs == 0) {
 						currAccActive = true;
-						PluginCore::instance()->setGameJidStatus(i, 1);
+						PluginCore::instance()->setGameJidStatus(i, PluginCore::OnlineStatus);
 					} else {
-						PluginCore::instance()->setGameJidStatus(i, 0);
+						PluginCore::instance()->setGameJidStatus(i, PluginCore::OfflineStatus);
 					}
 				}
 			}

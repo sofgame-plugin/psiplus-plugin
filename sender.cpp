@@ -108,7 +108,7 @@ void Sender::setAccountStatus(int curr_status)
 	if (curr_status == 0) {
 		int cnt = gameJidsEx.size();
 		for (int i = 0; i < cnt; i++) {
-			setGameJidStatus(i, 0);
+			setGameJidStatus(i, PluginCore::OfflineStatus);
 		}
 	}
 }
@@ -127,7 +127,7 @@ void Sender::insertGameJid(const QString &jid, int pos)
 	// Вставляем запись
 	struct jid_status jst;
 	jst.jid = jid;
-	jst.status = 0;
+	jst.status = PluginCore::OfflineStatus;
 	jst.last_status = QDateTime();
 	jst.last_send = QDateTime();
 	jst.last_recv_game = QDateTime();
@@ -228,21 +228,29 @@ bool Sender::setGameJidStatus(int jid_index, qint32 status)
 	bool res = false;
 	int oldJidActiveCount = jidActiveCount;
 	struct jid_status* jstat = &gameJidsEx[jid_index];
-	if (status == 0) {
-		if (jstat->status != 0) {
-			jstat->probe_count = 0;
-			jstat->status = 0;
-			jstat->last_status = QDateTime::currentDateTime();
-			jidActiveCount--;
-			res = true;
-			// Отменяем пинг отключенного зеркала
-			clearPingQueue(jid_index);
-		}
-	} else {
-		if (jstat->status == 0) {
+	if (status == PluginCore::OnlineStatus)
+	{
+		if (jstat->status != PluginCore::OnlineStatus)
+		{
 			jstat->status = status;
 			jstat->last_status = QDateTime::currentDateTime();
 			jidActiveCount++;
+			res = true;
+		}
+	}
+	else
+	{
+		if (jstat->status != status)
+		{
+			if (jstat->status == PluginCore::OnlineStatus)
+			{
+				jstat->probe_count = 0;
+				jidActiveCount--;
+				// Отменяем пинг отключенного зеркала
+				clearPingQueue(jid_index);
+			}
+			jstat->status = status;
+			jstat->last_status = QDateTime::currentDateTime();
 			res = true;
 		}
 	}
@@ -327,10 +335,10 @@ bool Sender::doGameAsk(const QString &mirrorJid, const QString &message)
 					// Отмечаем время получения пакета
 					gameJidsEx[jidIndex].last_recv_ping = lastReceive;
 					// Обсчитываем среднее
-					int elapsed = gameJidsEx[jidIndex].last_send_ping.time().elapsed();
-					int probe_cnt = gameJidsEx[jidIndex].probe_count;
+					int elapsed = gameJidsEx.at(jidIndex).last_send_ping.time().elapsed();
+					int probe_cnt = gameJidsEx.at(jidIndex).probe_count;
 					if (probe_cnt > 0) {
-						float average_temp = gameJidsEx[jidIndex].resp_average;
+						float average_temp = gameJidsEx.at(jidIndex).resp_average;
 						if (probe_cnt >= 10) {
 							gameJidsEx[jidIndex].resp_average = (average_temp * 2.0f + elapsed) / 3.0f;
 							probe_cnt = 3;
@@ -464,42 +472,42 @@ void Sender::doPingJob()
 	QDateTime currTime = QDateTime::currentDateTime();
 	if (pingQueue.isEmpty()) { // Новый пинг ставим в очередь, только если предыдущие отправлены
 		// Получаем индекс текущего jid-а
-		if (currGameJidIndex != -1 && gameJidsEx[currGameJidIndex].status != 0 && gameJidsEx[currGameJidIndex].last_send.isValid()) { // Игровой jid активен
-			int timeDelta = gameJidsEx[currGameJidIndex].last_send.secsTo(currTime);
+		if (currGameJidIndex != -1 && gameJidsEx.at(currGameJidIndex).status == PluginCore::OnlineStatus && gameJidsEx.at(currGameJidIndex).last_send.isValid()) { // Игровой jid активен
+			int timeDelta = gameJidsEx.at(currGameJidIndex).last_send.secsTo(currTime);
 			if (timeDelta > 5 && timeDelta < 600) { // Пингуем только если простой в игре более 5 сек, но меньше чем 10 мин.
 				// Проверяем, подошло ли время пинга зеркал
 				int indexForPing = -1;
 				QDateTime lastPing = currTime;
 				int cnt = gameJidsEx.size();
 				for (int i = 0; i < cnt; i++) {
-					if (gameJidsEx[i].status != 0) { // Зеркало должно быть активно
-						if (!gameJidsEx[i].last_send_ping.isValid()) {
+					if (gameJidsEx.at(i).status == PluginCore::OnlineStatus) { // Зеркало должно быть активно
+						if (!gameJidsEx.at(i).last_send_ping.isValid()) {
 							// Небыло ни одного пинга зеркала. Пингуем безусловно.
 							indexForPing = i;
 							gameJidsEx[i].probe_count = 0;
 							break;
 						}
-						if (indexForPing == -1 || gameJidsEx[i].last_send_ping < lastPing) {
+						if (indexForPing == -1 || gameJidsEx.at(i).last_send_ping < lastPing) {
 							// Это зеркало - кандидат на ping
-							timeDelta = gameJidsEx[i].last_send_ping.secsTo(currTime);
+							timeDelta = gameJidsEx.at(i).last_send_ping.secsTo(currTime);
 							if (timeDelta >= 60) { // Время между пингами одного зеркала не должно быть меньше 1 мин.
-								if (gameJidsEx[i].probe_count < 10 || timeDelta >= 1200) { // Менее 10ти пингов или прошло 20 мин.
+								if (gameJidsEx.at(i).probe_count < 10 || timeDelta >= 1200) { // Менее 10ти пингов или прошло 20 мин.
 									indexForPing = i;
-									lastPing = gameJidsEx[i].last_send_ping;
+									lastPing = gameJidsEx.at(i).last_send_ping;
 								}
 							}
 						}
 					}
 				}
 				if (indexForPing != -1) {
-					if (gameJidsEx[indexForPing].last_send_ping.isValid()) {
+					if (gameJidsEx.at(indexForPing).last_send_ping.isValid()) {
 						if (timeDelta >= 3600) {
 							// Если последний замер был час назад, то сбрасываем результаты замеров
 							gameJidsEx[indexForPing].probe_count = 0;
-						} else if (!gameJidsEx[indexForPing].last_recv_ping.isValid() || gameJidsEx[indexForPing].last_recv_ping < gameJidsEx[indexForPing].last_send_ping) {
+						} else if (!gameJidsEx.at(indexForPing).last_recv_ping.isValid() || gameJidsEx.at(indexForPing).last_recv_ping < gameJidsEx.at(indexForPing).last_send_ping) {
 							// В последний раз ответа от зеркала не было
 							gameJidsEx[indexForPing].probe_count = 0;
-						} else if (gameJidsEx[indexForPing].probe_count >= 10) {
+						} else if (gameJidsEx.at(indexForPing).probe_count >= 10) {
 							gameJidsEx[indexForPing].probe_count = 3; // Принижаем ценность замеров
 						}
 					}
@@ -524,11 +532,11 @@ void Sender::doPingJob()
 			if (timeDeltaMsec >= jidInterval) {
 				// Можно отправлять данные
 				int i = pingQueue.dequeue();
-				if (gameJidsEx[i].status != 0) {
+				if (gameJidsEx.at(i).status == PluginCore::OnlineStatus) {
 					gameJidsEx[i].last_send_ping = currTime;
 					gameJidsEx[i].last_send_ping.time().start();
 					lastSend = currTime;
-					PluginHosts::psiSender->sendMessage(currentAccount, gameJidsEx[i].jid, "000", "", "chat");
+					PluginHosts::psiSender->sendMessage(currentAccount, gameJidsEx.at(i).jid, "000", "", "chat");
 				}
 			} else {
 				timeout = jidInterval - timeDeltaMsec;
@@ -567,7 +575,7 @@ void Sender::doSendGameStringJob() {
 	// Проверяем, пришел ли ответ на предыдущий пакет
 	if (waitingForReceive && lastSendIndex != -1) {
 		// Ответа пока не было
-		int timeDeltaMsec = gameJidsEx[lastSendIndex].last_send.time().msecsTo(currTime.time());
+		int timeDeltaMsec = gameJidsEx.at(lastSendIndex).last_send.time().msecsTo(currTime.time());
 		if (timeDeltaMsec < 0) {
 			timeDeltaMsec += 86400000;
 		}
@@ -605,7 +613,7 @@ void Sender::doSendGameStringJob() {
 		int jidIndex = -1;
 		qint32 jidWeight = QINT32_MIN;
 		for (int i = 0; i < cnt; i++) {
-			if (gameJidsEx[i].status == 1) {
+			if (gameJidsEx.at(i).status == PluginCore::OnlineStatus) {
 				// Зеркало подключено
 				if (gameMirrorsMode == 0) {
 					// Используем первый доступный Джид
@@ -614,8 +622,8 @@ void Sender::doSendGameStringJob() {
 				}
 				qint32 weight = 0; // Эквивалентно: статус не менялся в теч. 10мин, не играли в течении часа, нет тестов
 				// Учитываем когда зеркало последний раз меняло статус
-				if (gameJidsEx[i].last_status.isValid()) {
-					int timeDelta = gameJidsEx[i].last_status.secsTo(currTime);
+				if (gameJidsEx.at(i).last_status.isValid()) {
+					int timeDelta = gameJidsEx.at(i).last_status.secsTo(currTime);
 					if (timeDelta < 10) {
 						weight -= 600;
 					} else if (timeDelta < 60) {
@@ -628,9 +636,9 @@ void Sender::doSendGameStringJob() {
 				}
 				//qDebug() << "--Index: " << i << ", weight: " << weight;
 				// Проверяем отклик и последний пакет с зеркала
-				if (gameJidsEx[i].last_send.isValid()) {
-					if (gameJidsEx[i].last_recv_game.isValid() && gameJidsEx[i].last_recv_game >= gameJidsEx[i].last_send) {
-						int timeDelta = gameJidsEx[i].last_recv_game.secsTo(currTime);
+				if (gameJidsEx.at(i).last_send.isValid()) {
+					if (gameJidsEx.at(i).last_recv_game.isValid() && gameJidsEx.at(i).last_recv_game >= gameJidsEx.at(i).last_send) {
+						int timeDelta = gameJidsEx.at(i).last_recv_game.secsTo(currTime);
 						if (timeDelta <= 2) {
 							// Активная игра, jid без особой надобности не меняем.
 							weight += 300;
@@ -648,7 +656,7 @@ void Sender::doSendGameStringJob() {
 							weight += 10;
 						}
 					} else {
-						int timeDelta = gameJidsEx[i].last_send.secsTo(currTime);
+						int timeDelta = gameJidsEx.at(i).last_send.secsTo(currTime);
 						weight -= 50;
 						if (timeDelta > 10) {
 							weight -= 50;
@@ -657,8 +665,8 @@ void Sender::doSendGameStringJob() {
 				}
 				//qDebug() << "--Index: " << i << ", weight: " << weight;
 				// Учитываем результаты подсчета среднего отклика зеркала
-				if (gameJidsEx[i].probe_count > 0) {
-					float average = gameJidsEx[i].resp_average;
+				if (gameJidsEx.at(i).probe_count > 0) {
+					float average = gameJidsEx.at(i).resp_average;
 					int weight_tmp = 0;
 					if (average <= 300) {
 						weight_tmp = 250;
@@ -671,9 +679,9 @@ void Sender::doSendGameStringJob() {
 					} else {
 						weight_tmp = -250;
 					}
-					if (gameJidsEx[i].probe_count < 3) {
+					if (gameJidsEx.at(i).probe_count < 3) {
 						weight_tmp = weight_tmp / 2;
-					} else if (gameJidsEx[i].probe_count < 5) {
+					} else if (gameJidsEx.at(i).probe_count < 5) {
 						weight_tmp = weight_tmp * 7 / 10 ;
 					}
 					weight += weight_tmp;
@@ -710,7 +718,7 @@ void Sender::doSendGameStringJob() {
 				emit queueSizeChanged(gameQueue.size());
 			}
 		}
-		PluginHosts::psiSender->sendMessage(currentAccount, gameJidsEx[jidIndex].jid, lastCommand, "", "chat");
+		PluginHosts::psiSender->sendMessage(currentAccount, gameJidsEx.at(jidIndex).jid, lastCommand, "", "chat");
 		lastSendIndex = jidIndex;
 		waitingForReceive = true;
 		sendCommandRetries++;

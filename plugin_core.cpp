@@ -235,10 +235,16 @@ void PluginCore::setGameJidStatus(int jid_index, qint32 status)
 	if (sender->setGameJidStatus(jid_index, status)) {
 		const Sender::jid_status* jstat = sender->getGameJidInfo(jid_index);
 		QString str1 = "### " + jstat->jid + " - ";
-		if (status == 0) {
+		if (status == OfflineStatus) {
 			str1.append(QString::fromUtf8("отключен"));
-		} else {
+		}
+		else if (status == OnlineStatus)
+		{
 			str1.append(QString::fromUtf8("подключен"));
+		}
+		else
+		{
+			str1.append(QString::fromUtf8("ошибка"));
 		}
 		str1.append(" ###");
 		setConsoleText(GameText(str1, false), 3, false);
@@ -1842,10 +1848,12 @@ void PluginCore::getStatistics(const QString &commandPtr)
 				text.append(QString::fromUtf8("-Зеркало: <em>%1</em>").arg(jid), true);
 				QString str1;
 				int status = jstat->status;
-				if (status == 0) {
+				if (status == OfflineStatus) {
 					str1 = QString::fromUtf8("отключено");
-				} else {
+				} else if (status == OnlineStatus) {
 					str1 = QString::fromUtf8("доступно");
+				} else {
+					str1 = QString::fromUtf8("с ошибкой");
 				}
 				text.append(QString::fromUtf8("&nbsp;&nbsp;статус: <em>%1</em>").arg(str1), true);
 				if (jstat->last_status.isValid()) {
@@ -1855,7 +1863,7 @@ void PluginCore::getStatistics(const QString &commandPtr)
 				}
 				text.append(QString::fromUtf8("&nbsp;&nbsp;последняя смена статуса: <em>%1</em>").arg(str1), true);
 
-				if (status != 0) {
+				if (status == OnlineStatus) {
 					if (jstat->last_send.isValid()) {
 						str1 = jstat->last_send.toString("dd.MM.yyyy hh:mm:ss.zzz");
 					} else {

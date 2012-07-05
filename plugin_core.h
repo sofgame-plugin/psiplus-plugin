@@ -43,6 +43,7 @@ class PluginCore: public QObject
   Q_OBJECT
 
 	public:
+		enum {OfflineStatus, OnlineStatus, ErrorStatus};
 		static PluginCore *instance();
 		static void reset();
 		void doTextParsing(const QString &jid, const QString &message);
