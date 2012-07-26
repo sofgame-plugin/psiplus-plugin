@@ -41,7 +41,7 @@ public:
 	void setThingsSource(ThingsModel*);
 	const Thing* getThingByRow(int) const;
 	void setFilter(ThingFilter const *);
-	void setPrice(int /*row*/, int /*price*/);
+	//void setPrice(int /*row*/, int /*price*/);
 	QVariant data(const QModelIndex &index, int role) const;
 	QColor color(int row) const;
 

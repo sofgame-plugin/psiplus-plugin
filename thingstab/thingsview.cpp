@@ -50,6 +50,9 @@ void ThingsView::init()
 {
 	ifaceNum = Pers::instance()->getThingsInterface();
 	setModel(Pers::instance()->getThingsModel(ifaceNum));
+	connect(model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)), this, SIGNAL(changeSummary()));
+	connect(model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)), this, SIGNAL(changeSummary()));
+	connect(model(), SIGNAL(rowsRemoved(const QModelIndex &, int, int)), this, SIGNAL(changeSummary()));
 
 	resizeColumnsToContents();
 
@@ -204,7 +207,7 @@ void ThingsView::setPrice()
 	int new_price = QInputDialog::getInt(this, QString::fromUtf8("Новая цена вещи"), s_name, price, -1, 2147483647, 1, &fOk, 0);
 	if (fOk && price != new_price) {
 		pers->setThingPrice(ifaceNum, row, new_price);
-		emit changeSummary();
+		//emit changeSummary();
 	}
 }
 
@@ -233,7 +236,6 @@ void ThingsView::paramToClipboard()
 int ThingsView::summaryCount()
 {
 	return Pers::instance()->getThingsCount(ifaceNum);
-
 }
 
 int ThingsView::summaryPriceAll()

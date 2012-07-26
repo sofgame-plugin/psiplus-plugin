@@ -239,6 +239,17 @@ void Pers::setThingElement(int mode, Thing* thing)
 {
 	if (loadingThings) {
 		if (mode == THING_APPEND) {
+			// Ищем цену в прайсе
+			int nType = thing->type();
+			QString sName = thing->name().toLower();
+			foreach (const price_item &pi, thingPrice) {
+				if (pi.type == nType) {
+					if (pi.name.toLower() == sName) {
+						thing->setPrice(pi.price);
+						break;
+					}
+				}
+			}
 			if (thingsPos < thingsSize) {
 				if (!thingChanged) {
 					const Thing* old_thing = things->getThingByRow(thingsPos);
@@ -259,20 +270,6 @@ void Pers::setThingElement(int mode, Thing* thing)
 				thingChanged = true;
 				thingsSize++;
 			}
-			//if (thingChanged) {
-				// Ищем цену в прайсе
-				int priceCnt = thingPrice.size();
-				int nType = thing->type();
-				QString sName = thing->name().toLower();
-				for (int j = 0; j < priceCnt; j++) {
-					if (thingPrice[j].type == nType) {
-						if (thingPrice[j].name.toLower() == sName) {
-							thing->setPrice(thingPrice[j].price);
-							break;
-						}
-					}
-				}
-			//}
 			thingsPos++;
 		}
 	}
@@ -748,11 +745,14 @@ void Pers::setThingPrice(int iface, int row, int price)
 	ThingsProxyModel* tpm = thingModels.value(iface, NULL);
 	if (tpm == NULL)
 		return;
-	// Правим прайс
-	const Thing *thg = tpm->getThingByRow(row);
+	QModelIndex index = tpm->mapToSource(tpm->index(row, 0));
+	if (!index.isValid())
+		return;
+	Thing *thg = things->getThingByRow(index.row());
 	if (!thg || !thg->isValid())
 		return;
-	tpm->setPrice(row, price);
+
+	// Правим прайс
 	int n_type = thg->type();
 	QString s_name = thg->name();
 	QString s_name2 = s_name.toLower();
@@ -773,6 +773,9 @@ void Pers::setThingPrice(int iface, int row, int price)
 		pi.price = price;
 		thingPrice.push_back(pi);
 	}
+
+	thg->setPrice(price);
+	things->setThing(thg, index.row());
 }
 
 void Pers::beginSetPersParams()

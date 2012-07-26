@@ -75,8 +75,8 @@ public:
 	void setName(const QString &);
 	const QString & name() const;
 	void setCitizenship(const QString &s);
-	const QString & citizenship() const {return _citizenship;};
-	int  moneysCount() const {return moneys;};
+	const QString & citizenship() const {return _citizenship;}
+	int  moneysCount() const {return moneys;}
 	void setMoneys(int);
 	void setThingsStart(bool clear);
 	void setThingsEnd();
@@ -106,9 +106,9 @@ public:
 	void removeThingsInterface(int ifaceNum);
 	QSortFilterProxyModel* getThingsModel(int ifaceNum) const;
 	QString getPersStatusString();
-	const MapPos &getCoordinates() const {return position;};
+	const MapPos &getCoordinates() const {return position;}
 	void setMapPosition(const MapPos &p);
-	const MapPos &getMapPosition() const {return position;};
+	const MapPos &getMapPosition() const {return position;}
 	QDomElement exportBackpackSettingsToDomElement(QDomDocument &xmlDoc) const;
 
 private:

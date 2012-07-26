@@ -31,6 +31,7 @@ ThingsProxyModel::ThingsProxyModel(QObject *parent) :
 	thingsSource(NULL),
 	thingsFilter(NULL)
 {
+	setDynamicSortFilter(true);
 }
 
 ThingsProxyModel::~ThingsProxyModel()
@@ -114,25 +115,6 @@ void ThingsProxyModel::setFilter(ThingFilter const *filter)
 {
 	thingsFilter = filter;
 	invalidateFilter();
-	reset();
-}
-
-void ThingsProxyModel::setPrice(int row, int price)
-{
-	if (thingsSource) {
-		QModelIndex proxy_index = index(row, 1);
-		if (proxy_index.isValid()) {
-			QModelIndex source_index = mapToSource(proxy_index);
-			if (source_index.isValid()) {
-				int s_row = source_index.row();
-				Thing *thg = thingsSource->getThingByRow(s_row);
-				if (thg) {
-					thg->setPrice(price);
-					thingsSource->setThing(thg, s_row);
-				}
-			}
-		}
-	}
 }
 
 QVariant ThingsProxyModel::data(const QModelIndex &index, int role) const

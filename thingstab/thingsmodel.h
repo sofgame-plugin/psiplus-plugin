@@ -51,7 +51,7 @@ public:
 	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
 	bool insertThing(Thing*, int);
 	//bool setData (const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
-	bool setThing(Thing*, int);
+	bool setThing(Thing* thing, int row);
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	void clear();
 	Qt::ItemFlags flags(const QModelIndex & index) const;
