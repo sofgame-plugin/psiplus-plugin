@@ -151,6 +151,8 @@ void PersInfo::setEquip(const EquipItem &eItem)
 		_feet = eItem;
 	if (eItem.equipType() == EquipItem::EquipTypeShoes)
 		_shoes = eItem;
+	equipLossCalc = QINT32_MIN;
+	equipProtectCalc = QINT32_MIN;
 }
 
 void PersInfo::calculateLoss()
@@ -228,13 +230,16 @@ QString PersInfo::getSharpening(int calcVal, int currVal)
 	QString res;
 	if (calcVal != QINT32_MIN && currVal != QINT32_MIN)
 	{
-		float nSharpening = (float)currVal / (float)calcVal;
-		if (nSharpening > 1.01f)
+		if (calcVal != 0)
 		{
-			res = QString::fromUtf8("[заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
-		}
-		else {
-			res = QString::fromUtf8("[без заточки]");
+			float nSharpening = (float)currVal / (float)calcVal;
+			if (nSharpening > 1.01f)
+			{
+				res = QString::fromUtf8("[заточка %1%]").arg(floor((nSharpening - 1.0f + 0.01f) * 100));
+			}
+			else {
+				res = QString::fromUtf8("[без заточки]");
+			}
 		}
 	}
 	return res;
@@ -599,10 +604,13 @@ QString PersInfo::toString(int ver)
 	resStr.append(QString::fromUtf8("\nВещей одето: %1").arg(equipCount));
 	if (equipCount > 0)
 		resStr.append(QString::fromUtf8(", из них именных: %1").arg(namedCount));
-	resStr.append(QString::fromUtf8("\nОбщий уровень именных: %1").arg(namedLevelAll));
-	resStr.append(QString::fromUtf8("\nОбщая эффективность именных: %1 / %2").arg(numToStr(floor(namedEffectAll + 0.51f), "'")).arg(namedEffectCount));
+	if (namedCount > 0)
+	{
+		resStr.append(QString::fromUtf8("\nОбщий уровень именных: %1").arg(namedLevelAll));
+		resStr.append(QString::fromUtf8("\nОбщая эффективность именных: %1 / %2").arg(numToStr(floor(namedEffectAll + 0.51f), "'")).arg(namedEffectCount));
+	}
 
-	if (ver == 2)
+	if (equipCount > 0 && ver == 2)
 	{
 		resStr.append(QString::fromUtf8("\n--- Долевой вклад экипировки ---"));
 		int force_sum = nForce;
