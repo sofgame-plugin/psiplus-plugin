@@ -1,0 +1,8 @@
+*.[oa]
+*.so
+*.user
+moc_*.cpp
+qrc_*.cpp
+Makefile
+ui_*.h
+
