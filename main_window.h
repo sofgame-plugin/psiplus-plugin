@@ -31,6 +31,11 @@
 #include "pers.h"
 #include "aurainfo.h"
 #include "ui_main_window.h"
+#include "mainwidget.h"
+#include "fightwidget.h"
+#include "infowidget.h"
+#include "thingswidget.h"
+#include "statistic/statwidget.h"
 
 QT_BEGIN_NAMESPACE
 	class QDateTime;
@@ -106,6 +111,11 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void loadAppearanceSettings(const QDomElement &xml);
 
 	private:
+		MainWidget   *mainWidget;
+		FightWidget  *fightWidget;
+		InfoWidget   *infoWidget;
+		ThingsWidget *thingsWidget;
+		StatWidget   *statWidget;
 		static QList< QPair<int, QString> > statisticXmlStrings;
 		int settingTimeOutDisplay;
 		int selectedMapElement;
@@ -115,12 +125,10 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		int queueEventSlot;
 		bool queueShowFlag;
 		bool thingsChanged;
-		int currentPage;
 		QMenu* mapMenu;
 		QAction* actionMarkMapElement;
 		QAction* actionMoveMapElement;
 		QAction* actionRemoveMapElement;
-		QTabBar* thingsTabBar;
 		QList<FontLabel*>fontLabelGroup;
 		QButtonGroup* fontButtonGroup;
 		bool autoEnterMode;
@@ -159,10 +167,8 @@ class SofMainWindow : public QWidget, public Ui::SofMainWindowWnd
 		void moveMapElement();
 		void removeMapElement();
 		void markMapElement();
-		void showThings(int);
 		void persThingsChanged();
 		void persParamChanged(int, int, int);
-		void showThingsSummary();
 		void updateStatistic(int);
 
 };

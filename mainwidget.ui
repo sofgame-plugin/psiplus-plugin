@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWidget</class>
+ <widget class="QWidget" name="MainWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>404</width>
+    <height>356</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="margin">
+    <number>2</number>
+   </property>
+   <item>
+    <widget class="QSplitter" name="mapSplitter">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+       <horstretch>0</horstretch>
+       <verstretch>100</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QGraphicsView" name="gameMapView">
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="dragMode">
+       <enum>QGraphicsView::ScrollHandDrag</enum>
+      </property>
+      <property name="transformationAnchor">
+       <enum>QGraphicsView::NoAnchor</enum>
+      </property>
+      <property name="resizeAnchor">
+       <enum>QGraphicsView::NoAnchor</enum>
+      </property>
+      <property name="viewportUpdateMode">
+       <enum>QGraphicsView::FullViewportUpdate</enum>
+      </property>
+     </widget>
+     <widget class="QTabWidget" name="text_tabWidget">
+      <property name="tabPosition">
+       <enum>QTabWidget::South</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="elideMode">
+       <enum>Qt::ElideNone</enum>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Текст игры</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_31">
+        <item>
+         <widget class="TextView" name="serverTextView">
+          <property name="cursor" stdset="0">
+           <cursorShape>ArrowCursor</cursorShape>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::TextSelectableByMouse</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Текст плагина</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_32">
+        <item>
+         <widget class="TextView" name="consoleTextView">
+          <property name="cursor" stdset="0">
+           <cursorShape>ArrowCursor</cursorShape>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="undoRedoEnabled">
+           <bool>false</bool>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::TextSelectableByMouse</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>120</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_47">
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <property name="margin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="CmdLineEdit" name="userCommandLine"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="cmd_send">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>26</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>26</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::CustomContextMenu</enum>
+        </property>
+        <property name="toolTip">
+         <string>Отправить</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CmdLineEdit</class>
+   <extends>QTextEdit</extends>
+   <header>cmdlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TextView</class>
+   <extends>QTextEdit</extends>
+   <header>subclasses/textview.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

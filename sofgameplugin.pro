@@ -15,7 +15,11 @@ HEADERS += sofgameplugin.h \
     pluginhosts.h \
     specificenemiesview.h \
     aurainfo.h \
-    equipitem.h
+    equipitem.h \
+    mainwidget.h \
+    fightwidget.h \
+    infowidget.h \
+    thingswidget.h
 SOURCES += sofgameplugin.cpp \
     plugin_core.cpp \
     main_window.cpp \
@@ -30,8 +34,16 @@ SOURCES += sofgameplugin.cpp \
     pluginhosts.cpp \
     specificenemiesview.cpp \
     aurainfo.cpp \
-    equipitem.cpp
-FORMS += main_window.ui
+    equipitem.cpp \
+    mainwidget.cpp \
+    fightwidget.cpp \
+    infowidget.cpp \
+    thingswidget.cpp
+FORMS += main_window.ui \
+    mainwidget.ui \
+    fightwidget.ui \
+    infowidget.ui \
+    thingswidget.ui
 
 # Resources
 RESOURCES += sofgameplugin.qrc

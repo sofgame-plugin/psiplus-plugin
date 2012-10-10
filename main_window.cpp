@@ -61,6 +61,17 @@ SofMainWindow::SofMainWindow() : QWidget(NULL)
 	timeoutStamp = 0;
 	timeoutTimer = 0;
 	setupUi(this);
+	// Виджеты плагина
+	mainWidget = new MainWidget(stackedWidget);
+	fightWidget = new FightWidget(stackedWidget);
+	infoWidget = new InfoWidget(stackedWidget);
+	thingsWidget = new ThingsWidget(stackedWidget);
+	statWidget = new StatWidget(stackedWidget);
+	stackedWidget->addWidget(mainWidget);
+	stackedWidget->addWidget(fightWidget);
+	stackedWidget->addWidget(infoWidget);
+	stackedWidget->addWidget(thingsWidget);
+	stackedWidget->addWidget(statWidget);
 #ifdef Q_WS_WIN
 	// В некоторых случаях фреймы с QFrame::StyledPanel в Windows не отображаются.
 	// Похоже зависит от текущей темы. Ставим прямые углы для Windows
@@ -77,33 +88,31 @@ SofMainWindow::SofMainWindow() : QWidget(NULL)
 	connect(thingsModeBtn, SIGNAL(released()), SLOT(activateThingsPage()));
 	connect(statModeBtn, SIGNAL(released()), SLOT(activateStatPage()));
 	connect(settingsModeBtn, SIGNAL(released()), SLOT(activateSettingsPage()));
-	// Страницы плагина
-	stackedWidget->setCurrentIndex(0);
 	// Создаем действия для карты
-	QAction* actionSaveMap = new QAction(gameMapView);
+	QAction* actionSaveMap = new QAction(mainWidget->gameMapView);
 	//actionSaveMap->setIcon (QIcon(":/images/edit_copy.png"));
 	actionSaveMap->setText(QString::fromUtf8("Сохранить"));
 	//actionSaveMap->setShortcut(tr("Ctrl+C"));
 	actionSaveMap->setStatusTip(QString::fromUtf8("Сохранить карты"));
 	connect(actionSaveMap, SIGNAL(triggered()), this, SLOT(saveMap()));
-	QAction* actionCreateMap = new QAction(gameMapView);
+	QAction* actionCreateMap = new QAction(mainWidget->gameMapView);
 	actionCreateMap->setText(QString::fromUtf8("Создать карту"));
 	actionCreateMap->setStatusTip(QString::fromUtf8("Создать новую карту"));
 	connect(actionCreateMap, SIGNAL(triggered()), this, SLOT(createMap()));
-	QAction* actionClearMap = new QAction(gameMapView);
+	QAction* actionClearMap = new QAction(mainWidget->gameMapView);
 	actionClearMap->setText(QString::fromUtf8("Очистить карту"));
 	actionClearMap->setStatusTip(QString::fromUtf8("Очистить текущую карту"));
 	connect(actionClearMap, SIGNAL(triggered()), this, SLOT(clearMap()));
-	actionMarkMapElement = new QAction(gameMapView);
+	actionMarkMapElement = new QAction(mainWidget->gameMapView);
 	actionMarkMapElement->setText(QString::fromUtf8("Отметка на карте"));
 	actionMarkMapElement->setStatusTip(QString::fromUtf8("Поставить/убрать отметку на карте"));
 	//actionMarkMapElement->setCheckable(true);
 	connect(actionMarkMapElement, SIGNAL(triggered()), this, SLOT(markMapElement()));
-	actionMoveMapElement = new QAction(gameMapView);
+	actionMoveMapElement = new QAction(mainWidget->gameMapView);
 	actionMoveMapElement->setText(QString::fromUtf8("Перенести элемент"));
 	actionMoveMapElement->setStatusTip(QString::fromUtf8("Перенести элемент на другую карту"));
 	connect(actionMoveMapElement, SIGNAL(triggered()), this, SLOT(moveMapElement()));
-	actionRemoveMapElement = new QAction(gameMapView);
+	actionRemoveMapElement = new QAction(mainWidget->gameMapView);
 	actionRemoveMapElement->setText(QString::fromUtf8("Удалить элемент"));
 	actionRemoveMapElement->setStatusTip(QString::fromUtf8("Удалить элемент с карты"));
 	connect(actionRemoveMapElement, SIGNAL(triggered()), this, SLOT(removeMapElement()));
@@ -118,28 +127,15 @@ SofMainWindow::SofMainWindow() : QWidget(NULL)
 	mapMenu->insertSeparator(actionCreateMap);
 	mapMenu->insertSeparator(actionMarkMapElement);
 	// Привязываем сигнал
-	connect(gameMapView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(mapShowContextMenu(const QPoint &)));
-	gameMapView->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(mainWidget->gameMapView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(mapShowContextMenu(const QPoint &)));
+	mainWidget->gameMapView->setContextMenuPolicy(Qt::CustomContextMenu);
 	// Строка команд
-	connect(userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
-	connect(userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
+	connect(mainWidget->userCommandLine, SIGNAL(returnPressed()), SLOT(userCommandReturnPressed()));
+	connect(mainWidget->userCommandLine, SIGNAL(textChanged()), SLOT(userCommandChanged()));
 	// Кнопка ввода команд
-	cmd_send->setIcon(PluginHosts::psiIcon->getIcon("psi/action_button_send"));
-	connect(cmd_send, SIGNAL(clicked()), SLOT(userCommandReturnPressed()));
-	// Таббар вещей (фильтры)
-	thingsTabBar = new QTabBar(page_4);
-	connect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
+	connect(mainWidget->cmd_send, SIGNAL(clicked()), SLOT(userCommandReturnPressed()));
 	// Таблица вещей
-	QLayout* lt = page_4->layout();
-	lt->removeWidget(thingsTable);
-	lt->removeItem(thingsSummaryLayout);
-	lt->removeItem(moneyCountLayout);
-	lt->addWidget(thingsTabBar);
-	lt->addWidget(thingsTable);
-	lt->addItem(thingsSummaryLayout);
-	lt->addItem(moneyCountLayout);
-	connect(thingsTable, SIGNAL(changeSummary()), this, SLOT(showThingsSummary()));
-	connect(thingsTable, SIGNAL(writeToConsole(QString,int,bool)), this, SLOT(setConsoleText(QString,int,bool)));
+	connect(thingsWidget->thingsTable, SIGNAL(writeToConsole(QString,int,bool)), this, SLOT(setConsoleText(QString,int,bool)));
 	// Табвиджет настроек
 	settingTab->setCurrentIndex(0);
 	// Кнопки шрифтов
@@ -150,19 +146,19 @@ SofMainWindow::SofMainWindow() : QWidget(NULL)
 	fontButtonGroup->addButton(gameTextFont_button);
 	connect(fontButtonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(chooseFont(QAbstractButton*)));
 	// Виджеты страницы статистики
-	statisticWidgets[Statistic::StatLastGameJid] = (StatWidgets) {lastGameJidCaption_label, lastGameJidValue_label};
-	statisticWidgets[Statistic::StatLastChatJid] = (StatWidgets) {lastGameChatCaption_label, lastGameChatValue_label};
-	statisticWidgets[Statistic::StatMessagesCount] = (StatWidgets) {gameMessagesCountCaption_label, gameMessagesCountValue_label};
-	connect(resetCommonStatBtn, SIGNAL(released()), SLOT(resetCommonStatistic()));
-	statisticWidgets[Statistic::StatFightsCount] = (StatWidgets) {fightsCountCaption_label, fightsCountValue_label};
-	statisticWidgets[Statistic::StatDamageMaxFromPers] = (StatWidgets) {damageMaxFromPersCaption_label, damageMaxFromPersValue_label};
-	statisticWidgets[Statistic::StatDamageMinFromPers] = (StatWidgets) {damageMinFromPersCaption_label, damageMinFromPersValue_label};
-	statisticWidgets[Statistic::StatDropMoneys] = (StatWidgets) {dropMoneysCaption_label, dropMoneysValue_label};
-	statisticWidgets[Statistic::StatThingsDropCount] = (StatWidgets) {thingsDropCountCaption_label, thingsDropCountValue_label};
-	statisticWidgets[Statistic::StatThingDropLast] = (StatWidgets) {thingDropLastCaption_label, thingDropLastValue_label};
-	statisticWidgets[Statistic::StatExperienceDropCount] = (StatWidgets) {experienceDropCountCaption_label, experienceDropCountValue_label};
-	statisticWidgets[Statistic::StatKilledEnemies] = (StatWidgets) {killedEnemiesCaption_label, killedEnemiesValue_label};
-	connect(resetFightsStatBtn, SIGNAL(released()), SLOT(resetFightStatistic()));
+	statisticWidgets[Statistic::StatLastGameJid] = (StatWidgets) {statWidget->lastGameJidCaption_label, statWidget->lastGameJidValue_label};
+	statisticWidgets[Statistic::StatLastChatJid] = (StatWidgets) {statWidget->lastGameChatCaption_label, statWidget->lastGameChatValue_label};
+	statisticWidgets[Statistic::StatMessagesCount] = (StatWidgets) {statWidget->gameMessagesCountCaption_label, statWidget->gameMessagesCountValue_label};
+	connect(statWidget->resetCommonStatBtn, SIGNAL(released()), SLOT(resetCommonStatistic()));
+	statisticWidgets[Statistic::StatFightsCount] = (StatWidgets) {statWidget->fightsCountCaption_label, statWidget->fightsCountValue_label};
+	statisticWidgets[Statistic::StatDamageMaxFromPers] = (StatWidgets) {statWidget->damageMaxFromPersCaption_label, statWidget->damageMaxFromPersValue_label};
+	statisticWidgets[Statistic::StatDamageMinFromPers] = (StatWidgets) {statWidget->damageMinFromPersCaption_label, statWidget->damageMinFromPersValue_label};
+	statisticWidgets[Statistic::StatDropMoneys] = (StatWidgets) {statWidget->dropMoneysCaption_label, statWidget->dropMoneysValue_label};
+	statisticWidgets[Statistic::StatThingsDropCount] = (StatWidgets) {statWidget->thingsDropCountCaption_label, statWidget->thingsDropCountValue_label};
+	statisticWidgets[Statistic::StatThingDropLast] = (StatWidgets) {statWidget->thingDropLastCaption_label, statWidget->thingDropLastValue_label};
+	statisticWidgets[Statistic::StatExperienceDropCount] = (StatWidgets) {statWidget->experienceDropCountCaption_label, statWidget->experienceDropCountValue_label};
+	statisticWidgets[Statistic::StatKilledEnemies] = (StatWidgets) {statWidget->killedEnemiesCaption_label, statWidget->killedEnemiesValue_label};
+	connect(statWidget->resetFightsStatBtn, SIGNAL(released()), SLOT(resetFightStatistic()));
 	// Таблицы для настройки фильтров
 	thingFiltersTable->init();
 	thingRulesTable->init(thingFiltersTable);
@@ -203,8 +199,8 @@ SofMainWindow::SofMainWindow() : QWidget(NULL)
 	auraInfo = new AuraInfo(wdgExtraInfo);
 	wdgExtraInfo->layout()->addWidget(auraInfo);
 	// Соединение с картой
-	gameMapView->setScene(GameMap::instance()->getGraphicsScene());
-	gameMapView->show();
+	mainWidget->gameMapView->setScene(GameMap::instance()->getGraphicsScene());
+	mainWidget->gameMapView->show();
 	// Сигнал на смену страницы в стеке
 	connect(stackedWidget, SIGNAL(currentChanged(int)), this, SLOT(changePage(int)));
 	// Соединение с параметрами персонажа
@@ -219,8 +215,8 @@ SofMainWindow::SofMainWindow() : QWidget(NULL)
 	connect(restPopup, SIGNAL(toggled(bool)), restDurationPopup, SLOT(setEnabled(bool)));
 	// Инициируем форму
 	init();
-	// Устанавливаем фокус ввода
-	userCommandLine->setFocus();
+	// Устанавливаем текущий виджет и фокус ввода
+	activateMainPage();
 }
 
 SofMainWindow::~SofMainWindow()
@@ -240,7 +236,6 @@ void SofMainWindow::init()
 	if (timeoutStamp)
 		delete timeoutStamp;
 	timeoutStamp = new QDateTime();
-	currentPage = 0;
 	settingTimeOutDisplay = 0;
 	selectedMapElement = -1;
 	thingsChanged = false;
@@ -253,7 +248,7 @@ void SofMainWindow::init()
 	// Настройки шрифтов
 	QFont f = persNameLabel->font();
 	persNameFont_label->setFont(f.toString());
-	f = serverTextView->font();
+	f = mainWidget->serverTextView->font();
 	gameTextFont_label->setFont(f.toString());
 	// Получаем основные настройки окна
 	getAllDataFromCore();
@@ -261,12 +256,12 @@ void SofMainWindow::init()
 	QList<int> sizes;
 	sizes.push_back(100);
 	sizes.push_back(100);
-	mapSplitter->setSizes(sizes);
+	mainWidget->mapSplitter->setSizes(sizes);
 	// Загружаем настройки слотов
 	Settings *settings = Settings::instance();
 	loadSlotsSettings(settings->getSlotsData());
 	// Таблица вещей
-	thingsTable->init();
+	thingsWidget->thingsTable->init();
 	// Загружаем настройки внешнего вида
 	loadAppearanceSettings(settings->getAppearanceData());
 	// Убираем табы фильтров вещей
@@ -296,11 +291,11 @@ void SofMainWindow::setAutoEnterMode(bool mode)
 		QBrush brush1;
 		QBrush brush2;
 		if (mode) {
-			cmd_send->setStyleSheet("background-color: rgba(255,0,0,64);");
+			mainWidget->cmd_send->setStyleSheet("background-color: rgba(255,0,0,64);");
 			brush1.setColor(QColor(255, 0, 0, 64)); // Красный
 			brush2.setColor(QColor(255, 0, 0, 64)); // Красный
 		} else {
-			cmd_send->setStyleSheet(QString());
+			mainWidget->cmd_send->setStyleSheet(QString());
 			brush1.setColor(QApplication::palette().color(QPalette::Active, QPalette::Base));
 			brush2.setColor(QApplication::palette().color(QPalette::Inactive, QPalette::Base));
 		}
@@ -308,7 +303,7 @@ void SofMainWindow::setAutoEnterMode(bool mode)
 		brush2.setStyle(Qt::SolidPattern);
 		pal.setBrush(QPalette::Active, QPalette::Base, brush1);
 		pal.setBrush(QPalette::Inactive, QPalette::Base, brush2);
-		userCommandLine->setPalette(pal);
+		mainWidget->userCommandLine->setPalette(pal);
 	}
 }
 
@@ -533,9 +528,9 @@ void SofMainWindow::getAllDataFromCore() {
 	energyBar->setRange(0, newIntValue);
 	newIntValue = pers->moneysCount();
 	if (newIntValue == QINT32_MIN) {
-		labelMoneysCount->setText(NA_TEXT);
+		thingsWidget->labelMoneySummary->setText(NA_TEXT);
 	} else {
-		labelMoneysCount->setText(numToStr(newIntValue, "'"));
+		thingsWidget->labelMoneySummary->setText(numToStr(newIntValue, "'"));
 	}
 	// Прокрутка карты к позиции персонажа
 	scrollMapToPersPosition();
@@ -559,8 +554,8 @@ void SofMainWindow::getAllDataFromCore() {
 		newIntValue = 100;
 	}
 	maxTextBlocksCount->setValue(newIntValue);
-	serverTextView->setMaximumBlockCount(newIntValue);
-	consoleTextView->setMaximumBlockCount(newIntValue);
+	mainWidget->serverTextView->setMaximumBlockCount(newIntValue);
+	mainWidget->consoleTextView->setMaximumBlockCount(newIntValue);
 	// Расцветка текста игры
 	gameTextColoring->setChecked(settings->getBoolSetting(Settings::SettingGameTextColoring));
 	// Режим сохранения карт
@@ -653,16 +648,16 @@ void SofMainWindow::setGameText(const QString &gameText, int type)
 	* type - 1: исходящее, 2: входящее, 3 - информационное
 	**/
 	if (gameText.isEmpty()) {
-		serverTextView->clear();
+		mainWidget->serverTextView->clear();
 	}
 	if (!gameText.isEmpty()) {
 		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
-		serverTextView->appendText("<span>" + gameText + "</span>", type_);
+		mainWidget->serverTextView->appendText("<span>" + gameText + "</span>", type_);
 	} else {
-		serverTextView->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
+		mainWidget->serverTextView->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
 	if (type == 1) {
-		text_tabWidget->setCurrentIndex(0);
+		mainWidget->text_tabWidget->setCurrentIndex(0);
 	}
 }
 
@@ -674,17 +669,17 @@ void SofMainWindow::setGameText(const QString &gameText, int type)
 void SofMainWindow::setConsoleText(const QString &text, int type, bool switch_)
 {
 	if (text.isEmpty()) {
-		consoleTextView->clear();
+		mainWidget->consoleTextView->clear();
 	}
 	if (!text.isEmpty()) {
 		TextView::TextType type_ = (type == 1) ? TextView::LocalText : (type == 2) ? TextView::GameText : TextView::PluginText;
-		consoleTextView->appendText("<span>" + text + "</span>", type_);
+		mainWidget->consoleTextView->appendText("<span>" + text + "</span>", type_);
 	} else {
-		consoleTextView->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
+		mainWidget->consoleTextView->appendText(QString::fromUtf8("<span>--- <b>очищено</b> ---</span>"), TextView::PluginText);
 	}
-	consoleTextView->verticalScrollBar()->setValue(consoleTextView->verticalScrollBar()->maximum());
+	mainWidget->consoleTextView->verticalScrollBar()->setValue(mainWidget->consoleTextView->verticalScrollBar()->maximum());
 	if (switch_) {
-		text_tabWidget->setCurrentIndex(1);
+		mainWidget->text_tabWidget->setCurrentIndex(1);
 	}
 }
 
@@ -703,8 +698,8 @@ QDomElement SofMainWindow::exportAppearanceSettings(QDomDocument &xmlDoc) const
 	eAppearance.appendChild(eServerTextAppe);
 	QDomElement eServerTextFontAppe = xmlDoc.createElement("font");
 	eServerTextAppe.appendChild(eServerTextFontAppe);
-	eServerTextFontAppe.setAttribute("value", serverTextView->document()->defaultFont().toString());
-	QDomElement eThingsTable = thingsTable->saveSettingsToXml(xmlDoc);
+	eServerTextFontAppe.setAttribute("value", mainWidget->serverTextView->document()->defaultFont().toString());
+	QDomElement eThingsTable = thingsWidget->thingsTable->saveSettingsToXml(xmlDoc);
 	eAppearance.appendChild(eThingsTable);
 	if (settingWindowSizePos == 1) {
 		QDomElement eWindowParams = xmlDoc.createElement("window-save-params");
@@ -766,14 +761,14 @@ void SofMainWindow::loadAppearanceSettings(const QDomElement &xml)
 				QFont f;
 				if (f.fromString(fontStr)) {
 					gameTextFont_label->setFont(f.toString());
-					serverTextView->setFont(f);
-					consoleTextView->setFont(f);
+					mainWidget->serverTextView->setFont(f);
+					mainWidget->consoleTextView->setFont(f);
 				}
 			}
 		}
 	}
 	QDomElement eThingsSettings = xml.firstChildElement("things-table");
-	thingsTable->loadSettingsFromXml(eThingsSettings);
+	thingsWidget->thingsTable->loadSettingsFromXml(eThingsSettings);
 	QDomElement eGeometry = xml.firstChildElement("window-save-params");
 	if (!eGeometry.isNull()) {
 		if (eGeometry.attribute("mode") == "position-and-size") {
@@ -1021,9 +1016,9 @@ void SofMainWindow::scrollMapNewPosition(const MapPos &pos)
 	QRectF coordinates = GameMap::instance()->gameToSceneCoordinates(pos);
 	if (!coordinates.isNull()) {
 		if (Settings::instance()->getBoolSetting(Settings::SettingPersPosInCenter)) { // TODO Откэшировать!
-			gameMapView->centerOn(coordinates.center());
+			mainWidget->gameMapView->centerOn(coordinates.center());
 		} else {
-			gameMapView->ensureVisible(coordinates, 50, 50);
+			mainWidget->gameMapView->ensureVisible(coordinates, 50, 50);
 		}
 	}
 }
@@ -1143,25 +1138,24 @@ void SofMainWindow::setMaximumExperience(long long mExp)
 
 // ***************** Slots ***********************
 
-void SofMainWindow::changePage(int index)
+void SofMainWindow::changePage(int /*index*/)
 {
 	/**
 	* Произошла смена страницы у плагина
 	**/
-	currentPage = index;
-	if (currentPage == 3) { // Вещи
-		if (thingsChanged) { // Список вещей менялся
+	if (stackedWidget->currentWidget() == thingsWidget)
+	{
+		if (thingsChanged)
+		{
+			// Список вещей менялся
 			// Сбрасываем цвет текста кнопки
 			thingsModeBtn->setStyleSheet(QString());
 		}
 		// Инициируем табы и таблицу
-		if (thingsTabBar->count() == 0) {
+		if (thingsWidget->tabsCount() == 0)
+		{
 			updateThingFiltersTab();
-			showThings(0);
-		//} else {
-		//	if (thingsChanged) {
-		//		showThings(thingsTabBar->currentIndex());
-		//	}
+			thingsWidget->activateTab(0);
 		}
 		thingsChanged = false;
 	}
@@ -1169,53 +1163,41 @@ void SofMainWindow::changePage(int index)
 
 void SofMainWindow::activateMainPage()
 {
-	if (currentPage == 0) {
-		return;
+	if (stackedWidget->currentWidget() != mainWidget)
+	{
+		stackedWidget->setCurrentWidget(mainWidget);
+		mainWidget->userCommandLine->setFocus();
 	}
-	stackedWidget->setCurrentIndex(0);
-	currentPage = 0;
-	userCommandLine->setFocus();
 }
 
 void SofMainWindow::activateFightPage()
 {
-	if (currentPage == 1) {
-		return;
-	}
-	stackedWidget->setCurrentIndex(1);
-	currentPage = 1;
+	if (stackedWidget->currentWidget() != fightWidget)
+		stackedWidget->setCurrentWidget(fightWidget);
 }
 
 void SofMainWindow::activatePersInfoPage()
 {
-	if (currentPage == 2) {
-		return;
-	}
-	stackedWidget->setCurrentIndex(2);
-	currentPage = 2;
+	if (stackedWidget->currentWidget() != infoWidget)
+		stackedWidget->setCurrentWidget(infoWidget);
 }
 
 void SofMainWindow::activateThingsPage()
 {
-	stackedWidget->setCurrentIndex(3);
+	if (stackedWidget->currentWidget() != thingsWidget)
+		stackedWidget->setCurrentWidget(thingsWidget);
 }
 
 void SofMainWindow::activateStatPage()
 {
-	if (currentPage == 4) {
-		return;
-	}
-	stackedWidget->setCurrentIndex(4);
-	currentPage = 4;
+	if (stackedWidget->currentWidget() != statWidget)
+		stackedWidget->setCurrentWidget(statWidget);
 }
 
 void SofMainWindow::activateSettingsPage()
 {
-	if (currentPage == 5) {
-		return;
-	}
-	stackedWidget->setCurrentIndex(5);
-	currentPage = 5;
+	if (stackedWidget->currentWidget() != page_6)
+		stackedWidget->setCurrentWidget(page_6);
 }
 
 void SofMainWindow::resetCommonStatistic()
@@ -1343,8 +1325,8 @@ void SofMainWindow::applySettings()
 		persNameLabel->setFont(f);
 	}
 	if (f.fromString(gameTextFont_label->fontName())) {
-		serverTextView->setFont(f);
-		consoleTextView->setFont(f);
+		mainWidget->serverTextView->setFont(f);
+		mainWidget->consoleTextView->setFont(f);
 	}
 	// Максимальное количество блоков текста
 	int textBlocksCount = maxTextBlocksCount->value();
@@ -1353,8 +1335,8 @@ void SofMainWindow::applySettings()
 	} else if (textBlocksCount > 0 && textBlocksCount < 100) {
 		textBlocksCount = 100;
 	}
-	serverTextView->setMaximumBlockCount(textBlocksCount);
-	consoleTextView->setMaximumBlockCount(textBlocksCount);
+	mainWidget->serverTextView->setMaximumBlockCount(textBlocksCount);
+	mainWidget->consoleTextView->setMaximumBlockCount(textBlocksCount);
 	settings->setIntSetting(Settings::SettingServerTextBlocksCount, textBlocksCount);
 	// Расцветка текста игры
 	settings->setBoolSetting(Settings::SettingGameTextColoring, gameTextColoring->isChecked());
@@ -1388,12 +1370,12 @@ void SofMainWindow::userCommandChanged()
 {
 	if (!autoEnterMode)
 		return;
-	QString sText = userCommandLine->toPlainText().trimmed();
+	QString sText = mainWidget->userCommandLine->toPlainText().trimmed();
 	int strLen = sText.length();
 	if (strLen == 1) {
 		if (sText != "/") {
 			if (sText >= "0" && sText <= "9") {
-				userCommandLine->setText(QString());
+				mainWidget->userCommandLine->setText(QString());
 				PluginCore::instance()->sendString(sText);
 			}
 		}
@@ -1402,12 +1384,12 @@ void SofMainWindow::userCommandChanged()
 
 void SofMainWindow::userCommandReturnPressed()
 {
-	QString sText = userCommandLine->toPlainText().trimmed();
+	QString sText = mainWidget->userCommandLine->toPlainText().trimmed();
 	if (!sText.isEmpty()) {
-		userCommandLine->appendMessageHistory(sText);
+		mainWidget->userCommandLine->appendMessageHistory(sText);
 		PluginCore::instance()->sendString(sText);
 	}
-	userCommandLine->setText(QString());
+	mainWidget->userCommandLine->setText(QString());
 }
 
 void SofMainWindow::timeoutEvent()
@@ -1473,7 +1455,7 @@ void SofMainWindow::mapShowContextMenu(const QPoint &pos)
 	/**
 	* Обработчик события вызова контекстного меню
 	**/
-	QPointF viewPos = gameMapView->mapToScene(pos);
+	QPointF viewPos = mainWidget->gameMapView->mapToScene(pos);
 	selectedMapElement = GameMap::instance()->getIndexByCoordinate(viewPos);
 	if (selectedMapElement != -1) {
 		actionMarkMapElement->setEnabled(true);
@@ -1484,7 +1466,7 @@ void SofMainWindow::mapShowContextMenu(const QPoint &pos)
 		actionMoveMapElement->setEnabled(false);
 		actionRemoveMapElement->setEnabled(false);
 	}
-	mapMenu->exec(gameMapView->mapToGlobal(pos));
+	mapMenu->exec(mainWidget->gameMapView->mapToGlobal(pos));
 }
 
 void SofMainWindow::moveMapElement()
@@ -1589,34 +1571,12 @@ void SofMainWindow::markMapElement()
 }
 
 /**
- * Заполняет данные вещей в табличном виджете
- */
-void SofMainWindow::showThings(int tab_num)
-{
-	thingsTable->setFilter(thingsTabBar->tabData(tab_num).toInt());
-}
-
-/**
- * Отображает итог под таблицей с вещами
- */
-void SofMainWindow::showThingsSummary()
-{
-	int nCountAll = thingsTable->summaryCount();
-	int nPriceAll = thingsTable->summaryPriceAll();
-	int noPrice = thingsTable->summaryNoPriceCount();
-	labelThingsCountAll->setText(numToStr(nCountAll, "'"));
-	QString str1 = numToStr(nPriceAll, "'");
-	if (noPrice != 0)
-		str1.append("+");
-	labelThingsPriceAll->setText(str1);
-}
-
-/**
  * Изменился состав вещей у персонажа
  */
 void SofMainWindow::persThingsChanged()
 {
-	if (currentPage != 3) {
+	if (stackedWidget->currentWidget() != thingsWidget)
+	{
 		// Если текущая страница не вещи
 		thingsChanged = true;
 		// Меняем цвет текста кнопки
@@ -1658,7 +1618,7 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			scrollMapToPersPosition();
 		} else if (paramId == Pers::ParamMoneysCount) {
 			// Количество денег
-			labelMoneysCount->setText(numToStr(paramValue, "'"));
+			thingsWidget->labelMoneySummary->setText(numToStr(paramValue, "'"));
 		}
 	} else if (paramType == TYPE_LONGLONG_FULL) {
 		if (paramId == Pers::ParamExperienceCurr) {
@@ -1701,34 +1661,16 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 		} else if (paramId == Pers::ParamExperienceMax) {
 			// Максимальный опыт для уровня
 			setMaximumExperience(0);
-		} else if (paramId == Pers::ParamExperienceMax) {
+		} else if (paramId == Pers::ParamMoneysCount) {
 			// Количество денег
-			labelMoneysCount->setText(NA_TEXT);
+			thingsWidget->labelMoneySummary->setText(NA_TEXT);
 		}
 	}
 }
 
 void SofMainWindow::updateThingFiltersTab()
 {
-	int current_tab = thingsTabBar->currentIndex();
-	disconnect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
-	while (thingsTabBar->count() > 0)
-		thingsTabBar->removeTab(0);
-	thingsTabBar->setTabData(thingsTabBar->addTab(QString::fromUtf8("Все вещи")), -1);
-	int fltr_index = 0;
-	const ThingFiltersList &thfList = Pers::instance()->thingsFiltersList();
-	for (int i = 0, cnt = thfList.size(); i < cnt; ++i) {
-		ThingFilter const *thf = thfList.at(i);
-		if (thf->isActive()) {
-			thingsTabBar->setTabData(thingsTabBar->addTab(thf->name()), fltr_index);
-		}
-		fltr_index++;
-	}
-	if (current_tab < 0 || current_tab >= thingsTabBar->count())
-		current_tab = 0;
-	connect(thingsTabBar, SIGNAL(currentChanged(int)), this, SLOT(showThings(int)));
-	thingsTabBar->setCurrentIndex(current_tab);
-	showThings(current_tab);
+	thingsWidget->updateTabs();
 }
 
 /**
