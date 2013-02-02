@@ -1649,6 +1649,10 @@ void SofMainWindow::persParamChanged(int paramId, int paramType, int paramValue)
 			if (str1.isEmpty())
 				str1 = QString::fromUtf8("без гражданства");
 			persCitizenship->setText(str1);
+			Statistic *stat = Statistic::instance();
+			auraInfo->setShield(stat->value(Statistic::StatProtectAura1).toString(), stat->value(Statistic::StatProtectAura2).toString());
+			auraInfo->setSword(stat->value(Statistic::StatDamageAura1).toString(), stat->value(Statistic::StatDamageAura2).toString());
+			auraInfo->setPill(Statistic::instance()->value(Statistic::StatRegenAura1).toString());
 		}
 	} else if (paramType == TYPE_NA) {
 		if (paramId == Pers::ParamPersLevel) {
