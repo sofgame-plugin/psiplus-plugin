@@ -59,6 +59,7 @@ public:
 	virtual QString name() const;
 	virtual QString shortName() const;
 	virtual QString version() const;
+	virtual QPixmap icon() const;
 	virtual bool enable();
 	virtual bool disable();
 	virtual QWidget* options();

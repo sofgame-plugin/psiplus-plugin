@@ -67,6 +67,11 @@ QString SofGamePlugin::version() const
 	return cVer;
 }
 
+QPixmap SofGamePlugin::icon() const
+{
+	return QPixmap(":/main/stone_16");
+}
+
 bool SofGamePlugin::enable()
 {
 	if (PluginHosts::psiOptions == NULL || PluginHosts::psiSender == NULL)

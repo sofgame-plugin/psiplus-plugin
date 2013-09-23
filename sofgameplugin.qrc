@@ -4,4 +4,7 @@
         <file alias="sword">resorces/flash.png</file>
         <file alias="pill">resorces/pill.png</file>
     </qresource>
+    <qresource prefix="/main">
+        <file alias="stone_16">resorces/stone_16.png</file>
+    </qresource>
 </RCC>
